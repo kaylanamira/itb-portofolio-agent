@@ -1,0 +1,618 @@
+[
+    {
+        "kode_mk": "IF1210",
+        "nama_mk": "Algoritma dan Pemrograman 1",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Yani Widyani",
+            "Tricya Esterina Widagdo"
+        ]
+    },
+    {
+        "kode_mk": "IF1210",
+        "nama_mk": "Algoritma dan Pemrograman 1",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Fazat Nur Azizah",
+            "Muhamad Koyimatu"
+        ]
+    },
+    {
+        "kode_mk": "IF1210",
+        "nama_mk": "Algoritma dan Pemrograman 1",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Riza Satria Perdana"
+        ]
+    },
+    {
+        "kode_mk": "IF1210",
+        "nama_mk": "Algoritma dan Pemrograman 1",
+        "sks": 3,
+        "kelas": "04",
+        "dosen": [
+            "Riza Satria Perdana"
+        ]
+    },
+    {
+        "kode_mk": "IF1210",
+        "nama_mk": "Algoritma dan Pemrograman 1",
+        "sks": 3,
+        "kelas": "05",
+        "dosen": [
+            "Lenni Yulianti"
+        ]
+    },
+    {
+        "kode_mk": "IF1210",
+        "nama_mk": "Algoritma dan Pemrograman 1",
+        "sks": 3,
+        "kelas": "06",
+        "dosen": [
+            "Beni Rio Hermanto"
+        ]
+    },
+    {
+        "kode_mk": "IF1220",
+        "nama_mk": "Matematika Diskrit",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Rinaldi"
+        ]
+    },
+    {
+        "kode_mk": "IF1220",
+        "nama_mk": "Matematika Diskrit",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Rinaldi"
+        ]
+    },
+    {
+        "kode_mk": "IF1221",
+        "nama_mk": "Logika Komputasional",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Fariska Zakhralativa Ruskanda"
+        ]
+    },
+    {
+        "kode_mk": "IF1221",
+        "nama_mk": "Logika Komputasional",
+        "sks": 2,
+        "kelas": "02",
+        "dosen": [
+            "Fariska Zakhralativa Ruskanda",
+            "Dion Tanjung"
+        ]
+    },
+    {
+        "kode_mk": "IF1230",
+        "nama_mk": "Organisasi dan Arsitektur Komputer",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Robithoh Annur",
+            "Dion Tanjung"
+        ]
+    },
+    {
+        "kode_mk": "IF1230",
+        "nama_mk": "Organisasi dan Arsitektur Komputer",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Robithoh Annur"
+        ]
+    },
+    {
+        "kode_mk": "IF2010",
+        "nama_mk": "Pemrograman Berorientasi Objek",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Muhammad Zuhri Catur Candra",
+            "Hari Purnama"
+        ]
+    },
+    {
+        "kode_mk": "IF2010",
+        "nama_mk": "Pemrograman Berorientasi Objek",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Muhammad Zuhri Catur Candra"
+        ]
+    },
+    {
+        "kode_mk": "IF2010",
+        "nama_mk": "Pemrograman Berorientasi Objek",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Hari Purnama",
+            "Satrio Adi Rukmono"
+        ]
+    },
+    {
+        "kode_mk": "IF2050",
+        "nama_mk": "Dasar Rekayasa Perangkat Lunak",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Wikan Danar Sunindyo"
+        ]
+    },
+    {
+        "kode_mk": "IF2050",
+        "nama_mk": "Dasar Rekayasa Perangkat Lunak",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Yani Widyani"
+        ]
+    },
+    {
+        "kode_mk": "IF2050",
+        "nama_mk": "Dasar Rekayasa Perangkat Lunak",
+        "sks": 3,
+        "kelas": "04",
+        "dosen": [
+            "Wikan Danar Sunindyo",
+            "Muhamad Koyimatu"
+        ]
+    },
+    {
+        "kode_mk": "IF2211",
+        "nama_mk": "Strategi Algoritma",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Rinaldi"
+        ]
+    },
+    {
+        "kode_mk": "IF2211",
+        "nama_mk": "Strategi Algoritma",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Rila Mandala"
+        ]
+    },
+    {
+        "kode_mk": "IF2211",
+        "nama_mk": "Strategi Algoritma",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Muhammad Zuhri Catur Candra",
+            "Tricya Esterina Widagdo",
+            "Fazat Nur Azizah"
+        ]
+    },
+    {
+        "kode_mk": "IF2224",
+        "nama_mk": "Teori Bahasa Formal dan Otomata",
+        "sks": 4,
+        "kelas": "01",
+        "dosen": [
+            "Judhi Santoso"
+        ]
+    },
+    {
+        "kode_mk": "IF2224",
+        "nama_mk": "Teori Bahasa Formal dan Otomata",
+        "sks": 4,
+        "kelas": "02",
+        "dosen": [
+            "Rila Mandala"
+        ]
+    },
+    {
+        "kode_mk": "IF2224",
+        "nama_mk": "Teori Bahasa Formal dan Otomata",
+        "sks": 4,
+        "kelas": "03",
+        "dosen": [
+            "Ayu Purwarianti",
+            "Yudistira Dwi Wardhana Asnar"
+        ]
+    },
+    {
+        "kode_mk": "IF2230",
+        "nama_mk": "Jaringan Komputer",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Afwarman",
+            "Dody Dharma"
+        ]
+    },
+    {
+        "kode_mk": "IF2230",
+        "nama_mk": "Jaringan Komputer",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Robithoh Annur",
+            "Dion Tanjung"
+        ]
+    },
+    {
+        "kode_mk": "IF2230",
+        "nama_mk": "Jaringan Komputer",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Achmad Imam Kistijantoro",
+            "Robithoh Annur"
+        ]
+    },
+    {
+        "kode_mk": "IF2240",
+        "nama_mk": "Basis Data",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Tricya Esterina Widagdo"
+        ]
+    },
+    {
+        "kode_mk": "IF2240",
+        "nama_mk": "Basis Data",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Fazat Nur Azizah",
+            "Maya Nabila"
+        ]
+    },
+    {
+        "kode_mk": "IF2240",
+        "nama_mk": "Basis Data",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Fazat Nur Azizah",
+            "Maya Nabila"
+        ]
+    },
+    {
+        "kode_mk": "IF3141",
+        "nama_mk": "Sistem Informasi",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Windy Gambetta"
+        ]
+    },
+    {
+        "kode_mk": "IF3141",
+        "nama_mk": "Sistem Informasi",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Dicky Prima Satya"
+        ]
+    },
+    {
+        "kode_mk": "IF3141",
+        "nama_mk": "Sistem Informasi",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Windy Gambetta"
+        ]
+    },
+    {
+        "kode_mk": "IF3151",
+        "nama_mk": "Interaksi Manusia Komputer",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Adi Mulyanto"
+        ]
+    },
+    {
+        "kode_mk": "IF3151",
+        "nama_mk": "Interaksi Manusia Komputer",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Adi Mulyanto"
+        ]
+    },
+    {
+        "kode_mk": "IF3151",
+        "nama_mk": "Interaksi Manusia Komputer",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Fitra Arifiansyah",
+            "Satrio Adi Rukmono"
+        ]
+    },
+    {
+        "kode_mk": "IF3210",
+        "nama_mk": "Pengembangan Aplikasi Piranti Bergerak",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Agung Dewandaru"
+        ]
+    },
+    {
+        "kode_mk": "IF3210",
+        "nama_mk": "Pengembangan Aplikasi Piranti Bergerak",
+        "sks": 2,
+        "kelas": "02",
+        "dosen": [
+            "Hari Purnama"
+        ]
+    },
+    {
+        "kode_mk": "IF3210",
+        "nama_mk": "Pengembangan Aplikasi Piranti Bergerak",
+        "sks": 2,
+        "kelas": "03",
+        "dosen": [
+            "Hari Purnama"
+        ]
+    },
+    {
+        "kode_mk": "IF3211",
+        "nama_mk": "Komputasi Domain Spesifik",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Judhi Santoso"
+        ]
+    },
+    {
+        "kode_mk": "IF3211",
+        "nama_mk": "Komputasi Domain Spesifik",
+        "sks": 2,
+        "kelas": "02",
+        "dosen": [
+            "Nugraha Priya Utama"
+        ]
+    },
+    {
+        "kode_mk": "IF3211",
+        "nama_mk": "Komputasi Domain Spesifik",
+        "sks": 2,
+        "kelas": "03",
+        "dosen": [
+            "Judhi Santoso",
+            "Muhamad Koyimatu"
+        ]
+    },
+    {
+        "kode_mk": "IF3211",
+        "nama_mk": "Komputasi Domain Spesifik",
+        "sks": 2,
+        "kelas": "04",
+        "dosen": [
+            "Nugraha Priya Utama",
+            "Muhamad Koyimatu"
+        ]
+    },
+    {
+        "kode_mk": "IF3211",
+        "nama_mk": "Komputasi Domain Spesifik",
+        "sks": 2,
+        "kelas": "05",
+        "dosen": [
+            "Beni Rio Hermanto"
+        ]
+    },
+    {
+        "kode_mk": "IF3250",
+        "nama_mk": "Proyek Perangkat Lunak",
+        "sks": 4,
+        "kelas": "01",
+        "dosen": [
+            "Yani Widyani"
+        ]
+    },
+    {
+        "kode_mk": "IF3250",
+        "nama_mk": "Proyek Perangkat Lunak",
+        "sks": 4,
+        "kelas": "02",
+        "dosen": [
+            "Yani Widyani"
+        ]
+    },
+    {
+        "kode_mk": "IF3250",
+        "nama_mk": "Proyek Perangkat Lunak",
+        "sks": 4,
+        "kelas": "03",
+        "dosen": [
+            "Fitra Arifiansyah"
+        ]
+    },
+    {
+        "kode_mk": "IF3270",
+        "nama_mk": "Pembelajaran Mesin",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Fariska Zakhralativa Ruskanda"
+        ]
+    },
+    {
+        "kode_mk": "IF3270",
+        "nama_mk": "Pembelajaran Mesin",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Masayu Leylia Khodra"
+        ]
+    },
+    {
+        "kode_mk": "IF3270",
+        "nama_mk": "Pembelajaran Mesin",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Ayu Purwarianti"
+        ]
+    },
+    {
+        "kode_mk": "IF4010",
+        "nama_mk": "Pemrograman Unit Pemrosesan Grafis",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Dody Dharma"
+        ]
+    },
+    {
+        "kode_mk": "IF4042",
+        "nama_mk": "Sistem Temu Balik Informasi",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Rila Mandala"
+        ]
+    },
+    {
+        "kode_mk": "IF4044",
+        "nama_mk": "Teknologi Big Data",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Saiful Akbar"
+        ]
+    },
+    {
+        "kode_mk": "IF4050",
+        "nama_mk": "Perkembangan dalam Rekayasa Perangkat Lunak",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Muhammad Zuhri Catur Candra",
+            "Satrio Adi Rukmono"
+        ]
+    },
+    {
+        "kode_mk": "IF4051",
+        "nama_mk": "Pengembangan Sistem IoT",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Trio Adiono",
+            "Nana Sutisna",
+            "Nur Ahmadi"
+        ]
+    },
+    {
+        "kode_mk": "IF4053",
+        "nama_mk": "Keamanan Perangkat Lunak",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Yudistira Dwi Wardhana Asnar"
+        ]
+    },
+    {
+        "kode_mk": "IF4061",
+        "nama_mk": "Visualisasi Data",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Dessi Puji Lestari"
+        ]
+    },
+    {
+        "kode_mk": "IF4062",
+        "nama_mk": "Grafika Komputer",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Dody Dharma"
+        ]
+    },
+    {
+        "kode_mk": "IF4063",
+        "nama_mk": "Gim dan Realitas Digital",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Agung Dewandaru"
+        ]
+    },
+    {
+        "kode_mk": "IF4090",
+        "nama_mk": "Kerja Praktik",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Fitra Arifiansyah"
+        ]
+    },
+    {
+        "kode_mk": "IF4091",
+        "nama_mk": "Penyusunan Proposal",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Adi Mulyanto"
+        ]
+    },
+    {
+        "kode_mk": "IF4092",
+        "nama_mk": "Tugas Akhir",
+        "sks": 4,
+        "kelas": "01",
+        "dosen": [
+            "Tricya Esterina Widagdo"
+        ]
+    },
+    {
+        "kode_mk": "IF4092",
+        "nama_mk": "Tugas Akhir",
+        "sks": 4,
+        "kelas": "02",
+        "dosen": [
+            "Robithoh Annur"
+        ]
+    },
+    {
+        "kode_mk": "WI2022",
+        "nama_mk": "Manajemen Proyek",
+        "sks": 2,
+        "kelas": "21",
+        "dosen": [
+            "Adi Mulyanto"
+        ]
+    },
+    {
+        "kode_mk": "WI2022",
+        "nama_mk": "Manajemen Proyek",
+        "sks": 2,
+        "kelas": "22",
+        "dosen": [
+            "Yani Widyani",
+            "Wikan Danar Sunindyo"
+        ]
+    },
+    {
+        "kode_mk": "WI2022",
+        "nama_mk": "Manajemen Proyek",
+        "sks": 2,
+        "kelas": "23",
+        "dosen": [
+            "Adi Mulyanto"
+        ]
+    }
+]

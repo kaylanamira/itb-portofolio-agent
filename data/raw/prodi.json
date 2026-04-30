@@ -1,0 +1,1003 @@
+[
+  {
+    "kode_prodi": "101",
+    "nama_prodi": "Matematika",
+    "singkatan_prodi": "MA",
+    "jenjang": "S1",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "102",
+    "nama_prodi": "Fisika",
+    "singkatan_prodi": "FI",
+    "jenjang": "S1",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "103",
+    "nama_prodi": "Astronomi",
+    "singkatan_prodi": "AS",
+    "jenjang": "S1",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "105",
+    "nama_prodi": "Kimia",
+    "singkatan_prodi": "KI",
+    "jenjang": "S1",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "108",
+    "nama_prodi": "Aktuaria",
+    "singkatan_prodi": "AK",
+    "jenjang": "S1",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "104",
+    "nama_prodi": "Mikrobiologi",
+    "singkatan_prodi": "BM",
+    "jenjang": "S1",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "106",
+    "nama_prodi": "Biologi",
+    "singkatan_prodi": "BI",
+    "jenjang": "S1",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "112",
+    "nama_prodi": "Rekayasa Hayati",
+    "singkatan_prodi": "BE",
+    "jenjang": "S1",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "114",
+    "nama_prodi": "Rekayasa Pertanian",
+    "singkatan_prodi": "BA",
+    "jenjang": "S1",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "115",
+    "nama_prodi": "Rekayasa Kehutanan",
+    "singkatan_prodi": "BW",
+    "jenjang": "S1",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "119",
+    "nama_prodi": "Teknologi Pascapanen",
+    "singkatan_prodi": "BP",
+    "jenjang": "S1",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "107",
+    "nama_prodi": "Sains dan Teknologi Farmasi",
+    "singkatan_prodi": "FA",
+    "jenjang": "S1",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "116",
+    "nama_prodi": "Farmasi Klinik dan Komunitas",
+    "singkatan_prodi": "FKK",
+    "jenjang": "S1",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "121",
+    "nama_prodi": "Teknik Pertambangan",
+    "singkatan_prodi": "TA",
+    "jenjang": "S1",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "122",
+    "nama_prodi": "Teknik Perminyakan",
+    "singkatan_prodi": "TM",
+    "jenjang": "S1",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "123",
+    "nama_prodi": "Teknik Geofisika",
+    "singkatan_prodi": "TG",
+    "jenjang": "S1",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "125",
+    "nama_prodi": "Teknik Metalurgi",
+    "singkatan_prodi": "MG",
+    "jenjang": "S1",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "120",
+    "nama_prodi": "Teknik Geologi",
+    "singkatan_prodi": "GL",
+    "jenjang": "S1",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "128",
+    "nama_prodi": "Meteorologi",
+    "singkatan_prodi": "ME",
+    "jenjang": "S1",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "129",
+    "nama_prodi": "Oseanografi",
+    "singkatan_prodi": "OS",
+    "jenjang": "S1",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "151",
+    "nama_prodi": "Teknik Geodesi dan Geomatika",
+    "singkatan_prodi": "GD",
+    "jenjang": "S1",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "130",
+    "nama_prodi": "Teknik Kimia",
+    "singkatan_prodi": "TK",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "133",
+    "nama_prodi": "Teknik Fisika",
+    "singkatan_prodi": "TF",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "134",
+    "nama_prodi": "Teknik Industri",
+    "singkatan_prodi": "TI",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "143",
+    "nama_prodi": "Teknik Pangan",
+    "singkatan_prodi": "PG",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "144",
+    "nama_prodi": "Manajemen Rekayasa",
+    "singkatan_prodi": "MR",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "145",
+    "nama_prodi": "Teknik Bioenergi dan Kemurgi",
+    "singkatan_prodi": "TB",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "194",
+    "nama_prodi": "Teknik Industri (Kampus Cirebon)",
+    "singkatan_prodi": "TI",
+    "jenjang": "S1",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "132",
+    "nama_prodi": "Teknik Elektro",
+    "singkatan_prodi": "EL",
+    "jenjang": "S1",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "135",
+    "nama_prodi": "Teknik Informatika",
+    "singkatan_prodi": "IF",
+    "jenjang": "S1",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "180",
+    "nama_prodi": "Teknik Tenaga Listrik",
+    "singkatan_prodi": "EP",
+    "jenjang": "S1",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "181",
+    "nama_prodi": "Teknik Telekomunikasi",
+    "singkatan_prodi": "ET",
+    "jenjang": "S1",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "182",
+    "nama_prodi": "Sistem dan Teknologi Informasi",
+    "singkatan_prodi": "II",
+    "jenjang": "S1",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "183",
+    "nama_prodi": "Teknik Biomedis",
+    "singkatan_prodi": "EB",
+    "jenjang": "S1",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "131",
+    "nama_prodi": "Teknik Mesin",
+    "singkatan_prodi": "MS",
+    "jenjang": "S1",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "136",
+    "nama_prodi": "Teknik Dirgantara",
+    "singkatan_prodi": "AE",
+    "jenjang": "S1",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "137",
+    "nama_prodi": "Teknik Material",
+    "singkatan_prodi": "MT",
+    "jenjang": "S1",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "150",
+    "nama_prodi": "Teknik Sipil",
+    "singkatan_prodi": "SI",
+    "jenjang": "S1",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "153",
+    "nama_prodi": "Teknik Lingkungan",
+    "singkatan_prodi": "TL",
+    "jenjang": "S1",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "155",
+    "nama_prodi": "Teknik Kelautan",
+    "singkatan_prodi": "KL",
+    "jenjang": "S1",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "157",
+    "nama_prodi": "Rekayasa Infrastruktur Lingkungan",
+    "singkatan_prodi": "IL",
+    "jenjang": "S1",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "158",
+    "nama_prodi": "Teknik dan Pengelolaan Sumber Daya Air",
+    "singkatan_prodi": "SA",
+    "jenjang": "S1",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "152",
+    "nama_prodi": "Arsitektur",
+    "singkatan_prodi": "AR",
+    "jenjang": "S1",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "154",
+    "nama_prodi": "Perencanaan Wilayah dan Kota",
+    "singkatan_prodi": "PWK",
+    "jenjang": "S1",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "156",
+    "nama_prodi": "Perencanaan Wilayah dan Kota (Kampus Cirebon)",
+    "singkatan_prodi": "PWK",
+    "jenjang": "S1",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "170",
+    "nama_prodi": "Seni Rupa",
+    "singkatan_prodi": "SR",
+    "jenjang": "S1",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "171",
+    "nama_prodi": "Kriya (Kampus Cirebon)",
+    "singkatan_prodi": "KR",
+    "jenjang": "S1",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "172",
+    "nama_prodi": "Kriya",
+    "singkatan_prodi": "KR",
+    "jenjang": "S1",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "173",
+    "nama_prodi": "Desain Interior",
+    "singkatan_prodi": "DI",
+    "jenjang": "S1",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "174",
+    "nama_prodi": "Desain Komunikasi Visual",
+    "singkatan_prodi": "DKV",
+    "jenjang": "S1",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "175",
+    "nama_prodi": "Desain Produk",
+    "singkatan_prodi": "DP",
+    "jenjang": "S1",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "190",
+    "nama_prodi": "Manajemen",
+    "singkatan_prodi": "MB",
+    "jenjang": "S1",
+    "kode_fakultas": "SBM"
+  },
+  {
+    "kode_prodi": "192",
+    "nama_prodi": "Kewirausahaan",
+    "singkatan_prodi": "MK",
+    "jenjang": "S1",
+    "kode_fakultas": "SBM"
+  },
+  {
+    "kode_prodi": "201",
+    "nama_prodi": "Matematika",
+    "singkatan_prodi": "MA",
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "202",
+    "nama_prodi": "Fisika",
+    "singkatan_prodi": "FI",
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "203",
+    "nama_prodi": "Astronomi",
+    "singkatan_prodi": "AS",
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "205",
+    "nama_prodi": "Kimia",
+    "singkatan_prodi": "KI",
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "208",
+    "nama_prodi": "Aktuaria",
+    "singkatan_prodi": "AK",
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "209",
+    "nama_prodi": "Sains Komputasi",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "246",
+    "nama_prodi": "Pengajaran Matematika",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "247",
+    "nama_prodi": "Pengajaran Fisika",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "248",
+    "nama_prodi": "Pengajaran Kimia",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "249",
+    "nama_prodi": "Ilmu dan Rekayasa Nuklir",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "206",
+    "nama_prodi": "Biologi",
+    "singkatan_prodi": "BI",
+    "jenjang": "S2",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "211",
+    "nama_prodi": "Bioteknologi",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "213",
+    "nama_prodi": "Biomanajemen",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "207",
+    "nama_prodi": "Farmasi",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "217",
+    "nama_prodi": "Keolahragaan",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "218",
+    "nama_prodi": "Farmasi Industri",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "221",
+    "nama_prodi": "Rekayasa Pertambangan",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "222",
+    "nama_prodi": "Teknik Perminyakan",
+    "singkatan_prodi": "TM",
+    "jenjang": "S2",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "223",
+    "nama_prodi": "Teknik Geofisika",
+    "singkatan_prodi": "TG",
+    "jenjang": "S2",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "225",
+    "nama_prodi": "Teknik Metalurgi",
+    "singkatan_prodi": "MG",
+    "jenjang": "S2",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "226",
+    "nama_prodi": "Teknik Geotermal",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "220",
+    "nama_prodi": "Teknik Geologi",
+    "singkatan_prodi": "GL",
+    "jenjang": "S2",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "224",
+    "nama_prodi": "Sains Kebumian",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "227",
+    "nama_prodi": "Teknik Air Tanah",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "251",
+    "nama_prodi": "Teknik Geodesi dan Geomatika",
+    "singkatan_prodi": "GD",
+    "jenjang": "S2",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "230",
+    "nama_prodi": "Teknik Kimia",
+    "singkatan_prodi": "TK",
+    "jenjang": "S2",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "233",
+    "nama_prodi": "Teknik Fisika",
+    "singkatan_prodi": "TF",
+    "jenjang": "S2",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "234",
+    "nama_prodi": "Teknik dan Manajemen Industri",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "238",
+    "nama_prodi": "Instrumentasi dan Kontrol",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "294",
+    "nama_prodi": "Logistik",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "232",
+    "nama_prodi": "Teknik Elektro",
+    "singkatan_prodi": "EL",
+    "jenjang": "S2",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "235",
+    "nama_prodi": "Informatika",
+    "singkatan_prodi": "IF",
+    "jenjang": "S2",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "282",
+    "nama_prodi": "Sistem dan Teknologi Informasi",
+    "singkatan_prodi": "II",
+    "jenjang": "S2",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "284",
+    "nama_prodi": "Kecerdasan Artifisial",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "231",
+    "nama_prodi": "Teknik Mesin",
+    "singkatan_prodi": "MS",
+    "jenjang": "S2",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "236",
+    "nama_prodi": "Teknik Dirgantara",
+    "singkatan_prodi": "AE",
+    "jenjang": "S2",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "237",
+    "nama_prodi": "Ilmu dan Teknik Material",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "250",
+    "nama_prodi": "Teknik Sipil",
+    "singkatan_prodi": "SI",
+    "jenjang": "S2",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "253",
+    "nama_prodi": "Teknik Lingkungan",
+    "singkatan_prodi": "TL",
+    "jenjang": "S2",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "255",
+    "nama_prodi": "Teknik Kelautan",
+    "singkatan_prodi": "KL",
+    "jenjang": "S2",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "257",
+    "nama_prodi": "Pengelolaan Infrastruktur Air Bersih dan Sanitasi",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "258",
+    "nama_prodi": "Pengelolaan Sumberdaya Air (PSDA)",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "269",
+    "nama_prodi": "Sistem dan Teknik Jalan Raya",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "240",
+    "nama_prodi": "Studi Pembangunan",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "242",
+    "nama_prodi": "Transportasi",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "252",
+    "nama_prodi": "Arsitektur",
+    "singkatan_prodi": "AR",
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "254",
+    "nama_prodi": "Perencanaan Wilayah dan Kota",
+    "singkatan_prodi": "PWK",
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "256",
+    "nama_prodi": "Rancang Kota",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "288",
+    "nama_prodi": "Perencanaan Kepariwisataan",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "289",
+    "nama_prodi": "Arsitektur Lanskap",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "270",
+    "nama_prodi": "Seni Rupa",
+    "singkatan_prodi": "SR",
+    "jenjang": "S2",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "271",
+    "nama_prodi": "Desain",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "290",
+    "nama_prodi": "Sains Manajemen",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SBM"
+  },
+  {
+    "kode_prodi": "291",
+    "nama_prodi": "Administrasi Bisnis",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SBM"
+  },
+  {
+    "kode_prodi": "293",
+    "nama_prodi": "Administrasi Bisnis (Kampus Jakarta)",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SBM"
+  },
+  {
+    "kode_prodi": "279",
+    "nama_prodi": "Teknokultur",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SPITM"
+  },
+  {
+    "kode_prodi": "285",
+    "nama_prodi": "Kecerdasan Sistem",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SPITM"
+  },
+  {
+    "kode_prodi": "287",
+    "nama_prodi": "Teknologi Nano",
+    "singkatan_prodi": null,
+    "jenjang": "S2",
+    "kode_fakultas": "SPITM"
+  },
+  {
+    "kode_prodi": "301",
+    "nama_prodi": "Matematika",
+    "singkatan_prodi": "MA",
+    "jenjang": "S3",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "302",
+    "nama_prodi": "Fisika",
+    "singkatan_prodi": "FI",
+    "jenjang": "S3",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "303",
+    "nama_prodi": "Astronomi",
+    "singkatan_prodi": "AS",
+    "jenjang": "S3",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "305",
+    "nama_prodi": "Kimia",
+    "singkatan_prodi": "KI",
+    "jenjang": "S3",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "349",
+    "nama_prodi": "Rekayasa Nuklir",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "FMIPA"
+  },
+  {
+    "kode_prodi": "306",
+    "nama_prodi": "Biologi",
+    "singkatan_prodi": "BI",
+    "jenjang": "S3",
+    "kode_fakultas": "SITH"
+  },
+  {
+    "kode_prodi": "307",
+    "nama_prodi": "Farmasi",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "321",
+    "nama_prodi": "Rekayasa Pertambangan",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "322",
+    "nama_prodi": "Teknik Perminyakan",
+    "singkatan_prodi": "TM",
+    "jenjang": "S3",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "323",
+    "nama_prodi": "Teknik Geofisika",
+    "singkatan_prodi": "TG",
+    "jenjang": "S3",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "325",
+    "nama_prodi": "Teknik Metalurgi",
+    "singkatan_prodi": "MG",
+    "jenjang": "S3",
+    "kode_fakultas": "FTTM"
+  },
+  {
+    "kode_prodi": "320",
+    "nama_prodi": "Teknik Geologi",
+    "singkatan_prodi": "GL",
+    "jenjang": "S3",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "324",
+    "nama_prodi": "Sains Kebumian",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "351",
+    "nama_prodi": "Teknik Geodesi dan Geomatika",
+    "singkatan_prodi": "GD",
+    "jenjang": "S3",
+    "kode_fakultas": "FITB"
+  },
+  {
+    "kode_prodi": "330",
+    "nama_prodi": "Teknik Kimia",
+    "singkatan_prodi": "TK",
+    "jenjang": "S3",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "333",
+    "nama_prodi": "Teknik Fisika",
+    "singkatan_prodi": "TF",
+    "jenjang": "S3",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "334",
+    "nama_prodi": "Teknik dan Manajemen Industri",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "FTI"
+  },
+  {
+    "kode_prodi": "332",
+    "nama_prodi": "Teknik Elektro dan Informatika",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "STEI"
+  },
+  {
+    "kode_prodi": "331",
+    "nama_prodi": "Teknik Mesin",
+    "singkatan_prodi": "MS",
+    "jenjang": "S3",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "336",
+    "nama_prodi": "Teknik Dirgantara",
+    "singkatan_prodi": "AE",
+    "jenjang": "S3",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "337",
+    "nama_prodi": "Ilmu dan Teknik Material",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "FTMD"
+  },
+  {
+    "kode_prodi": "350",
+    "nama_prodi": "Teknik Sipil",
+    "singkatan_prodi": "SI",
+    "jenjang": "S3",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "353",
+    "nama_prodi": "Teknik Lingkungan",
+    "singkatan_prodi": "TL",
+    "jenjang": "S3",
+    "kode_fakultas": "FTSL"
+  },
+  {
+    "kode_prodi": "342",
+    "nama_prodi": "Transportasi",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "352",
+    "nama_prodi": "Arsitektur",
+    "singkatan_prodi": "AR",
+    "jenjang": "S3",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "354",
+    "nama_prodi": "Perencanaan Wilayah dan Kota",
+    "singkatan_prodi": "PWK",
+    "jenjang": "S3",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "370",
+    "nama_prodi": "Ilmu Seni Rupa dan Desain",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "FSRD"
+  },
+  {
+    "kode_prodi": "390",
+    "nama_prodi": "Sains Manajemen",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "SBM"
+  },
+  {
+    "kode_prodi": "387",
+    "nama_prodi": "Sains dan Teknologi Nano",
+    "singkatan_prodi": null,
+    "jenjang": "S3",
+    "kode_fakultas": "SPITM"
+  },
+  {
+    "kode_prodi": "907",
+    "nama_prodi": "Profesi Apoteker",
+    "singkatan_prodi": null,
+    "jenjang": "Profesi",
+    "kode_fakultas": "SF"
+  },
+  {
+    "kode_prodi": "952",
+    "nama_prodi": "Profesi Arsitek",
+    "singkatan_prodi": null,
+    "jenjang": "Profesi",
+    "kode_fakultas": "SAPPK"
+  },
+  {
+    "kode_prodi": "900",
+    "nama_prodi": "Profesi Insinyur",
+    "singkatan_prodi": null,
+    "jenjang": "Profesi",
+    "kode_fakultas": "SPITM"
+  }
+]

@@ -1,0 +1,1550 @@
+[
+  {
+    "kode_mk": "IF1210",
+    "nama_mk": "Algoritma dan Pemrograman 1",
+    "nama_mk_en": "Algorithm and Programming 1",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF1220",
+    "nama_mk": "Matematika Diskrit",
+    "nama_mk_en": "Discrete Mathematics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF1221",
+    "nama_mk": "Logika Komputasional",
+    "nama_mk_en": "Computational Logic",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF1230",
+    "nama_mk": "Organisasi dan Arsitektur Komputer",
+    "nama_mk_en": "Computer Organization and Architecture",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2010",
+    "nama_mk": "Pemrograman Berorientasi Objek",
+    "nama_mk_en": "Object-Oriented Programming",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2040",
+    "nama_mk": "Pemodelan Basis Data",
+    "nama_mk_en": "Database Modeling",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2050",
+    "nama_mk": "Dasar Rekayasa Perangkat Lunak",
+    "nama_mk_en": "Foundations of Software Engineering",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2110",
+    "nama_mk": "Algoritma dan Pemrograman 2",
+    "nama_mk_en": "Algorithm and Programming 2",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2120",
+    "nama_mk": "Probabilitas dan Statistika",
+    "nama_mk_en": "Probability and Statistics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2123",
+    "nama_mk": "Aljabar Linier dan Geometri",
+    "nama_mk_en": "Geometric and Linear Algebra",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2130",
+    "nama_mk": "Sistem Operasi",
+    "nama_mk_en": "Operating System",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2150",
+    "nama_mk": "Rekayasa Perangkat Lunak",
+    "nama_mk_en": "Software Engineering",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2180",
+    "nama_mk": "Sosio-informatika dan Profesionalisme",
+    "nama_mk_en": "Sosio-informatics and Professionalism",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2211",
+    "nama_mk": "Strategi Algoritma",
+    "nama_mk_en": "Algorithm Strategy",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2224",
+    "nama_mk": "Teori Bahasa Formal dan Otomata",
+    "nama_mk_en": "Formal Language Theory and Automata",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2230",
+    "nama_mk": "Jaringan Komputer",
+    "nama_mk_en": "Computer Network",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF2240",
+    "nama_mk": "Basis Data",
+    "nama_mk_en": "Database",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3070",
+    "nama_mk": "Dasar Inteligensi Artifisial",
+    "nama_mk_en": "Foundations of Artificial Intelligence",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3110",
+    "nama_mk": "Pengembangan Aplikasi Web",
+    "nama_mk_en": "Web Application Development",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3130",
+    "nama_mk": "Sistem Paralel dan Terdistribusi",
+    "nama_mk_en": "Parallel and Distributed Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3140",
+    "nama_mk": "Sistem Basis Data",
+    "nama_mk_en": "Database System",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3141",
+    "nama_mk": "Sistem Informasi",
+    "nama_mk_en": "Information System",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3151",
+    "nama_mk": "Interaksi Manusia Komputer",
+    "nama_mk_en": "Human-Computer Interaction",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3170",
+    "nama_mk": "Inteligensi Artifisial",
+    "nama_mk_en": "Artificial Intelligence",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3210",
+    "nama_mk": "Pengembangan Aplikasi Piranti Bergerak",
+    "nama_mk_en": "Mobile Application Development",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3211",
+    "nama_mk": "Komputasi Domain Spesifik",
+    "nama_mk_en": "Domain-Specific Computation",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3250",
+    "nama_mk": "Proyek Perangkat Lunak",
+    "nama_mk_en": "Software Project",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF3270",
+    "nama_mk": "Pembelajaran Mesin",
+    "nama_mk_en": "Machine Learning",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4010",
+    "nama_mk": "Pemrograman Unit Pemrosesan Grafis",
+    "nama_mk_en": "Graphical Processing Unit Programming",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4020",
+    "nama_mk": "Kriptografi",
+    "nama_mk_en": "Cryptography",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4021",
+    "nama_mk": "Pemodelan dan Simulasi",
+    "nama_mk_en": "Modeling and Simulation",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4031",
+    "nama_mk": "Arsitektur Aplikasi Terdistribusi",
+    "nama_mk_en": "Distributed Application Architecture",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4033",
+    "nama_mk": "Keamanan Siber",
+    "nama_mk_en": "Cyber Security",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4035",
+    "nama_mk": "Blockchain",
+    "nama_mk_en": "Blockchain",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4040",
+    "nama_mk": "Pemodelan Data Lanjut",
+    "nama_mk_en": "Advanced Data Modeling",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4041",
+    "nama_mk": "Penambangan Data",
+    "nama_mk_en": "Data Mining",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4042",
+    "nama_mk": "Sistem Temu Balik Informasi",
+    "nama_mk_en": "Information Retrieval System",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4044",
+    "nama_mk": "Teknologi Big Data",
+    "nama_mk_en": "Big Data Technology",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4050",
+    "nama_mk": "Perkembangan dalam Rekayasa Perangkat Lunak",
+    "nama_mk_en": "Advances in Software Engineering",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4051",
+    "nama_mk": "Pengembangan Sistem IoT",
+    "nama_mk_en": "IoT System Development",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4052",
+    "nama_mk": "Komputasi Layanan",
+    "nama_mk_en": "Service Computing",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4053",
+    "nama_mk": "Keamanan Perangkat Lunak",
+    "nama_mk_en": "Software Security",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4054",
+    "nama_mk": "Pengoperasian Sistem Perangkat Lunak",
+    "nama_mk_en": "Software System X-Ops",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4060",
+    "nama_mk": "Rekayasa Interaksi",
+    "nama_mk_en": "Interaction Engineering",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4061",
+    "nama_mk": "Visualisasi Data",
+    "nama_mk_en": "Data Visualization",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4062",
+    "nama_mk": "Grafika Komputer",
+    "nama_mk_en": "Computer Graphics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4063",
+    "nama_mk": "Gim dan Realitas Digital",
+    "nama_mk_en": "Game and Digital Reality",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4070",
+    "nama_mk": "Representasi Pengetahuan dan Penalaran",
+    "nama_mk_en": "Knowledge Representation and Reasoning",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4071",
+    "nama_mk": "Pemrosesan Ucapan",
+    "nama_mk_en": "Speech Processing",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4072",
+    "nama_mk": "Pemrosesan Bahasa Alami",
+    "nama_mk_en": "Natural Language Processing",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4073",
+    "nama_mk": "Pemrosesan Citra Digital",
+    "nama_mk_en": "Digital Image Processing",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4074",
+    "nama_mk": "Pembelajaran Mesin Lanjut",
+    "nama_mk_en": "Advanced Machine Learning",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4082",
+    "nama_mk": "Pengembangan Keprofesian/Komunitas Informatika A",
+    "nama_mk_en": "Profession and Community Development in Informatics A",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4083",
+    "nama_mk": "Pengembangan Keprofesian/Komunitas Informatika B",
+    "nama_mk_en": "Profession and Community Development in Informatics B",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4084",
+    "nama_mk": "Pengembangan Keprofesian/Komunitas Informatika C",
+    "nama_mk_en": "Profession and Community Development in Informatics C",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4085",
+    "nama_mk": "Topik Khusus Informatika A",
+    "nama_mk_en": "Special Topics in Informatics A",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4086",
+    "nama_mk": "Topik Khusus Informatika B",
+    "nama_mk_en": "Special Topics in Informatics B",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4087",
+    "nama_mk": "Topik Khusus Informatika C",
+    "nama_mk_en": "Special Topics in Informatics C",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4088",
+    "nama_mk": "Pengembangan Kemampuan Interpersonal",
+    "nama_mk_en": "Interpersonal Skills Development",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4090",
+    "nama_mk": "Kerja Praktik",
+    "nama_mk_en": "Industrial Internship",
+    "sks": 2,
+    "kategori": "Kerja Praktik",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4091",
+    "nama_mk": "Penyusunan Proposal",
+    "nama_mk_en": "Project Proposal",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "IF4092",
+    "nama_mk": "Tugas Akhir",
+    "nama_mk_en": "Final Project",
+    "sks": 4,
+    "kategori": "Tugas Akhir / Tesis / Disertasi",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "135"
+  },
+  {
+    "kode_mk": "II1200",
+    "nama_mk": "Pengantar Sistem dan Teknologi Informasi",
+    "nama_mk_en": "Introduction to Information Systems and Technology",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2100",
+    "nama_mk": "Komunikasi Interpersonal dan Publik",
+    "nama_mk_en": "Interpersonal and Public Communication",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2110",
+    "nama_mk": "Matematika Diskret",
+    "nama_mk_en": "Discrete Mathematics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2120",
+    "nama_mk": "Jaringan Komputer",
+    "nama_mk_en": "Computer Networks",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2130",
+    "nama_mk": "Sistem dan Arsitektur Komputer",
+    "nama_mk_en": "Computer System and Architecture",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2210",
+    "nama_mk": "Teknologi Platform",
+    "nama_mk_en": "Platform Technology",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2211",
+    "nama_mk": "Probabilitas dan Statistik",
+    "nama_mk_en": "Probability and Statistics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2221",
+    "nama_mk": "Analisis Kebutuhan Enterprise",
+    "nama_mk_en": "Enterprise Requirement Analysis",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2240",
+    "nama_mk": "Sistem Multimedia",
+    "nama_mk_en": "Multimedia System",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2250",
+    "nama_mk": "Manajemen Basis Data",
+    "nama_mk_en": "Database Management",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II2260",
+    "nama_mk": "Internet of Things",
+    "nama_mk_en": "Internet of Things",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3120",
+    "nama_mk": "Layanan Sistem dan Teknologi Informasi",
+    "nama_mk_en": "Information Systems and Technology Services",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3130",
+    "nama_mk": "Arsitektur Enterprise",
+    "nama_mk_en": "Enterprise Architecture",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3131",
+    "nama_mk": "Interaksi Manusia Komputer",
+    "nama_mk_en": "Human Computer Interaction",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3140",
+    "nama_mk": "Pengembangan Aplikasi Web dan Mobile",
+    "nama_mk_en": "Web and Mobile Application Development",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3160",
+    "nama_mk": "Teknologi Sistem Terintegrasi",
+    "nama_mk_en": "Integrated Systems Technology",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3170",
+    "nama_mk": "Hukum dan Etika Teknologi Informasi",
+    "nama_mk_en": "Information Technology Laws and Ethics",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3220",
+    "nama_mk": "Tata Kelola Teknologi Informasi",
+    "nama_mk_en": "Information Technology Governance",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3230",
+    "nama_mk": "Keamanan Informasi",
+    "nama_mk_en": "Information Security",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II3240",
+    "nama_mk": "Rekayasa Sistem dan Teknologi Informasi",
+    "nama_mk_en": "Information Systems and Technology Engineering",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4010",
+    "nama_mk": "Manajemen Data",
+    "nama_mk_en": "Data Management",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4011",
+    "nama_mk": "Transformasi Digital",
+    "nama_mk_en": "Digital Transformation",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4012",
+    "nama_mk": "Inteligensi Artifisial untuk Bisnis",
+    "nama_mk_en": "Artificial Intelligence for Business",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4013",
+    "nama_mk": "Data Analytics",
+    "nama_mk_en": "Data Analytics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4021",
+    "nama_mk": "Kriptografi",
+    "nama_mk_en": "Cryptography",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4022",
+    "nama_mk": "Rekayasa Privasi Digital",
+    "nama_mk_en": "Digital Privacy Engineering",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4023",
+    "nama_mk": "Forensik Digital",
+    "nama_mk_en": "Digital Forensics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4024",
+    "nama_mk": "Hukum Siber",
+    "nama_mk_en": "Cyberlaw",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4050",
+    "nama_mk": "Rekayasa Sistem Multimedia",
+    "nama_mk_en": "Multimedia System Engineering",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4051",
+    "nama_mk": "Manajemen Produk",
+    "nama_mk_en": "Product Management",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4052",
+    "nama_mk": "Analisis dan Perancangan Kinerja Sistem",
+    "nama_mk_en": "System Performance Analysis and Design",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4053",
+    "nama_mk": "Audit Teknologi Informasi",
+    "nama_mk_en": "Information Technology Audit",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4071",
+    "nama_mk": "Pengembangan Keprofesian/Komunitas STI A",
+    "nama_mk_en": "IST Professional and Community Development A",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4072",
+    "nama_mk": "Pengembangan Keprofesian/Komunitas STI B",
+    "nama_mk_en": "IST Professional and Community Development B",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4073",
+    "nama_mk": "Pengembangan Keprofesian/Komunitas STI C",
+    "nama_mk_en": "IST Professional and Community Development C",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4074",
+    "nama_mk": "Pengembangan Soft Skills STI",
+    "nama_mk_en": "IST Soft Skills Development",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4075",
+    "nama_mk": "Inovasi dan Studi Mandiri STI",
+    "nama_mk_en": "IST Innovation and Independent Study",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4077",
+    "nama_mk": "Pengembangan Wirausaha STI",
+    "nama_mk_en": "IST Entrepreneurship Development",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "Pass/Fail",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4078",
+    "nama_mk": "Penelitian STI",
+    "nama_mk_en": "IST Research",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4079",
+    "nama_mk": "Topik Khusus STI A",
+    "nama_mk_en": "IST Special Topics A",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4080",
+    "nama_mk": "Topik Khusus STI B",
+    "nama_mk_en": "IST Special Topics B",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4081",
+    "nama_mk": "Topik Khusus STI C",
+    "nama_mk_en": "IST Special Topics C",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4090",
+    "nama_mk": "Kerja Praktik",
+    "nama_mk_en": "Industrial Practice",
+    "sks": 2,
+    "kategori": "Kerja Praktik",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4091",
+    "nama_mk": "Proposal Tugas Akhir",
+    "nama_mk_en": "Final Project Proposal",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "II4092",
+    "nama_mk": "Tugas Akhir",
+    "nama_mk_en": "Final Project",
+    "sks": 4,
+    "kategori": "Tugas Akhir / Tesis / Disertasi",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "182"
+  },
+  {
+    "kode_mk": "EL1200",
+    "nama_mk": "Pengantar Analisis Rangkaian",
+    "nama_mk_en": "Introduction to Circuit Analysis",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2001",
+    "nama_mk": "Rangkaian Elektrik",
+    "nama_mk_en": "Electric Circuits",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2002",
+    "nama_mk": "Sistem Digital",
+    "nama_mk_en": "Digital Systems",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2003",
+    "nama_mk": "Struktur Diskrit",
+    "nama_mk_en": "Discrete Structures",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2004",
+    "nama_mk": "Probabilitas dan Statistika",
+    "nama_mk_en": "Probability and Statistics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2005",
+    "nama_mk": "Elektronika I",
+    "nama_mk_en": "Electronics I",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2006",
+    "nama_mk": "Material Teknik Elektro",
+    "nama_mk_en": "Electrical Engineering Materials",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2007",
+    "nama_mk": "Sinyal dan Sistem",
+    "nama_mk_en": "Signals and Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2008",
+    "nama_mk": "Pemecahan Masalah dengan Pemrograman",
+    "nama_mk_en": "Problem Solving with Programming",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2101",
+    "nama_mk": "Praktikum Rangkaian Elektrik",
+    "nama_mk_en": "Electric Circuits Laboratory",
+    "sks": 1,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2102",
+    "nama_mk": "Praktikum Sistem Digital",
+    "nama_mk_en": "Digital Systems Laboratory",
+    "sks": 1,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2150",
+    "nama_mk": "Sistem Digital dan Mikroprosesor",
+    "nama_mk_en": "Digital System dan Microprocessor",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL2205",
+    "nama_mk": "Praktikum Elektronika I",
+    "nama_mk_en": "Electronics I Laboratory",
+    "sks": 1,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3009",
+    "nama_mk": "Elektronika II",
+    "nama_mk_en": "Electronics II",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3010",
+    "nama_mk": "Pengolahan Sinyal Digital",
+    "nama_mk_en": "Digital Signal Processing",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3011",
+    "nama_mk": "Arsitektur Sistem Komputer",
+    "nama_mk_en": "Computer System Architecture",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3012",
+    "nama_mk": "Sistem Mikroprosesor",
+    "nama_mk_en": "Microprocessor Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3013",
+    "nama_mk": "Sistem Instrumentasi",
+    "nama_mk_en": "Instrumentation Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3014",
+    "nama_mk": "Etika Profesi & Rekayasa",
+    "nama_mk_en": "Professional and Engineering Ethics",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3015",
+    "nama_mk": "Sistem Kendali",
+    "nama_mk_en": "Control Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3016",
+    "nama_mk": "Sistem Komunikasi",
+    "nama_mk_en": "Communication Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3017",
+    "nama_mk": "Sistem Tenaga Elektrik",
+    "nama_mk_en": "Electrical Power Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL3112",
+    "nama_mk": "Praktikum Sistem Mikroprosesor",
+    "nama_mk_en": "Microprocessor Systems Laboratory",
+    "sks": 1,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4001",
+    "nama_mk": "Arsitektur Sistem Komputer II",
+    "nama_mk_en": "Computer System Architecture II",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4002",
+    "nama_mk": "Mikroelektronika RF",
+    "nama_mk_en": "RF Microelectronics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4003",
+    "nama_mk": "Perancangan Sistem Embedded",
+    "nama_mk_en": "Embedded System Design",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4004",
+    "nama_mk": "Sistem Penggerak Elektrik",
+    "nama_mk_en": "Electrical Drive Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4005",
+    "nama_mk": "Arsitektur & Komputasi Paralel",
+    "nama_mk_en": "Parallel Computation and Architecture",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4006",
+    "nama_mk": "Jaringan Komputer",
+    "nama_mk_en": "Computer Networks",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4007",
+    "nama_mk": "Pengolahan Citra Digital",
+    "nama_mk_en": "Digital Image Processing",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4011",
+    "nama_mk": "Perancangan Elektronika Analog-Mixed-Signal",
+    "nama_mk_en": "Analog-Mixed-Signal Electronic Design",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4012",
+    "nama_mk": "Analisis & Perancangan IC Digital",
+    "nama_mk_en": "Analysis and Design of Digital IC",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4013",
+    "nama_mk": "Perancangan Sistem VLSI",
+    "nama_mk_en": "VLSI Systems Design",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4021",
+    "nama_mk": "Devais Semikonduktor",
+    "nama_mk_en": "Semiconductor Devices",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4022",
+    "nama_mk": "Teknologi IC",
+    "nama_mk_en": "IC Technology",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4023",
+    "nama_mk": "Optoelektronika",
+    "nama_mk_en": "Optoelectronics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4031",
+    "nama_mk": "Sistem Kendali Multivariabel",
+    "nama_mk_en": "Multivariable Control Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4032",
+    "nama_mk": "Dasar Sistem Kendali Cerdas",
+    "nama_mk_en": "Fundamental of Intelligent Control Systems",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4033",
+    "nama_mk": "Robotika",
+    "nama_mk_en": "Robotics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4034",
+    "nama_mk": "Proyek Robotika",
+    "nama_mk_en": "Project on Robotics",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4041",
+    "nama_mk": "Perancangan Perangkat Lunak Jaringan",
+    "nama_mk_en": "Network Software Design",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4042",
+    "nama_mk": "Teknik Enkripsi dan Keamanan",
+    "nama_mk_en": "Encryption and Security Techniques",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4043",
+    "nama_mk": "Teknologi dan Komputasi Kuantum",
+    "nama_mk_en": "Quantum Computation and Technology",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4044",
+    "nama_mk": "Perancangan Sistem IoT",
+    "nama_mk_en": "Internet of Things System Design",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4045",
+    "nama_mk": "Komputasi Performa Tinggi",
+    "nama_mk_en": "High Performance Computation",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4060",
+    "nama_mk": "Pengembangan Keprofesian dan Komunitas",
+    "nama_mk_en": "Professional and Community Development",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4061",
+    "nama_mk": "Kapita Selekta Teknik Elektro",
+    "nama_mk_en": "Elective Topics in Electrical Engineering",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4062",
+    "nama_mk": "Inovasi dan Kewirausahaan dalam Rekayasa",
+    "nama_mk_en": "Engineering Innovation and Entrepreneurship",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4063",
+    "nama_mk": "Pengembangan Usaha dalam Rekayasa",
+    "nama_mk_en": "Engineering Business Development",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4064",
+    "nama_mk": "Penelitian Rekayasa",
+    "nama_mk_en": "Engineering Research",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4065",
+    "nama_mk": "Proyek Kerekayasaan Mandiri",
+    "nama_mk_en": "Independent Engineering Project",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4071",
+    "nama_mk": "Kuliah Multidisiplin A",
+    "nama_mk_en": "Multidisciplinary Course A",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4072",
+    "nama_mk": "Kuliah Multidisiplin B",
+    "nama_mk_en": "Multidisciplinary Course B",
+    "sks": 2,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4073",
+    "nama_mk": "Kuliah Multidisiplin C",
+    "nama_mk_en": "Multidisciplinary Course C",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4074",
+    "nama_mk": "Kuliah Multidisiplin D",
+    "nama_mk_en": "Multidisciplinary Course D",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4075",
+    "nama_mk": "Kuliah Multidisiplin E",
+    "nama_mk_en": "Multidisciplinary Course E",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4076",
+    "nama_mk": "Kuliah Multidisiplin F",
+    "nama_mk_en": "Multidisciplinary Course F",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4077",
+    "nama_mk": "Kuliah Multidisiplin G",
+    "nama_mk_en": "Multidisciplinary Course G",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4090",
+    "nama_mk": "Proposal Proyek Akhir",
+    "nama_mk_en": "Proposal of Final Project",
+    "sks": 3,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4091",
+    "nama_mk": "Tugas Akhir",
+    "nama_mk_en": "Final Project",
+    "sks": 3,
+    "kategori": "Tugas Akhir / Tesis / Disertasi",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4092",
+    "nama_mk": "Kerja Praktik",
+    "nama_mk_en": "Industrial Experiences",
+    "sks": 2,
+    "kategori": "Kerja Praktik",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4093",
+    "nama_mk": "Magang di Industri",
+    "nama_mk_en": "Industrial Internships",
+    "sks": 9,
+    "kategori": "Kerja Praktik",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4094",
+    "nama_mk": "Pembelajaran Mandiri Teknik Elektro A",
+    "nama_mk_en": "Electrical Engineering Independent Study A",
+    "sks": 4,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4095",
+    "nama_mk": "Pembelajaran Mandiri Teknik Elektro B",
+    "nama_mk_en": "Electrical Engineering Independent Study B",
+    "sks": 8,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  },
+  {
+    "kode_mk": "EL4099",
+    "nama_mk": "Praktikum Pilihan Teknik Elektro",
+    "nama_mk_en": "Electrical Engineering Elective Laboratory",
+    "sks": 1,
+    "kategori": "Kuliah",
+    "jenis_nilai": "ABCDE",
+    "kode_prodi": "132"
+  }
+]

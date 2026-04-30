@@ -1,0 +1,337 @@
+[
+    {
+        "kode_mk": "II1200",
+        "nama_mk": "Pengantar Sistem dan Teknologi Informasi",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Windy Gambetta"
+        ]
+    },
+    {
+        "kode_mk": "II1200",
+        "nama_mk": "Pengantar Sistem dan Teknologi Informasi",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Suhono Harso Supangkat",
+            "Devi Willieam Anggara"
+        ]
+    },
+    {
+        "kode_mk": "II2210",
+        "nama_mk": "Teknologi Platform",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Arry Akhmad Arman"
+        ]
+    },
+    {
+        "kode_mk": "II2210",
+        "nama_mk": "Teknologi Platform",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Devi Willieam Anggara"
+        ]
+    },
+    {
+        "kode_mk": "II2211",
+        "nama_mk": "Probabilitas dan Statistik",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Dimitri Mahayana"
+        ]
+    },
+    {
+        "kode_mk": "II2211",
+        "nama_mk": "Probabilitas dan Statistik",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Armein Z.R. Langi",
+            "Budiman Dabarsyah"
+        ]
+    },
+    {
+        "kode_mk": "II2221",
+        "nama_mk": "Analisis Kebutuhan Enterprise",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Dicky Prima Satya"
+        ]
+    },
+    {
+        "kode_mk": "II2221",
+        "nama_mk": "Analisis Kebutuhan Enterprise",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Lenny Putri Yulianti"
+        ]
+    },
+    {
+        "kode_mk": "II2240",
+        "nama_mk": "Sistem Multimedia",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Yusep Rosmansyah"
+        ]
+    },
+    {
+        "kode_mk": "II2240",
+        "nama_mk": "Sistem Multimedia",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "I Gusti Bagus Baskara Nugraha"
+        ]
+    },
+    {
+        "kode_mk": "II2250",
+        "nama_mk": "Manajemen Basis Data",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Fazat Nur Azizah"
+        ]
+    },
+    {
+        "kode_mk": "II2250",
+        "nama_mk": "Manajemen Basis Data",
+        "sks": 2,
+        "kelas": "02",
+        "dosen": [
+            "Tricya Esterina Widagdo"
+        ]
+    },
+    {
+        "kode_mk": "II2260",
+        "nama_mk": "Internet of Things",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Kusprasapta Mutijarsa",
+            "Budiman Dabarsyah"
+        ]
+    },
+    {
+        "kode_mk": "II2260",
+        "nama_mk": "Internet of Things",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Fadhil Hidayat",
+            "Yusep Rosmansyah"
+        ]
+    },
+    {
+        "kode_mk": "II3220",
+        "nama_mk": "Tata Kelola Teknologi Informasi",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Kridanto Surendro"
+        ]
+    },
+    {
+        "kode_mk": "II3220",
+        "nama_mk": "Tata Kelola Teknologi Informasi",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Kridanto Surendro"
+        ]
+    },
+    {
+        "kode_mk": "II3220",
+        "nama_mk": "Tata Kelola Teknologi Informasi",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Kridanto Surendro"
+        ]
+    },
+    {
+        "kode_mk": "II3230",
+        "nama_mk": "Keamanan Informasi",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Budi Rahardjo"
+        ]
+    },
+    {
+        "kode_mk": "II3230",
+        "nama_mk": "Keamanan Informasi",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Hari Purnama"
+        ]
+    },
+    {
+        "kode_mk": "II3230",
+        "nama_mk": "Keamanan Informasi",
+        "sks": 3,
+        "kelas": "03",
+        "dosen": [
+            "Yusuf Kurniawan"
+        ]
+    },
+    {
+        "kode_mk": "II3240",
+        "nama_mk": "Rekayasa Sistem dan Teknologi Informasi",
+        "sks": 4,
+        "kelas": "01",
+        "dosen": [
+            "Suhardi"
+        ]
+    },
+    {
+        "kode_mk": "II3240",
+        "nama_mk": "Rekayasa Sistem dan Teknologi Informasi",
+        "sks": 4,
+        "kelas": "02",
+        "dosen": [
+            "Y. Bandung"
+        ]
+    },
+    {
+        "kode_mk": "II3240",
+        "nama_mk": "Rekayasa Sistem dan Teknologi Informasi",
+        "sks": 4,
+        "kelas": "03",
+        "dosen": [
+            "Albarda"
+        ]
+    },
+    {
+        "kode_mk": "II4012",
+        "nama_mk": "Inteligensi Artifisial untuk Bisnis",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Windy Gambetta"
+        ]
+    },
+    {
+        "kode_mk": "II4012",
+        "nama_mk": "Inteligensi Artifisial untuk Bisnis",
+        "sks": 3,
+        "kelas": "02",
+        "dosen": [
+            "Masayu Leylia Khodra"
+        ]
+    },
+    {
+        "kode_mk": "II4013",
+        "nama_mk": "Data Analytics",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Jaka Sembiring",
+            "Fetty Fitriyanti Lubis"
+        ]
+    },
+    {
+        "kode_mk": "II4021",
+        "nama_mk": "Kriptografi",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Rinaldi"
+        ]
+    },
+    {
+        "kode_mk": "II4022",
+        "nama_mk": "Rekayasa Privasi Digital",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Suhardi",
+            "Arry Akhmad Arman"
+        ]
+    },
+    {
+        "kode_mk": "II4024",
+        "nama_mk": "Hukum Siber",
+        "sks": 3,
+        "kelas": "01",
+        "dosen": [
+            "Suhardi",
+            "Ian Josef Matheus Edward"
+        ]
+    },
+    {
+        "kode_mk": "II4051",
+        "nama_mk": "Manajemen Produk",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Adi Mulyanto"
+        ]
+    },
+    {
+        "kode_mk": "II4091",
+        "nama_mk": "Proposal Tugas Akhir",
+        "sks": 2,
+        "kelas": "01",
+        "dosen": [
+            "Fetty Fitriyanti Lubis",
+            "Lenny Putri Yulianti",
+            "Arry Akhmad Arman"
+        ]
+    },
+    {
+        "kode_mk": "II4092",
+        "nama_mk": "Tugas Akhir",
+        "sks": 4,
+        "kelas": "01",
+        "dosen": [
+            "Fetty Fitriyanti Lubis",
+            "Arry Akhmad Arman"
+        ]
+    },
+    {
+        "kode_mk": "II4092",
+        "nama_mk": "Tugas Akhir",
+        "sks": 4,
+        "kelas": "02",
+        "dosen": [
+            "Lenny Putri Yulianti",
+            "Arry Akhmad Arman"
+        ]
+    },
+    {
+        "kode_mk": "WI2022",
+        "nama_mk": "Manajemen Proyek",
+        "sks": 2,
+        "kelas": "17",
+        "dosen": [
+            "Arry Akhmad Arman"
+        ]
+    },
+    {
+        "kode_mk": "WI2022",
+        "nama_mk": "Manajemen Proyek",
+        "sks": 2,
+        "kelas": "18",
+        "dosen": [
+            "I Gusti Bagus Baskara Nugraha"
+        ]
+    },
+    {
+        "kode_mk": "WI2022",
+        "nama_mk": "Manajemen Proyek",
+        "sks": 2,
+        "kelas": "19",
+        "dosen": [
+            "Albarda"
+        ]
+    }
+]
