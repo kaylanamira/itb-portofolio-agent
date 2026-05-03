@@ -1,0 +1,22 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	intent_classifier(intent_classifier)
+	portfolio_agent(portfolio_agent)
+	wisudawan_agent(wisudawan_agent)
+	out_of_scope(out_of_scope)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> intent_classifier;
+	intent_classifier -.-> out_of_scope;
+	intent_classifier -.-> portfolio_agent;
+	intent_classifier -.-> wisudawan_agent;
+	out_of_scope --> __end__;
+	portfolio_agent --> __end__;
+	wisudawan_agent --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

@@ -1,0 +1,41 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	query_rewriter(query_rewriter)
+	query_classifier(query_classifier)
+	schema_linker(schema_linker)
+	sql_generator(sql_generator)
+	sql_validator(sql_validator)
+	sql_executor(sql_executor)
+	answer_validator(answer_validator)
+	response_formatter(response_formatter)
+	error_handler(error_handler)
+	clarification_handler(clarification_handler)
+	rag_retriever(rag_retriever)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> query_rewriter;
+	answer_validator -.-> error_handler;
+	answer_validator -.-> response_formatter;
+	error_handler -.-> response_formatter;
+	error_handler -.-> sql_generator;
+	query_classifier -.-> clarification_handler;
+	query_classifier -.-> rag_retriever;
+	query_classifier -.-> response_formatter;
+	query_classifier -.-> schema_linker;
+	query_rewriter --> query_classifier;
+	rag_retriever --> response_formatter;
+	schema_linker --> sql_generator;
+	sql_executor -.-> answer_validator;
+	sql_executor -.-> error_handler;
+	sql_generator --> sql_validator;
+	sql_validator -.-> error_handler;
+	sql_validator -.-> sql_executor;
+	clarification_handler --> __end__;
+	response_formatter --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
