@@ -5,8 +5,9 @@ from agent.nodes.intent_classifier import intent_classifier
 from agent.nodes.response_formatter import response_formatter
 
 async def wisudawan_agent(state: AgentState):
-    from agent.state import FormattedResponse
-    return {"formatted_response": FormattedResponse(response_type="text", narrative="Wisudawan agent is not implemented yet.")}
+    return {
+        "abort_reason": "Fitur modul Wisudawan ITB saat ini masih dalam tahap pengembangan dan belum dapat diakses."
+    }
 
 def route_after_intent(state: AgentState) -> str:
     domain = state.get("domain", "out_of_scope")
@@ -32,7 +33,8 @@ def build_main_graph():
     })
     
     g.add_edge("portfolio_agent", END)
-    g.add_edge("wisudawan_agent", END)
+    g.add_edge("wisudawan_agent", "out_of_scope")
+    # g.add_edge("wisudawan_agent", END)
     g.add_edge("out_of_scope", END)
     
     return g.compile()

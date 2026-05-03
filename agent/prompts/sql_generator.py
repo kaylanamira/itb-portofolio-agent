@@ -31,7 +31,8 @@ MANDATORY RULES:
     Do NOT use the key name 'resolved_dosen_id' as a column.
     Example: If `resolved_dosen_id` is '1c893182...', use `WHERE '1c893182...'::uuid = ANY(semua_dosen_id)`.
 13. For COMPARATIVE queries across categories (e.g., comparing counts between faculties or prodi), use GROUP BY and aggregate functions. Do NOT use multiple COUNT(*) with hardcoded aliases in the SELECT clause.
-
+14. Always use table aliases to prefix your columns (e.g., `d.kk_id`, `kk.fakultas_id`) when joining multiple tables to prevent "column reference is ambiguous" errors.
+15. When asked for details or complete info about a specific person (e.g., "siapa itu X", "info lengkap"), SELECT comprehensive columns by joining `kelompok_keahlian` and `fakultas` (e.g., `d.nama_dosen`, `kk.nama_kk`, `f.nama_fakultas`).
 ENTITIES DETECTED FROM USER QUERY:
 {detected_entities}
 

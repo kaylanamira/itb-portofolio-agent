@@ -14,12 +14,14 @@ ATURAN FORMAT:
 10. Jika hasil kosong (0 rows): jelaskan kemungkinan penyebab, jangan hanya "tidak ditemukan"
 11. Jika hasil terpotong (>100 rows): hanya beri top 5
 12. Jika terdapat Alasan Penolakan (out of scope): buat respons penolakan yang sopan, personal, dan jelaskan alasannya dengan bahasa natural sesuai bahasa user.
+13. ITB Terminology: JANGAN PERNAH gunakan istilah 'departemen' atau 'jurusan'. Gunakan istilah resmi ITB: 'Fakultas' (Faculty), 'Program Studi' / 'Prodi' (Study Program), dan 'Kelompok Keahlian' / 'KK' (Research Group).
 
 DISCLAIMER WAJIB untuk diagnostic:
 "Analisis ini berdasarkan data portofolio yang tersedia dan mungkin tidak mencerminkan semua faktor." (Translate to user's language if not Indonesian)
 
 CHART SPEC REQUIREMENTS (untuk chart_generate):
-- Schema: https://vega.github.io/schema/vega-lite/v5.json
+- Schema: Wajib sertakan key "$schema": "https://vega.github.io/schema/vega-lite/v5.json" di root object.
+- Data: Wajib sertakan key "data" dengan "values" berisi array object dari Hasil SQL.
 - Warna: primary #003D7C (ITB biru), secondary #E8A000 (kuning), fill #F5F5F5
 - Semua label chart dalam bahasa yang sesuai dengan pertanyaan user
 - Selalu include tooltip dengan field yang relevan
@@ -35,7 +37,7 @@ OUTPUT FORMAT (JSON):
 """
 
 
-def build_formatter_human_message(query: str, query_type: str, sql_result: list, row_count: int, attempt_count: int, abort_reason: str = None) -> str:
+def build_formatter_human_message(query: str, query_type: str, sql_result: list, row_count: int, attempt_count: int, abort_reason: str = None, chart_context: dict | object = None) -> str:
     """Build the human message for the response formatter."""
     if abort_reason:
         return f"""Pertanyaan user: {query}
@@ -53,12 +55,21 @@ Generate respons penolakan yang personal dan sopan:"""
     truncation_note = ""
     if row_count and row_count > 100:
         truncation_note = f"\n Hasil dipotong: menampilkan 100 dari {row_count} baris total."
+        
+    chart_info = ""
+    if chart_context:
+        chart_str = str(chart_context.model_dump() if hasattr(chart_context, "model_dump") else chart_context)
+        chart_info = f"\n\nKonteks Grafik yang sedang dilihat user:\n{chart_str}"
+        
+    sql_section = f"Hasil SQL ({row_count} rows):\n        {result_str}{truncation_note}"
+    if query_type == "chart_interpret":
+        sql_section = "Konteks: User sedang meminta penjelasan tentang grafik yang tampil di layar mereka."
     
     return f"""Pertanyaan user: {query}
-Tipe query: {query_type}
-Jumlah attempts SQL: {attempt_count}
+        Tipe query: {query_type}
+        Jumlah attempts SQL: {attempt_count}
 
-Hasil SQL ({row_count} rows):
-{result_str}{truncation_note}
+        {sql_section}{chart_info}
 
-Generate respons:"""
+        Generate respons:
+    """

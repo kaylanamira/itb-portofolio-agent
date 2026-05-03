@@ -20,6 +20,7 @@ async def response_formatter(state: AgentState) -> dict:
         row_count=state.get("sql_row_count", 0),
         attempt_count=state.get("attempt_count", 0),
         abort_reason=state.get("abort_reason"),
+        chart_context=state.get("chart_context"),
     )
     
     messages = [
