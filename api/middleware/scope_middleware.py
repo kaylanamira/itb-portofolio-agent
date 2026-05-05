@@ -5,7 +5,7 @@ import uuid
 
 class ScopeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        role_str = request.headers.get("X-User-Role", "dosen")
+        role_str = request.headers.get("X-User-Role", "wram")
         try:
             role = UserRole(role_str.lower())
         except ValueError:

@@ -1,3 +1,4 @@
+from core.utils import extract_json_from_llm
 import json
 from agent.state import AgentState
 from agent.prompts.query_rewriter import REWRITER_PROMPT
@@ -22,7 +23,7 @@ async def query_rewriter(state: AgentState) -> dict:
     response = await llm.ainvoke(messages)
     
     try:
-        content = json.loads(response.content)
+        content = extract_json_from_llm(response.content)
         rewritten = content.get("rewritten_query", state["raw_query"])
     except Exception:
         rewritten = state["raw_query"]

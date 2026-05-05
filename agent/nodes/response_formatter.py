@@ -1,3 +1,4 @@
+from core.utils import extract_json_from_llm
 import json
 from agent.state import AgentState, FormattedResponse
 from agent.prompts.response_formatter import RESPONSE_FORMATTER_SYSTEM, build_formatter_human_message
@@ -30,7 +31,7 @@ async def response_formatter(state: AgentState) -> dict:
     response = await llm.ainvoke(messages)
     
     try:
-        content = json.loads(response.content)
+        content = extract_json_from_llm(response.content)
         resp = FormattedResponse(
             response_type=content.get("response_type", "text"),
             narrative=content.get("narrative", "Data telah diproses."),

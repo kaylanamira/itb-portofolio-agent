@@ -44,7 +44,21 @@ async def chat_endpoint(
         abort_reason=None
     )
     
-    final_state = await main_graph.ainvoke(initial_state)
+    final_state = initial_state
+    async for output in main_graph.astream(initial_state):
+        for node_name, state_update in output.items():
+            print(f"\n[NODE FINISHED]: {node_name}")
+            if "domain" in state_update:
+                print(f"  > Domain: {state_update['domain']}")
+            if "query_type" in state_update:
+                print(f"  > Query Type: {state_update['query_type']}")
+            if "generated_sql" in state_update:
+                print(f"  > SQL: {state_update['generated_sql']}")
+            if "sql_error" in state_update and state_update["sql_error"]:
+                print(f"  > SQL Error: {state_update['sql_error']}")
+            
+            # Keep track of latest state
+            final_state = {**final_state, **state_update}
     
     resp = final_state.get("formatted_response")
     if resp:

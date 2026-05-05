@@ -1,3 +1,4 @@
+from core.utils import extract_json_from_llm
 import json
 from agent.state import AgentState, DetectedEntities
 from agent.prompts.schema_linker import SCHEMA_LINKER_SYSTEM_PROMPT, build_schema_linker_human_message
@@ -32,7 +33,7 @@ async def schema_linker(state: AgentState) -> dict:
     schema_context = load_schema_context()
 
     try:
-        content = json.loads(response.content)
+        content = extract_json_from_llm(response.content)
         entities_dict = content.get("detected_entities") or {}
         relevant_tables = content.get("relevant_tables") or ["mv_kelas"]
 

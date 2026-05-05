@@ -13,6 +13,12 @@ RULES:
    - "AI" -> "Kecerdasan Buatan"
    - "strukdat" -> "Struktur Data"
    - "rpl" -> "Rekayasa Perangkat Lunak"
+   - "kaprodi" -> "Ketua Program Studi",
+   - "dekan" -> "Ketua Fakultas"
+   - "jurusan" -> "Program Studi" - ITB dont use departemen jargon, 
+   - "if" -> "Informatika"
+   - "fti" -> "Fakultas Teknologi Industri"
+   - "stei" -> "Sekolah Teknik Elektro dan Informatika"
 5. If the query is already explicit and self-contained, return it unchanged.
 6. Strip Indonesian honorifics (Pak, Bu, Prof, Dr, etc.) when identifying names to help with database matching.
 7. Do NOT add information the user didn't ask about.

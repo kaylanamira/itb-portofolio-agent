@@ -116,7 +116,7 @@ async def fuzzy_resolve_entities(entities: DetectedEntities) -> DetectedEntities
                            GREATEST(
                                similarity(kode_prodi, %s),
                                similarity(COALESCE(singkatan_prodi,''), %s),
-                               similarity(nama_prodi, %s),
+                               similarity(nama_prodi, %s)
                            ) AS sim
                     FROM program_studi
                     WHERE is_active = TRUE
@@ -133,10 +133,9 @@ async def fuzzy_resolve_entities(entities: DetectedEntities) -> DetectedEntities
             # ── Resolve kode_fakultas ─────────────────────────────────────────
             if entities.kode_fakultas:
                 row = await _query_one(conn, """
-                    SELECT fakultas_id, kode_fakultas, singkatan_fakultas, nama_fakultas,
+                    SELECT fakultas_id, kode_fakultas, nama_fakultas,
                            GREATEST(
                                similarity(kode_fakultas, %s),
-                               similarity(COALESCE(singkatan_fakultas,''), %s),
                                similarity(nama_fakultas, %s)
                            ) AS sim
                     FROM fakultas

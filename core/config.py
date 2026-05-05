@@ -11,16 +11,18 @@ class Settings(BaseSettings):
     # DB
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     
-    # LLM
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "groq")
+    # LLM Routing
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "google")
+    FAST_LLM_MODEL: str = os.getenv("FAST_LLM_MODEL", "gemini-2.5-flash")
+    
+    HEAVY_LLM_PROVIDER: str = os.getenv("HEAVY_LLM_PROVIDER", "groq")
+    HEAVY_LLM_MODEL: str = os.getenv("HEAVY_LLM_MODEL", "llama-3.3-70b-versatile")
+    
+    # API Keys
     GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY")
-    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
     GOOGLE_API_KEY: str | None = os.getenv("GOOGLE_API_KEY")
-    GOOGLE_MODEL: str = os.getenv("GOOGLE_MODEL", "gemini-1.5-pro")
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
-    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
-    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-latest")
     
     # Agent
     MAX_SQL_ATTEMPTS: int = 3

@@ -1,3 +1,4 @@
+from core.utils import extract_json_from_llm
 import json
 import re
 from typing import Any
@@ -38,7 +39,7 @@ def _extract_sql(raw_response: str) -> str:
     
     # Try parsing as JSON first
     try:
-        content = json.loads(raw)
+        content = extract_json_from_llm(raw)
         if isinstance(content, dict) and "sql" in content:
             return content["sql"]
     except (json.JSONDecodeError, AttributeError):
@@ -58,7 +59,7 @@ def _extract_sql(raw_response: str) -> str:
 
 async def sql_generator(state: AgentState) -> dict:
     """LangGraph node: Generates SQL from natural language."""
-    llm = get_llm(force_json=False)
+    llm = get_llm(task_type="sql_generation", force_json=False)
     
     scope_desc, scope_hint = _build_scope_context(state)
     entities_str = _format_entities(state.get("detected_entities"))

@@ -1,3 +1,4 @@
+from core.utils import extract_json_from_llm
 import json
 from agent.state import AgentState, QueryType
 from agent.prompts.query_classifier import (
@@ -30,7 +31,7 @@ async def query_classifier(state: AgentState) -> dict:
     response = await llm.ainvoke(messages)
     
     try:
-        content = json.loads(response.content)
+        content = extract_json_from_llm(response.content)
         qtype = QueryType(content.get("query_type", "clarification_needed"))
     except Exception:
         qtype = QueryType.CLARIFICATION_NEEDED

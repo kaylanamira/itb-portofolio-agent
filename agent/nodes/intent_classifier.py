@@ -1,3 +1,4 @@
+from core.utils import extract_json_from_llm
 import json
 from agent.state import AgentState, AgentDomain
 from agent.prompts.intent_classifier import INTENT_SYSTEM_PROMPT, build_intent_human_message
@@ -20,7 +21,7 @@ async def intent_classifier(state: AgentState) -> dict:
     response = await llm.ainvoke(messages)
     
     try:
-        content = json.loads(response.content)
+        content = extract_json_from_llm(response.content)
         domain = AgentDomain(content.get("domain", "out_of_scope"))
         reason = content.get("reason", "Topik ini di luar pengetahuan saya.")
     except Exception:

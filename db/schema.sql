@@ -18,7 +18,7 @@ CREATE TYPE tipe_konten_enum AS ENUM (
     'tambahan_info_statistik',  -- Narasi tambahan terkait statistik kelas
     'refleksi_pelaksanaan',     -- Refleksi dosen atas pelaksanaan kuliah
     'usulan_perbaikan_dosen',   -- Saran untuk dosen pengajar berikutnya
-    'usulan_perbaikan_itb'    -- Saran untuk institusi ITB
+    'usulan_perbaikan_itb'      -- Saran untuk institusi ITB
 );
 
 CREATE TYPE user_role_enum AS ENUM (
