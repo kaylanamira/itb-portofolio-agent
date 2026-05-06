@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str | None = os.getenv("GOOGLE_API_KEY")
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
     ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
+    OPENROUTER_API_KEY: str | None = os.getenv("OPENROUTER_API_KEY")
     
     # Agent
     MAX_SQL_ATTEMPTS: int = 3

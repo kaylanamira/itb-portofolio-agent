@@ -36,7 +36,7 @@ async def answer_validator(state: AgentState) -> dict:
         }
     
     try:
-        llm = get_llm()
+        llm = get_llm("answer_validation")
         plan = state.get("plan", [])
         idx = state.get("current_step_index", 0)
         current_task = plan[idx].get("task") if plan and idx < len(plan) else state.get("effective_query", "")

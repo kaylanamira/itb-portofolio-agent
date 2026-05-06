@@ -18,7 +18,7 @@ Jangan sertakan key 'artifacts' atau key lainnya. Jangan sertakan grafik atau ta
 """
 
 async def synthesizer(state: AgentState) -> dict:
-    llm = get_llm()
+    llm = get_llm("synthesis")
     query = state.get("effective_query", state.get("raw_query", ""))
     abort_reason = state.get("abort_reason")
     

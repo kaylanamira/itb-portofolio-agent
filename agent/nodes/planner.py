@@ -10,7 +10,7 @@ async def planner(state: AgentState) -> dict:
     """
     Analyzes the query and creates a step-by-step execution plan.
     """
-    llm = get_llm()
+    llm = get_llm("planning")
     
     chart_ctx = state.get("chart_context")
     chart_status = "present" if chart_ctx else "absent"

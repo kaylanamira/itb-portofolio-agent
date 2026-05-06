@@ -30,7 +30,7 @@ async def step_reasoner(state: AgentState) -> dict:
         result_data = []
         query_used = "N/A"
 
-    llm = get_llm()
+    llm = get_llm("step_reasoning")
     step_desc = plan[idx].get("task", "") if idx < len(plan) else "Final step"
     
     # Generate the system prompt dynamically inside function scope to safely include effective_query

@@ -6,7 +6,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 async def clarification_handler(state: AgentState) -> dict:
     """Intelligent LLM-based clarification handler to replace fragile pattern matching."""
-    llm = get_llm()
+    llm = get_llm("clarification")
     
     query = state.get("effective_query", state.get("raw_query", ""))
     messages = state.get("messages", [])

@@ -9,7 +9,7 @@ async def query_rewriter(state: AgentState) -> dict:
     if len(state["raw_query"].split()) > 50:
         return {"rewritten_query": None, "effective_query": state["raw_query"]}
         
-    llm = get_llm()
+    llm = get_llm("query_rewriter")
     history = "\n".join(
         [msg.content if hasattr(msg, "content") else msg.get("content", "") 
          for msg in state.get("messages", [])[-5:]]

@@ -10,7 +10,7 @@ from agent.tools.academic_calendar import get_current_academic_period
 
 async def schema_linker(state: AgentState) -> dict:
     """LangGraph node: Extract entities and select relevant tables from the query."""
-    llm = get_llm()
+    llm = get_llm("schema_linking")
 
     user_scope = state.get("user_scope")
     user_role = user_scope.role.value if user_scope else "unknown"

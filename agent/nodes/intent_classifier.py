@@ -6,7 +6,7 @@ from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 async def intent_classifier(state: AgentState) -> dict:
-    llm = get_llm()
+    llm = get_llm("intent_classification")
     
     human_content = build_intent_human_message(
         query=state["raw_query"],
