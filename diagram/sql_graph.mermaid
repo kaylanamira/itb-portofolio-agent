@@ -1,0 +1,28 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	schema_linker(schema_linker)
+	sql_generator(sql_generator)
+	sql_validator(sql_validator)
+	sql_executor(sql_executor)
+	answer_validator(answer_validator)
+	error_handler(error_handler)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> schema_linker;
+	answer_validator -. &nbsp;step_reasoner&nbsp; .-> __end__;
+	answer_validator -.-> error_handler;
+	error_handler -. &nbsp;synthesizer&nbsp; .-> __end__;
+	error_handler -.-> sql_generator;
+	schema_linker --> sql_generator;
+	sql_executor -.-> answer_validator;
+	sql_executor -.-> error_handler;
+	sql_generator --> sql_validator;
+	sql_validator -.-> error_handler;
+	sql_validator -.-> sql_executor;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

@@ -52,37 +52,78 @@ class DetectedEntities(BaseModel):
     resolved_prodi_id: Optional[UUID] = None
     confidence: float = 1.0
 
+class ChartArtifact(BaseModel):
+    artifact_id: str                  
+    artifact_type: Literal["chart"] = "chart"
+    chart_type: str                    # "bar" | "line" | "heatmap" | "scatter" | "radar"
+    title: str
+    chart_spec: dict                    
+    source_sql: Optional[str] = None   # the SQL that produced this
+    columns_used: list[str]            # column names
+    insight: Optional[str] = None      # 1-2 sentence agent interpretation
+
+class TableArtifact(BaseModel):
+    artifact_id: str
+    artifact_type: Literal["table"] = "table"
+    title: str
+    columns: list[dict]                # [{name, type, display_name}]
+    rows: list[dict]
+    source_sql: Optional[str] = None
+    row_count: int
+    is_truncated: bool
+
+class StepResult(BaseModel):
+    step_number: int
+    thought: str
+    action: str                        # "sql" | "rag" | "search"
+    query: str                         # The generated SQL or Search query
+    result: Any                        # Raw data returned
+    observation: str                   # Agent's brief take on this specific result
+
 class FormattedResponse(BaseModel):
-    response_type: Literal["text", "chart", "clarification", "error"]
-    narrative: Optional[str] = None
-    data: Optional[Any] = None
-    chart_spec: Optional[dict] = None
-    clarification_question: Optional[str] = None
+    response_type: Literal["text", "mixed", "clarification", "error"]
+    narrative: str
+    artifacts: list[Annotated[ChartArtifact | TableArtifact, Field(discriminator="artifact_type")]] = Field(default_factory=list)
+    follow_up_suggestions: list[str] = Field(default_factory=list)
     disclaimer: Optional[str] = None
+    clarification_question: Optional[str] = None
 
 class AgentState(MessagesState):
     user_scope: UserScope
     session_id: str
-    chart_context: Optional[ChartContext]
+    
+    # -- Planning & Reasoning --
     raw_query: str
     rewritten_query: Optional[str]
     effective_query: str
     domain: Optional[AgentDomain]
     query_type: Optional[QueryType]
+    plan: list[dict] = Field(default_factory=list)
+    current_step_index: int = 0
+    steps_completed: Annotated[list[StepResult], operator.add] = Field(default_factory=list)
+    reasoning_history: Annotated[list[str], operator.add] = Field(default_factory=list)
+    
+    # -- Data Context --
+    chart_context: Optional[ChartContext] # Context from frontend if user is looking at a chart
     detected_entities: Optional[DetectedEntities]
     relevant_tables: Optional[list[str]]
     schema_context: Optional[str]
-    generated_sql: Optional[str]
-    sql_with_scope: Optional[str]
-    validation_status: Optional[ValidationStatus]
-    validation_errors: Annotated[list[str], operator.add]
-    sql_result: Optional[list[dict]]
-    sql_error: Optional[str]
-    sql_row_count: Optional[int]
-    rag_query: Optional[str]
-    rag_chunks: Optional[list[dict]]
-    answer_is_valid: Optional[bool]
+    generated_sql: Optional[str] = None
+    sql_with_scope: Optional[str] = None
+    validation_status: Optional[ValidationStatus] = None
+    validation_errors: Annotated[list[str], operator.add] = Field(default_factory=list)
+    sql_result: Optional[list[dict]] = None
+    sql_error: Optional[str] = None
+    sql_row_count: Optional[int] = None
+    rag_query: Optional[str] = None
+    rag_chunks: Optional[list[dict]] = None
+    answer_is_valid: Optional[bool] = None
+    next_step: Optional[str] = None 
+
+    # -- Final Output --
     formatted_response: Optional[FormattedResponse]
+    
+    # -- System / Error Handling --
     attempt_count: int
     max_attempts: int
     error_history: Annotated[list[dict], operator.add]

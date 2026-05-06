@@ -88,9 +88,13 @@ async def sql_generator(state: AgentState) -> dict:
             error_history=json.dumps(error_history, indent=2, default=str),
         )
     
+    plan = state.get("plan", [])
+    idx = state.get("current_step_index", 0)
+    current_task = plan[idx].get("task") if plan and idx < len(plan) else state["effective_query"]
+
     messages = [
         SystemMessage(content=sys_prompt),
-        HumanMessage(content=state["effective_query"]),
+        HumanMessage(content=f"Original Query: {state['effective_query']}\n\nTask for this step: {current_task}"),
     ]
     
     response = await llm.ainvoke(messages)

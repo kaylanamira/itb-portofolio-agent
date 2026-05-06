@@ -2,7 +2,7 @@ from langgraph.graph import StateGraph, END
 from agent.state import AgentState
 from agent.graph import portfolio_graph
 from agent.nodes.intent_classifier import intent_classifier
-from agent.nodes.response_formatter import response_formatter
+from agent.nodes.synthesizer import synthesizer
 
 async def wisudawan_agent(state: AgentState):
     return {
@@ -22,7 +22,7 @@ def build_main_graph():
     g.add_node("intent_classifier", intent_classifier)
     g.add_node("portfolio_agent", portfolio_graph)
     g.add_node("wisudawan_agent", wisudawan_agent)
-    g.add_node("out_of_scope", response_formatter)
+    g.add_node("out_of_scope", synthesizer)
     
     g.set_entry_point("intent_classifier")
     

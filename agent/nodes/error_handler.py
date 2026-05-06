@@ -35,5 +35,5 @@ async def error_handler(state: AgentState) -> dict:
 
 def route_after_error_handler(state: AgentState) -> str:
     if state.get("is_aborted", False) or state.get("attempt_count", 0) >= state.get("max_attempts", 3):
-        return "response_formatter" 
+        return "synthesizer"
     return "sql_generator"

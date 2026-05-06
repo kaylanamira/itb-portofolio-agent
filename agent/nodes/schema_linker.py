@@ -16,9 +16,12 @@ async def schema_linker(state: AgentState) -> dict:
     user_role = user_scope.role.value if user_scope else "unknown"
 
     current_semester, current_tahun_ajaran = get_current_academic_period()
+    plan = state.get("plan", [])
+    idx = state.get("current_step_index", 0)
+    current_task = plan[idx].get("task") if plan and idx < len(plan) else state["effective_query"]
 
     human_content = build_schema_linker_human_message(
-        query=state["effective_query"],
+        query=current_task,
         current_semester=current_semester,
         current_tahun_ajaran=current_tahun_ajaran,
         user_role=user_role,
@@ -36,8 +39,6 @@ async def schema_linker(state: AgentState) -> dict:
         content = extract_json_from_llm(response.content)
         entities_dict = content.get("detected_entities") or {}
         relevant_tables = content.get("relevant_tables") or ["mv_kelas"]
-
-        # Filter only known fields to avoid Pydantic validation errors
         valid_fields = DetectedEntities.model_fields.keys()
         filtered = {k: v for k, v in entities_dict.items() if k in valid_fields and v is not None}
         entities = DetectedEntities(**filtered)

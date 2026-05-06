@@ -8,8 +8,8 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response_type: str
-    narrative: Optional[str] = None
-    data: Optional[Any] = None
-    chart_spec: Optional[dict] = None
+    narrative: str
+    artifacts: list[dict] = Field(default_factory=list)
+    follow_up_suggestions: list[str] = Field(default_factory=list)
     clarification_question: Optional[str] = None
     disclaimer: Optional[str] = None

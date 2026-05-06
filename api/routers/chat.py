@@ -23,19 +23,13 @@ async def chat_endpoint(
         effective_query=request.query,
         domain=None,
         query_type=None,
+        plan=[],
+        current_step_index=0,
+        steps_completed=[],
+        reasoning_history=[],
         detected_entities=None,
         relevant_tables=None,
         schema_context=None,
-        generated_sql=None,
-        sql_with_scope=None,
-        validation_status=None,
-        validation_errors=[],
-        sql_result=None,
-        sql_error=None,
-        sql_row_count=None,
-        rag_query=None,
-        rag_chunks=None,
-        answer_is_valid=None,
         formatted_response=None,
         attempt_count=0,
         max_attempts=settings.MAX_SQL_ATTEMPTS,
@@ -48,14 +42,12 @@ async def chat_endpoint(
     async for output in main_graph.astream(initial_state):
         for node_name, state_update in output.items():
             print(f"\n[NODE FINISHED]: {node_name}")
-            if "domain" in state_update:
-                print(f"  > Domain: {state_update['domain']}")
-            if "query_type" in state_update:
-                print(f"  > Query Type: {state_update['query_type']}")
+            if "plan" in state_update:
+                print(f"  > Plan: {state_update['plan']}")
+            if "reasoning_history" in state_update:
+                print(f"  > Reasoning: {state_update['reasoning_history'][-1]}")
             if "generated_sql" in state_update:
                 print(f"  > SQL: {state_update['generated_sql']}")
-            if "sql_error" in state_update and state_update["sql_error"]:
-                print(f"  > SQL Error: {state_update['sql_error']}")
             
             # Keep track of latest state
             final_state = {**final_state, **state_update}
@@ -65,8 +57,8 @@ async def chat_endpoint(
         return ChatResponse(
             response_type=resp.response_type,
             narrative=resp.narrative,
-            data=resp.data,
-            chart_spec=resp.chart_spec,
+            artifacts=[a.model_dump() for a in resp.artifacts],
+            follow_up_suggestions=resp.follow_up_suggestions,
             clarification_question=resp.clarification_question,
             disclaimer=resp.disclaimer
         )
