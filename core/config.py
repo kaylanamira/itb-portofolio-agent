@@ -28,6 +28,52 @@ class Settings(BaseSettings):
     # Agent
     MAX_SQL_ATTEMPTS: int = 3
     
+    # Retrieval
+    RAG_RRF_K: int = 60
+    RAG_TOP_K_AFTER_RRF: int = 50
+    RAG_TOP_K_FINAL: int = 10
+    RAG_MMR_LAMBDA: float = 0.7
+    RAG_MMR_ENABLED_SOURCES: list[str] = ["komentar_mahasiswa"]
+    RAG_PARENT_EXPAND_THRESHOLD: float = 0.70
+
+    # CRAG
+    CRAG_CONFIDENCE_ACCEPT: float = 0.70
+    CRAG_CONFIDENCE_REFINE: float = 0.40
+    RAG_MAX_ATTEMPTS: int = 2
+
+    # Faithfulness
+    FAITH_ACCEPT: float = 0.85
+    FAITH_REVISE: float = 0.60
+    FAITH_DISCLAIMER: str = "Ringkasan ini berdasarkan data portofolio yang tersedia dan mungkin tidak mencerminkan semua faktor."
+
+    # Chunking
+    CHUNK_TOKEN_MIN: int = 10
+    CHUNK_TOKEN_MAX: int = 600
+    CHUNK_PARENT_MAX_CHUNKS: int = 20
+
+    # Embedding
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIMS: int = 1536
+
+    # Cache & Redis
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CACHE_SQL_TTL_SECONDS: int = 300
+    CACHE_RAG_SESSION_TTL_SECONDS: int = 3600
+    CACHE_RAG_SEMANTIC_THRESHOLD: float = 0.95
+
+    # Memory
+    MEMORY_SHORT_TERM_TURNS: int = 10
+    MEMORY_SESSION_TTL_SECONDS: int = 1800
+    MEMORY_LONG_TERM_DAYS: int = 90
+    MEMORY_SUMMARY_MAX_WORDS: int = 50
+
+    # Content filter
+    CONTENT_FILTER_ENABLED: bool = True
+
+    # Dashboard job
+    ISSUE_CLUSTER_K: int = 10
+    ISSUE_TOP_N: int = 5
+    
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

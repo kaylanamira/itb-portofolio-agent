@@ -30,7 +30,13 @@ FORMAT OUTPUT (WAJIB JSON):
   "reasoning": "Singkat saja: Mengapa kamu memilih tipe ini dan apa rencanamu?",
   "plan": [
     {{"task": "Deskripsi tindakan...", "tool": "sql"}},
-    {{"task": "Deskripsi tindakan...", "tool": "rag"}}
+    {{
+      "task": "Deskripsi tindakan...", 
+      "tool": "rag",
+      "rag_source_types": ["komentar_mahasiswa", "teks_portofolio"],
+      "rag_tipe_konten": ["refleksi", "usulan"],
+      "rag_scope_override": {{"kode_mk": "IF2210"}}
+    }}
   ]
 }}
 

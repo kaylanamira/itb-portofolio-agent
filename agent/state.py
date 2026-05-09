@@ -75,7 +75,7 @@ class TableArtifact(BaseModel):
 class StepResult(BaseModel):
     step_number: int
     thought: str
-    action: str                        # "sql" | "rag" | "search"
+    action: str                        # "sql" | "rag" | "hybrid"
     query: str                         # The generated SQL or Search query
     result: Any                        # Raw data returned
     observation: str                   # Agent's brief take on this specific result
@@ -103,6 +103,14 @@ class AgentState(MessagesState):
     steps_completed: Annotated[list[StepResult], operator.add] = Field(default_factory=list)
     reasoning_history: Annotated[list[str], operator.add] = Field(default_factory=list)
     
+    # -- Memory --
+    conversation_summary: Optional[str] = None
+    session_entities: Optional[dict] = None
+    
+    # -- Input Processing --
+    content_filter_result: Optional[str] = None
+    extracted_keywords: Optional[list[str]] = None
+    
     # -- Data Context --
     chart_context: Optional[ChartContext] # Context from frontend if user is looking at a chart
     detected_entities: Optional[DetectedEntities]
@@ -115,8 +123,22 @@ class AgentState(MessagesState):
     sql_result: Optional[list[dict]] = None
     sql_error: Optional[str] = None
     sql_row_count: Optional[int] = None
+    
+    # -- RAG Execution --
     rag_query: Optional[str] = None
     rag_chunks: Optional[list[dict]] = None
+    rag_source_types: Optional[list[str]] = None
+    rag_tipe_konten: Optional[list[str]] = None
+    rag_scope_override: Optional[dict] = None
+    rag_attempt_count: int = 0
+    rag_confidence: Optional[float] = None
+    rag_action: Optional[str] = None
+    rag_refined_query: Optional[str] = None
+    
+    # -- Faithfulness --
+    faithfulness_score: Optional[float] = None
+    faithfulness_action: Optional[str] = None
+    
     answer_is_valid: Optional[bool] = None
     next_step: Optional[str] = None 
 

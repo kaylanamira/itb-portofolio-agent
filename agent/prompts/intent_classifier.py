@@ -8,6 +8,11 @@ DOMAINS:
 - wisudawan: Questions about survei wisudawan ITB — kepuasan alumni, relevansi kurikulum dengan karir, feedback pasca kelulusan, wisudawan, alumni, lulusan, feedback after graduation.
 - out_of_scope: Anything not related to ITB academic portfolio or graduate data.
 
+Assign a confidence score (0-1):
+- 0.0 - 0.3 : NOT about ITB Academic Data, clearly Out Of Scope
+- 0.4 - 0.7 : Maybe related to ITB Academic Data, but not sure
+- 0.8 - 1.0 : Clearly related to ITB Academic Data
+
 Consider the conversation history to classify domain.
 
 Respond with JSON only:
