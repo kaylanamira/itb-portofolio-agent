@@ -90,9 +90,3 @@ Jangan tulis teks lainnya selain JSON.
         "next_step": None,
         "attempt_count": 0, 
     }
-
-def route_after_reasoning(state: AgentState) -> str:
-    """Route back to step_executor if more steps remain, else go to synthesizer."""
-    plan = state.get("plan", [])
-    idx = state.get("current_step_index", 0)
-    return "synthesizer" if idx >= len(plan) else "step_executor"
