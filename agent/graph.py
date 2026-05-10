@@ -53,7 +53,7 @@ def build_portfolio_graph():
         "step_reasoner": "step_reasoner"
     })
 
-    graph.add_edge("rag_retriever", "chunk_validator")
+    graph.add_edge("rag_retriever", "step_reasoner")
 
     graph.add_conditional_edges("step_reasoner", route_next_step, {
         "sql_pipeline": "sql_pipeline",
@@ -62,8 +62,9 @@ def build_portfolio_graph():
     })
 
     graph.add_edge("clarification_handler", END)
-    graph.add_edge("synthesizer", "faithfulness_checker")
-    graph.add_edge("faithfulness_checker", END)
+    graph.add_edge("synthesizer", END)
+    # graph.add_edge("synthesizer", "faithfulness_checker")
+    # graph.add_edge("faithfulness_checker", END)
 
     return graph.compile()
 
