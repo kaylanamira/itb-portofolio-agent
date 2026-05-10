@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from api.routers.schemas import ChatRequest, ChatResponse
 from api.dependencies import get_user_scope
 from core.scope import UserScope
+from agent.memory.session_manager import get_session_manager
 from agent.state import AgentState
 from agent.orchestrator import main_graph
 from core.config import settings
@@ -13,10 +14,14 @@ async def chat_endpoint(
     request: ChatRequest,
     user_scope: UserScope = Depends(get_user_scope)
 ):
+    session_manager = get_session_manager(request.session_id)
+    history = await session_manager.get_recent_messages()
+    await session_manager.append_message("user", request.query)
+
     initial_state = AgentState(
         user_scope=user_scope,
         session_id=request.session_id,
-        messages=[{"role": "user", "content": request.query}],
+        messages=history + [{"role": "user", "content": request.query}],
         chart_context=request.chart_context,
         raw_query=request.query,
         rewritten_query=None,
@@ -27,6 +32,8 @@ async def chat_endpoint(
         current_step_index=0,
         steps_completed=[],
         reasoning_history=[],
+        conversation_summary=await session_manager.get_summary(),
+        session_entities=await session_manager.get_entities(),
         detected_entities=None,
         relevant_tables=None,
         schema_context=None,
@@ -54,6 +61,30 @@ async def chat_endpoint(
     
     resp = final_state.get("formatted_response")
     if resp:
+        await session_manager.append_message("assistant", resp.narrative)
+        next_turn_index = await session_manager.next_turn_index()
+        if next_turn_index is not None:
+            query_type_value = final_state.get("query_type")
+            query_type = getattr(query_type_value, "value", str(query_type_value or ""))
+            entities = final_state.get("detected_entities")
+            await session_manager.save_turn(
+                user_id=user_scope.user_id,
+                turn_index=next_turn_index,
+                role="user",
+                content=request.query,
+                query_type=query_type,
+                entities=entities.model_dump(mode="json") if entities else None,
+                summary=final_state.get("conversation_summary"),
+            )
+            await session_manager.save_turn(
+                user_id=user_scope.user_id,
+                turn_index=next_turn_index + 1,
+                role="assistant",
+                content=resp.narrative,
+                query_type=query_type,
+                entities=entities.model_dump(mode="json") if entities else None,
+                summary=final_state.get("conversation_summary"),
+            )
         return ChatResponse(
             response_type=resp.response_type,
             narrative=resp.narrative,

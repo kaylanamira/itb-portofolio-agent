@@ -7,27 +7,32 @@ graph TD;
 	__start__([<p>__start__</p>]):::first
 	query_rewriter(query_rewriter)
 	planner(planner)
-	step_executor(step_executor)
 	sql_pipeline(sql_pipeline)
 	rag_retriever(rag_retriever)
+	chunk_validator(chunk_validator)
 	step_reasoner(step_reasoner)
 	synthesizer(synthesizer)
+	faithfulness_checker(faithfulness_checker)
 	clarification_handler(clarification_handler)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> query_rewriter;
+	chunk_validator -.-> rag_retriever;
+	chunk_validator -.-> step_reasoner;
+	chunk_validator -.-> synthesizer;
 	planner -.-> clarification_handler;
-	planner -.-> step_executor;
+	planner -.-> rag_retriever;
+	planner -.-> sql_pipeline;
+	planner -.-> synthesizer;
 	query_rewriter --> planner;
-	rag_retriever --> step_reasoner;
+	rag_retriever --> chunk_validator;
 	sql_pipeline -.-> step_reasoner;
 	sql_pipeline -.-> synthesizer;
-	step_executor -.-> rag_retriever;
-	step_executor -.-> sql_pipeline;
-	step_executor -.-> synthesizer;
-	step_reasoner -.-> step_executor;
+	step_reasoner -.-> rag_retriever;
+	step_reasoner -.-> sql_pipeline;
 	step_reasoner -.-> synthesizer;
+	synthesizer --> faithfulness_checker;
 	clarification_handler --> __end__;
-	synthesizer --> __end__;
+	faithfulness_checker --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2
 	classDef first fill-opacity:0
 	classDef last fill:#bfb6fc

@@ -86,13 +86,12 @@ Jangan tulis teks lainnya selain JSON.
         "sql_row_count": None,
         "rag_query": None,
         "rag_chunks": None,
+        "rag_source_types": None,
+        "rag_tipe_konten": None,
+        "rag_scope_override": None,
+        "rag_action": None,
+        "rag_refined_query": None,
         "answer_is_valid": None,
         "next_step": None,
         "attempt_count": 0, 
     }
-
-def route_after_reasoning(state: AgentState) -> str:
-    """Route back to step_executor if more steps remain, else go to synthesizer."""
-    plan = state.get("plan", [])
-    idx = state.get("current_step_index", 0)
-    return "synthesizer" if idx >= len(plan) else "step_executor"

@@ -1,5 +1,7 @@
 import logging
 from agent.state import AgentState
+from agent.tools.cache import CacheKeys, cache
+from core.config import settings
 from core.database import get_db_connection
 from psycopg import sql
 import sqlglot
@@ -33,6 +35,20 @@ async def sql_executor(state: AgentState) -> dict:
     
     # Replace the {SCOPE_FILTER} placeholder with scope filter (may contain %s)
     sql_with_scope = escaped_sql.replace('{SCOPE_FILTER}', f'({scope_where})')
+    cache_key = CacheKeys.sql_result(
+        sql_text=sql_with_scope,
+        params=scope_params,
+        scope_fingerprint=CacheKeys.scope_fingerprint(scope),
+    )
+    cached = await cache.get_json(cache_key)
+    if cached is not None:
+        logger.info("SQL result cache hit for table=%s", target_table)
+        return {
+            "sql_with_scope": sql_with_scope,
+            "sql_result": cached,
+            "sql_error": None,
+            "sql_row_count": len(cached),
+        }
     
     logger.info(f"Executing SQL (table={target_table}):\n{sql_with_scope}")
     logger.info(f"Scope params: {scope_params}")
@@ -54,6 +70,8 @@ async def sql_executor(state: AgentState) -> dict:
                     result = [dict(zip(columns, row)) for row in rows]
                 else:
                     result = []
+
+                await cache.set_json(cache_key, result, settings.CACHE_SQL_TTL_SECONDS)
                     
                 return {
                     "sql_with_scope": sql_with_scope,

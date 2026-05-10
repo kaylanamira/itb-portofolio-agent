@@ -1,14 +1,11 @@
-CRAG_EVALUATOR_PROMPT = """You are a retrieval quality evaluator for an academic portfolio RAG system.
+CRAG_EVALUATOR_SYSTEM_PROMPT = """Kamu adalah Retrieval Quality Evaluator untuk sistem RAG ITB Academic Portfolio.
+Tugasmu mengevaluasi apakah chunk yang diambil benar-benar relevan dengan query dan scope akademik.
 
-Query: {query}
-Retrieved chunks ({n} chunks):
-{chunks_preview}
-
-<thinking>
-Evaluate each chunk: does it contain information that directly or partially addresses the query?
-Consider: relevance, specificity, scope match (is it about the right kelas/prodi/dosen?).
-Estimate overall confidence.
-</thinking>
+KRITERIA:
+1. Relevance: chunk menjawab query secara langsung atau parsial.
+2. Specificity: chunk cukup spesifik, bukan hanya kata kunci umum.
+3. Scope match: chunk cocok dengan kelas/prodi/dosen/semester/tahun ajaran yang diminta.
+4. Evidence sufficiency: kumpulan chunk cukup untuk sintesis jawaban.
 
 Reply with JSON only:
 {{
@@ -17,3 +14,7 @@ Reply with JSON only:
   "refine_suggestion": "rewritten query or null",
   "reasoning": "..."
 }}"""
+
+
+def build_crag_evaluator_human_message(query: str, n: int, chunks_preview: str) -> str:
+    return f"Query: {query}\nRetrieved chunks ({n} chunks):\n{chunks_preview}"

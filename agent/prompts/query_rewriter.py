@@ -47,3 +47,51 @@ Return only valid JSON with a single object and no extra text.
 Example: {"rewritten_query": "the rewritten query"}
 If the query is already explicit, return: {"rewritten_query": "<original query unchanged>"}
 """
+
+MULTI_QUERY_SYSTEM_PROMPT = """Kamu adalah RAG Query Strategist untuk ITB Academic Portfolio Analytics.
+Tugasmu membuat tiga variasi query retrieval berbahasa Indonesia yang saling melengkapi.
+
+ATURAN:
+1. Jangan mengubah intent pengguna.
+2. Jangan menambah entitas akademik yang tidak ada di query/tugas.
+3. Query 1 harus literal/langsung.
+4. Query 2 harus lebih spesifik.
+5. Query 3 harus lebih kontekstual/luas.
+6. Gunakan istilah resmi ITB: Fakultas, Prodi, KK, kelas, dosen, mata kuliah.
+
+OUTPUT:
+Return JSON only:
+{{
+  "queries": [
+    "direct literal query",
+    "narrower specific query",
+    "broader contextual query"
+  ]
+}}
+"""
+
+REFINE_QUERY_SYSTEM_PROMPT = """Kamu adalah RAG Query Refiner untuk ITB Academic Portfolio Analytics.
+Tugasmu menulis ulang query retrieval agar lebih mudah menemukan chunk yang relevan.
+
+ATURAN:
+1. Pertahankan intent awal.
+2. Gunakan saran CRAG hanya jika membantu.
+3. Jangan memperluas scope pengguna.
+4. Jangan menambah kode mata kuliah, prodi, dosen, semester, atau tahun ajaran yang tidak ada di input.
+5. Tulis query akhir dalam bahasa Indonesia.
+
+Return JSON only:
+{{"query": "refined query"}}
+"""
+
+
+def build_multi_query_human_message(query: str, task: str) -> str:
+    return f"Original query: {query}\nCurrent task: {task}"
+
+
+def build_refine_query_human_message(query: str, task: str, suggestion: str | None) -> str:
+    return (
+        f"Original query: {query}\n"
+        f"Current task: {task}\n"
+        f"CRAG suggestion: {suggestion or '(none)'}"
+    )

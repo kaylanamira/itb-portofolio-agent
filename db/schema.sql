@@ -263,7 +263,8 @@ CREATE TABLE IF NOT EXISTS vector_chunks (
     tipe_konten     tipe_konten_enum,
     chunk_index     SMALLINT        NOT NULL DEFAULT 0,
     chunk_text      TEXT            NOT NULL,
-    embedding       VECTOR(1536),
+    embedding       VECTOR(1024),
+    fts_vector      TSVECTOR,
     model_used      VARCHAR(100),
     embedded_at     TIMESTAMPTZ,
 
@@ -295,6 +296,9 @@ CREATE INDEX idx_vc_kode_fak   ON vector_chunks(kode_fakultas, semester, tahun_a
 CREATE INDEX idx_vc_tipe       ON vector_chunks(tipe_konten)   WHERE tipe_konten IS NOT NULL AND embedding IS NOT NULL;
 CREATE INDEX idx_vc_source      ON vector_chunks(source_type, source_id);
 CREATE INDEX idx_vc_dosen       ON vector_chunks USING GIN(semua_dosen_id);
+CREATE INDEX idx_vc_fts         ON vector_chunks USING GIN(fts_vector);
+CREATE INDEX idx_vc_embedding_hnsw ON vector_chunks USING hnsw (embedding vector_cosine_ops)
+    WHERE embedding IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS pengguna (
     user_id         UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -356,6 +360,23 @@ COMMENT ON COLUMN llm_analysis_cache.kelas_ids  IS 'Array UUID kelas yang menjad
 CREATE INDEX idx_cache_kelas_ids ON llm_analysis_cache USING GIN (kelas_ids);
 CREATE INDEX idx_cache_expires      ON llm_analysis_cache(expires_at)
     WHERE expires_at IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS conversation_history (
+    memory_id     UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id    UUID            NOT NULL,
+    user_id       UUID            REFERENCES pengguna(user_id),
+    turn_index    INTEGER         NOT NULL,
+    role          VARCHAR(10)     NOT NULL CHECK (role IN ('user', 'assistant')),
+    content       TEXT            NOT NULL,
+    query_type    VARCHAR(30),
+    entities_json JSONB,
+    summary       TEXT,
+    created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    expires_at    TIMESTAMPTZ     NOT NULL
+);
+
+CREATE INDEX idx_conv_hist_session ON conversation_history(session_id, turn_index);
+CREATE INDEX idx_conv_hist_expiry  ON conversation_history(expires_at);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -733,6 +754,18 @@ $$;
 CREATE TRIGGER trg_komentar_reset_embedding
     BEFORE UPDATE ON komentar_mahasiswa
     FOR EACH ROW EXECUTE FUNCTION fn_komentar_reset_embedding();
+
+CREATE OR REPLACE FUNCTION fn_vector_chunks_fts()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    NEW.fts_vector := to_tsvector('simple', COALESCE(NEW.chunk_text, ''));
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_vector_chunks_fts
+    BEFORE INSERT OR UPDATE OF chunk_text ON vector_chunks
+    FOR EACH ROW EXECUTE FUNCTION fn_vector_chunks_fts();
 
 CREATE POLICY rls_vector_chunks ON vector_chunks FOR SELECT USING (
     user_can_see_kelas(kelas_id)
