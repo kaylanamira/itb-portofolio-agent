@@ -52,14 +52,18 @@ class Settings(BaseSettings):
     CHUNK_PARENT_MAX_CHUNKS: int = 20
 
     # Embedding
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
-    EMBEDDING_DIMS: int = 1536
+    EMBEDDING_MODEL: str = "BAAI/bge-m3"
+    EMBEDDING_DIMS: int = 1024
+    EMBEDDING_API_URL: str | None = os.getenv("EMBEDDING_API_URL")
+    EMBEDDING_API_KEY: str | None = os.getenv("EMBEDDING_API_KEY")
+    EMBEDDING_TIMEOUT_SECONDS: float = 30.0
 
     # Cache & Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     CACHE_SQL_TTL_SECONDS: int = 300
     CACHE_RAG_SESSION_TTL_SECONDS: int = 3600
     CACHE_RAG_SEMANTIC_THRESHOLD: float = 0.95
+    CACHE_RAG_SEMANTIC_INDEX_SIZE: int = 25
 
     # Memory
     MEMORY_SHORT_TERM_TURNS: int = 10

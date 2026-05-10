@@ -1,9 +1,12 @@
 from core.utils import extract_json_from_llm
-import json
+import logging
 from agent.state import AgentState, AgentDomain
 from agent.prompts.intent_classifier import INTENT_SYSTEM_PROMPT, build_intent_human_message
 from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
+
+logger = logging.getLogger(__name__)
+
 
 async def intent_classifier(state: AgentState) -> dict:
     llm = get_llm("intent_classification")
@@ -37,3 +40,12 @@ async def intent_classifier(state: AgentState) -> dict:
         updates["abort_reason"] = reason
         
     return updates
+
+def route_after_intent(state: AgentState) -> str:
+    domain = state.get("domain", "out_of_scope")
+    logger.info(f"Routing logic determined domain is: {domain}")
+    if domain == "portfolio":
+        return "portfolio_agent"
+    elif domain == "wisudawan":
+        return "wisudawan_agent"
+    return "out_of_scope"
