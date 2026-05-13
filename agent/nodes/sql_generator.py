@@ -37,7 +37,6 @@ def _extract_sql(raw_response: str) -> str:
     """Extract SQL query from LLM response (JSON or raw text with markdown)."""
     raw = raw_response.strip()
     
-    # Try parsing as JSON first
     try:
         content = extract_json_from_llm(raw)
         if isinstance(content, dict) and "sql" in content:
@@ -45,12 +44,10 @@ def _extract_sql(raw_response: str) -> str:
     except (json.JSONDecodeError, AttributeError):
         pass
 
-    # Fallback to markdown fence stripping
     cleaned = re.sub(r"^```(?:sql)?\s*", "", raw, flags=re.MULTILINE)
     cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE)
     sql = cleaned.strip()
 
-    # Fallback safety
     if not sql or not sql.upper().startswith("SELECT"):
         return "SELECT 1"
         

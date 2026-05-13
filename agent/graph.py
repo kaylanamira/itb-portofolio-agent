@@ -3,7 +3,8 @@ from langgraph.graph import StateGraph, END
 from agent.state import AgentState
 from agent.nodes.query_rewriter import query_rewriter
 from agent.nodes.planner import planner
-from agent.sql_pipeline import sql_pipeline, route_after_sql_pipeline
+# from agent.sql_pipeline import sql_pipeline, route_after_sql_pipeline
+from agent.nodes.sql_pipeline import sql_pipeline, route_after_sql_pipeline
 from agent.nodes.step_reasoner import step_reasoner
 from agent.nodes.synthesizer import synthesizer
 from agent.nodes.clarification_handler import clarification_handler

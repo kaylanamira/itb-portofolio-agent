@@ -29,3 +29,6 @@ docs/
 .DS_Store
 
 CLAUDE.md
+AGENTS.md
+.kiro/
+.pytest_cache/

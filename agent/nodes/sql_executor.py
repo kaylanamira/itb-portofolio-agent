@@ -34,8 +34,8 @@ async def sql_executor(state: AgentState) -> dict:
     # Replace the {SCOPE_FILTER} placeholder with scope filter (may contain %s)
     sql_with_scope = escaped_sql.replace('{SCOPE_FILTER}', f'({scope_where})')
     
-    logger.info(f"Executing SQL (table={target_table}):\n{sql_with_scope}")
-    logger.info(f"Scope params: {scope_params}")
+    logger.info(f"\nExecuting SQL (table={target_table}):\n{sql_with_scope}")
+    logger.info(f"\nScope params: {scope_params}")
     
     try:
         async with get_db_connection() as conn:

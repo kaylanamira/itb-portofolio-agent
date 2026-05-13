@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "ITB Academic Portfolio Analytics"
     VERSION: str = "0.1.0"
-    
+
     # DB
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     
@@ -77,6 +77,13 @@ class Settings(BaseSettings):
     # Dashboard job
     ISSUE_CLUSTER_K: int = 10
     ISSUE_TOP_N: int = 5
+
+    # Rate Limits
+    RATE_LIMIT_DEFAULT: list[str] = ["100/minute"]
+    RATE_LIMIT_ENDPOINTS: dict[str, list[str]] = {
+        "chat_stream": ["10/minute"],
+        "chat": ["20/minute"]
+    }
     
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
