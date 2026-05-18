@@ -10,11 +10,13 @@ from typing import Any, Callable, Optional
 import sqlglot
 from sqlglot import exp
 from langchain_core.messages import SystemMessage, HumanMessage
-from agent.tools.academic_calendar import get_current_academic_period
 from agent.llm import get_llm
 from agent.prompts.sql_generator import SQL_GENERATOR_SYSTEM, SQL_GENERATOR_RETRY
 from agent.prompts.answer_validator import ANSWER_VALIDATOR_PROMPT
 from agent.tools.security import check_sql_security
+from agent.tools.error_taxonomy import classify_sql_error
+from agent.tools.fuzzy_search import FuzzyResolutionError
+from agent.state import DetectedEntities
 from agent.tools.sql.state import SQLState
 from core.database import get_db_connection
 from core.scope import UserScope
@@ -30,7 +32,7 @@ class SQLTool:
     Constructor params:
         schema_linker_prompt  — system prompt for entity extraction LLM call.
                                 Must be fully domain-specific (tables, entities, rules).
-        human_message_builder — callable(question, user_scope, plan_step_context) -> str.
+        human_message_builder — callable(task, user_scope, plan_context) -> str.
                                 Builds the human message for the schema linker.
                                 Defaults to a simple passthrough if not provided.
         entity_resolver       — async callable(dict) -> Any.
@@ -77,9 +79,15 @@ class SQLTool:
         question = state["question"]
         user_scope = state["user_scope"]
         plan_step_context = state.get("plan_step_context")
+        plan_context = state.get("plan_context")
         query_type = state.get("query_type")
 
-        schema_result = await self.link_schema(question, user_scope, plan_step_context)
+        schema_result = await self.link_schema(
+            question,
+            user_scope,
+            plan_step_context,
+            plan_context,
+        )
         detected_entities = schema_result["detected_entities"]
         relevant_tables = schema_result["relevant_tables"]
 
@@ -109,11 +117,14 @@ class SQLTool:
             state["validation_status"] = val["validation_status"]
 
             if val["validation_status"] != "pass":
+                error_cat, correction_hint = classify_sql_error(val["error"])
                 state["error_history"].append({
                     "attempt": attempt_num - 1,
                     "sql": generated_sql,
                     "error": val["error"],
                     "type": val["error_type"],
+                    "error_category": error_cat.value,
+                    "correction_hint": correction_hint,
                 })
                 state["validation_errors"] = state.get("validation_errors", []) + [val["error"]]
                 state["generated_sql"] = None
@@ -128,11 +139,14 @@ class SQLTool:
             state["sql_row_count"] = exec_result["sql_row_count"]
 
             if exec_result["sql_error"]:
+                error_cat, correction_hint = classify_sql_error(exec_result["sql_error"])
                 state["error_history"].append({
                     "attempt": attempt_num - 1,
                     "sql": exec_result["sql_with_scope"],
                     "error": exec_result["sql_error"],
                     "type": "execution_error",
+                    "error_category": error_cat.value,
+                    "correction_hint": correction_hint,
                 })
                 state["generated_sql"] = None
                 state["sql_result"] = None
@@ -147,11 +161,16 @@ class SQLTool:
             state["answer_is_valid"] = ans["answer_is_valid"]
 
             if not ans["answer_is_valid"]:
+                error_cat, correction_hint = classify_sql_error(
+                    f"Answer validation failed: {ans.get('reason', '')}"
+                )
                 state["error_history"].append({
                     "attempt": attempt_num - 1,
                     "sql": generated_sql,
                     "error": f"Answer validation failed: {ans.get('reason', '')}",
                     "type": "answer_invalid",
+                    "error_category": error_cat.value,
+                    "correction_hint": correction_hint,
                 })
                 state["generated_sql"] = None
                 state["sql_result"] = None
@@ -169,21 +188,24 @@ class SQLTool:
         question: str,
         user_scope: UserScope,
         plan_step_context: Optional[dict] = None,
+        plan_context: Optional[str] = None,
     ) -> dict:
         """
-        Extracts entities and selects relevant tables via LLM.
+        Runs schema linking: extracts entities and selects relevant tables.
 
         Args:
-            question: raw user query.
-            user_scope: UserScope for the current user.
-            plan_step_context: optional plan step dict with a 'task' key.
+            question: The original user question.
+            user_scope: Caller's access scope.
+            plan_step_context: Current plan step dict (overrides question as the task).
+            plan_context: Summary of what previous steps already retrieved,
+                          used to guide table selection in multi-step plans.
 
         Returns:
             Dict with 'detected_entities' and 'relevant_tables'.
         """
         llm = get_llm("schema_linking")
         task = plan_step_context.get("task", question) if plan_step_context else question
-        human_content = self._human_message_builder(task, user_scope)
+        human_content = self._human_message_builder(task, user_scope, plan_context)
 
         messages = [
             SystemMessage(content=self.schema_linker_prompt),
@@ -199,7 +221,13 @@ class SQLTool:
             entities_dict = {}
             relevant_tables = [self.default_table]
 
-        resolved = await self.entity_resolver(entities_dict)
+        try:
+            resolved = await self.entity_resolver(entities_dict)
+        except FuzzyResolutionError as exc:
+            logger.warning("Fuzzy resolution error in link_schema: %s", exc)
+            valid_fields = DetectedEntities.model_fields.keys()
+            filtered = {k: v for k, v in entities_dict.items() if k in valid_fields and v is not None}
+            resolved = DetectedEntities(**filtered)
 
         return {
             "detected_entities": resolved,
@@ -210,8 +238,13 @@ class SQLTool:
     def _default_human_message(
         task: str,
         user_scope: UserScope,
+        plan_context: Optional[str] = None,
     ) -> str:
-        return f"User Role: {user_scope.role.value}\n\nUSER QUERY: {task}"
+        lines = [f"User Role: {user_scope.role.value}"]
+        if plan_context:
+            lines.append(f"\nPrevious steps context: {plan_context}")
+        lines.append(f"\nUSER QUERY: {task}")
+        return "\n".join(lines)
 
     async def generate_sql(
         self,
@@ -260,9 +293,11 @@ class SQLTool:
             sys_prompt += "\n" + SQL_GENERATOR_RETRY.format(
                 attempt_count=attempt_count,
                 max_attempts=self.max_attempts,
-                previous_sql=last_error.get("sql", ""),
-                last_error=last_error.get("error", ""),
-                error_history=json.dumps(error_history, indent=2, default=str),
+                previous_sql=self._truncate(last_error.get("sql", ""), 1200),
+                last_error=self._truncate(last_error.get("error", ""), 800),
+                error_category=last_error.get("error_category", "unknown"),
+                correction_hint=last_error.get("correction_hint", "Re-examine the query structure."),
+                error_history=self._format_retry_error_history(error_history),
             )
 
         task = plan_step_context.get("task", question) if plan_step_context else question
@@ -286,7 +321,8 @@ class SQLTool:
         """
         is_safe, sec_err = check_sql_security(generated_sql)
         if not is_safe:
-            return {"validation_status": "fail", "error": sec_err, "error_type": "security_violation"}
+            error_type = "parse_error" if sec_err and sec_err.startswith("SQL Parse Error") else "security_violation"
+            return {"validation_status": "fail", "error": sec_err, "error_type": error_type}
 
         try:
             parsed = sqlglot.parse_one(generated_sql, read="postgres")
@@ -441,15 +477,43 @@ class SQLTool:
         return str(entities)
 
     @staticmethod
+    def _truncate(value: Any, max_chars: int) -> str:
+        text = str(value or "")
+        if len(text) <= max_chars:
+            return text
+        return text[:max_chars].rstrip() + "\n... [truncated]"
+
+    @classmethod
+    def _format_retry_error_history(cls, error_history: list[dict], max_items: int = 2) -> str:
+        recent = error_history[-max_items:]
+        compact = []
+        for err in recent:
+            compact.append({
+                "attempt": err.get("attempt"),
+                "type": err.get("type"),
+                "error_category": err.get("error_category"),
+                "correction_hint": err.get("correction_hint"),
+                "error": cls._truncate(err.get("error", ""), 500),
+                "sql": cls._truncate(err.get("sql", ""), 700),
+            })
+        return json.dumps(compact, indent=2, default=str)
+
+    @staticmethod
     def _extract_sql(raw_response: str) -> str:
         """
-        Extracts a SQL string from an LLM response (JSON wrapper or markdown fence).
+        Extracts a SQL string from an LLM response.
+
+        Handles three output formats:
+        1. JSON wrapper: {"sql": "SELECT ..."}
+        2. Markdown fence: ```sql\nSELECT ...\n```
+        3. CoT comment block + bare SQL:
+           /* TABLES: ... JOINS: ... */ SELECT ...
 
         Args:
             raw_response: raw LLM output string.
 
         Returns:
-            SQL string, or 'SELECT 1' if extraction fails.
+            SQL string starting with SELECT or WITH, or 'SELECT 1' if extraction fails.
         """
         raw = raw_response.strip()
         try:
@@ -461,8 +525,16 @@ class SQLTool:
 
         cleaned = re.sub(r"^```(?:sql)?\s*", "", raw, flags=re.MULTILINE)
         cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE)
-        sql_str = cleaned.strip()
+        cleaned = re.sub(r"/\*.*?\*/", "", cleaned, flags=re.DOTALL).strip()
 
-        if not sql_str or not sql_str.upper().startswith("SELECT"):
-            return "SELECT 1"
-        return sql_str
+        # Prefer SQL starters at the beginning of a line. This preserves CTEs:
+        # WITH cte AS (SELECT ...) SELECT ... must not be cut at the inner SELECT.
+        statement_match = re.search(r"(?im)^\s*(WITH|SELECT)\b", cleaned)
+        if statement_match:
+            return cleaned[statement_match.start():].strip()
+
+        fallback_match = re.search(r"\b(WITH|SELECT)\b", cleaned, re.IGNORECASE)
+        if fallback_match:
+            return cleaned[fallback_match.start():].strip()
+
+        return "SELECT 1"

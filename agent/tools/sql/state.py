@@ -14,6 +14,7 @@ class SQLState(TypedDict, total=False):
     # default_table: Optional[str]
 
     # ── Schema linking outputs ──────────────────────────────────────────────────
+    plan_context: Optional[str]           
     detected_entities: Optional[Any]
     relevant_tables: Optional[list[str]]
     schema_context: Optional[str]

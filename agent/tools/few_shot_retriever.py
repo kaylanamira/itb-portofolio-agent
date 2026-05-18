@@ -3,8 +3,22 @@ Few-shot example retriever for SQL generator.
 
 Strategy: Hardcoded examples grouped by QueryType.
 These are derived from `core/dashboard_queries.py`.
+
+Future migration path:
+    The `retrieve_few_shots()` function accepts an optional `loader` callable
+    with signature `(QueryType, int) -> list[tuple[str, str]]`.
+    To migrate to YAML/DB-backed examples, pass a custom loader here without
+    changing any node code.
+
+    Example:
+        from agent.tools.few_shot_retriever import retrieve_few_shots
+        from my_yaml_loader import yaml_loader
+
+        # In tests or production DI:
+        result = retrieve_few_shots(query_type, loader=yaml_loader)
 """
 
+from typing import Callable, Optional
 from agent.state import QueryType
 
 _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
@@ -20,7 +34,7 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
         ),
         (
             "Berapa jumlah kelas di prodi IF semester ini?",
-            "SELECT COUNT(*) AS jumlah_kelas FROM mv_kelas WHERE singkatan_prodi='IF' AND semester = 1 AND tahun_ajaran = '2024/2025';",
+            "SELECT COUNT(*) AS jumlah_kelas FROM mv_kelas WHERE {SCOPE_FILTER} AND singkatan_prodi = 'IF' AND semester = 1 AND tahun_ajaran = '2024/2025';",
         ),
         (
             "Ada berapa fakultas di ITB?",
@@ -28,7 +42,7 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
         ),
         (
             "Berapa persentase kehadiran dosen IF3140?",
-            "SELECT pct_kehadiran_dosen FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140';",
+            "SELECT kode_mk, no_kelas, pct_kehadiran_dosen FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140';",
         ),
         (
             "Brp persen dosen di STEI yg ada di bawah kelompok keahlian RPL?",
@@ -48,6 +62,16 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
         (
             "Bagaimana perbandingan kehadiran dosen dan mahasiswa di prodi ini semester ini?",
             "SELECT AVG(pct_kehadiran_dosen) AS avg_kehadiran_dosen, AVG(pct_kehadiran_mahasiswa) AS avg_kehadiran_mahasiswa FROM mv_kelas WHERE {SCOPE_FILTER} AND semester = 1 AND tahun_ajaran = '2024/2025';",
+        ),
+        (
+            # HAVING example: filter on aggregated values
+            "Prodi mana yang rata-rata nilai mahasiswanya di atas 3.0 semester ini?",
+            "SELECT singkatan_prodi, nama_prodi, AVG(rata_rata_nilai) AS avg_nilai FROM mv_kelas WHERE {SCOPE_FILTER} AND semester = 1 AND tahun_ajaran = '2024/2025' GROUP BY prodi_id, singkatan_prodi, nama_prodi HAVING AVG(rata_rata_nilai) > 3.0 ORDER BY avg_nilai DESC LIMIT 100;",
+        ),
+        (
+            # WINDOW FUNCTION example: ranking within partitions
+            "Ranking dosen berdasarkan skor evaluasi per prodi semester ini?",
+            "SELECT singkatan_prodi, unnest(semua_dosen_nama) AS nama_dosen, skor_avg_overall, RANK() OVER (PARTITION BY prodi_id ORDER BY skor_avg_overall DESC) AS rank_dalam_prodi FROM mv_kelas WHERE {SCOPE_FILTER} AND semester = 1 AND tahun_ajaran = '2024/2025' ORDER BY singkatan_prodi, rank_dalam_prodi LIMIT 100;",
         ),
     ],
 
@@ -72,7 +96,8 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
     QueryType.CHART_GENERATE: [
         (
             "Tunjukkan grafik distribusi nilai mahasiswa IF3140 K1",
-            "SELECT 'A' AS grade, dist_jumlah_A AS jumlah FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'AB', dist_jumlah_AB FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'B', dist_jumlah_B FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'BC', dist_jumlah_BC FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'C', dist_jumlah_C FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'D', dist_jumlah_D FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'E', dist_jumlah_E FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1;",
+            # UNION ALL with {SCOPE_FILTER} repeated in each branch
+            "SELECT 'A' AS grade, COALESCE(dist_jumlah_A, 0) AS jumlah FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'AB', COALESCE(dist_jumlah_AB, 0) FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'B', COALESCE(dist_jumlah_B, 0) FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'BC', COALESCE(dist_jumlah_BC, 0) FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'C', COALESCE(dist_jumlah_C, 0) FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'D', COALESCE(dist_jumlah_D, 0) FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1 UNION ALL SELECT 'E', COALESCE(dist_jumlah_E, 0) FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140' AND no_kelas = '1' AND semester = 1;",
         ),
         (
             "Buat grafik tren rata-rata nilai per semester untuk matkul IF2210",
@@ -83,22 +108,31 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
 }
 
 
-def retrieve_few_shots(query_type: QueryType, n: int = 3) -> str:
+def retrieve_few_shots(
+    query_type: QueryType,
+    n: int = 3,
+    loader: Optional[Callable[[QueryType, int], list[tuple[str, str]]]] = None,
+) -> str:
     """
-    Returns example of question and sql queries.
+    Returns formatted few-shot SQL examples for the given query type.
 
     Args:
         query_type: The classified query type.
         n: Max number of examples to return.
+        loader: Optional external loader callable with signature
+                (QueryType, int) -> list[tuple[str, str]].
+                When provided, the built-in _EXAMPLES dict is bypassed.
+                This enables YAML/DB-backed examples without changing node code.
 
     Returns:
-        Formatted string ready for `{few_shot_examples}` in the prompt.
+        Formatted string ready for `{few_shot_examples}` in the SQL generator prompt.
     """
-    examples = _EXAMPLES.get(query_type, [])
-    
-    # Fallback to DATA_LOOKUP examples if none found for this type
-    if not examples:
-        examples = _EXAMPLES.get(QueryType.DATA_LOOKUP, [])
+    if loader is not None:
+        examples = loader(query_type, n)
+    else:
+        examples = _EXAMPLES.get(query_type, [])
+        if not examples:
+            examples = _EXAMPLES.get(QueryType.DATA_LOOKUP, [])
 
     selected = examples[:n]
     if not selected:

@@ -43,13 +43,14 @@ class DetectedEntities(BaseModel):
     nama_mk: Optional[str] = None
     no_kelas: Optional[str] = None
     nama_dosen: Optional[str] = None
-    kode_prodi: Optional[str] = None
+    kode_prodi: Optional[str] = None           
+    singkatan_prodi: Optional[str] = None     
     kode_fakultas: Optional[str] = None
     semester: Optional[int] = None
     tahun_ajaran: Optional[str] = None
     resolved_kelas_id: Optional[UUID] = None
-    resolved_matkul_id: Optional[UUID] = None   
-    resolved_kk_id: Optional[UUID] = None   
+    resolved_matkul_id: Optional[UUID] = None
+    resolved_kk_id: Optional[UUID] = None
     resolved_dosen_id: Optional[UUID] = None
     resolved_prodi_id: Optional[UUID] = None
     confidence: float = 1.0

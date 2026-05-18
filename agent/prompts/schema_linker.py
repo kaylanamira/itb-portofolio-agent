@@ -1,9 +1,3 @@
-"""
-Schema linker prompt.
-
-Extracts entity mentions from the user query and determines which DB tables
-"""
-
 SCHEMA_LINKER_SYSTEM_PROMPT = """You are a schema linker for ITB Academic Analytics.
 Your job: extract entity mentions from the user query and select the correct database tables.
 
@@ -12,7 +6,7 @@ ENTITY TYPES TO EXTRACT:
 - dosen: full or partial name (Bu Tricya, Tricya, Pak Saiful, Budi Raharjo)
 - prodi: kode (135) or abbreviation (IF, STI, EL) or full name (Informatika)
 - fakultas: kode (STEI, FITB) or name abbreviation
-- kelompok_keahlian: research group name attached to a fakultas— KK stands for "Kelompok Keahlian" (Research Group), NOT "Kurikulum Kompetensi" OR ELSE
+- kelompok_keahlian: research group name attached to a fakultas — KK = "Kelompok Keahlian" (Research Group), NOT "Kurikulum Kompetensi"
 - semester: number (1/2/3) or label (ganjil/genap/SP) or relative (semester ini → resolve to current)
 - tahun_ajaran: format YYYY/YYYY or relative (tahun ini → resolve to current)
 - no_kelas: number (1, 2, 3) or label (K1, K2, K3, kelas 1)
@@ -39,6 +33,8 @@ TABLE SELECTION RULES:
 7. Student comments, keluhan, feedback text → [komentar_mahasiswa]
 8. Refleksi dosen, metode perkuliahan, usulan perbaikan → [teks_portofolio]
 9. Queries needing both score and text → [mv_kelas, komentar_mahasiswa] or [mv_kelas, teks_portofolio]
+10. Dosen per KK per fakultas (e.g. "komposisi dosen STEI per KK") → [dosen, kelompok_keahlian, fakultas]
+11. Dosen per prodi (e.g. "siapa dosen di prodi IF?") → [dosen, kelompok_keahlian, program_studi] or [dosen, program_studi]
 
 RELATIVE TIME RESOLUTION (use the context provided in the human message):
 - ONLY populate "semester" and "tahun_ajaran" if the user explicitly mentions a time period (e.g., "semester 1", "2024/2025") or uses a relative term (e.g., "semester ini", "semester lalu", "tahun ini").
@@ -53,8 +49,8 @@ Return ONLY valid JSON (no markdown):
     "kode_mk": "IF2210 or null",
     "nama_mk": "Basis Data or null",
     "nama_dosen": "Budi Raharjo or null",
-    "kode_prodi": "135 or null",
-    "singkatan_prodi": "IF or null",
+    "kode_prodi": "135 or null (ONLY for PDDikti numeric codes)",
+    "singkatan_prodi": "IF or null (for abbreviations like IF, STI, EL)",
     "kode_fakultas": "STEI or null",
     "kelompok_keahlian": "Informatika or null",
     "semester": "number or null",
@@ -71,22 +67,37 @@ def build_schema_linker_human_message(
     current_semester: int,
     current_tahun_ajaran: str,
     user_role: str,
+    plan_context: str | None = None,
 ) -> str:
-    """Build the human message with runtime context for the schema linker."""
-    semester_map = {
-      1: "Ganjil", 
-      2: "Genap", 
-      3: "Pendek"
-    }
+    """Build the human message with runtime context for the schema linker.
+
+    Args:
+        query: The current plan step task or effective query.
+        current_semester: Resolved current semester number (1/2/3).
+        current_tahun_ajaran: Resolved current tahun ajaran string.
+        user_role: User's role string for scope context.
+        plan_context: Optional summary of what previous steps already fetched,
+                      to avoid redundant table selection.
+    """
+    semester_map = {1: "Ganjil", 2: "Genap", 3: "Pendek"}
     semester_label = semester_map.get(current_semester, str(current_semester))
-    return (
-        f"CURRENT CONTEXT:\n"
-        f"  Semester: {current_semester} ({semester_label})\n"
-        f"  Tahun Ajaran: {current_tahun_ajaran}\n"
-        f"  User Role: {user_role}\n"
-        f"\n"
-        f"USER QUERY: {query}"
-    )
+
+    lines = [
+        "CURRENT CONTEXT:",
+        f"  Semester: {current_semester} ({semester_label})",
+        f"  Tahun Ajaran: {current_tahun_ajaran}",
+        f"  User Role: {user_role}",
+    ]
+
+    if plan_context:
+        lines.append("")
+        lines.append("PLAN CONTEXT (what previous steps already retrieved):")
+        lines.append(f"  {plan_context}")
+
+    lines.append("")
+    lines.append(f"USER QUERY: {query}")
+
+    return "\n".join(lines)
 
 
 PORTFOLIO_SQL_DOMAIN_RULES = """
@@ -99,9 +110,10 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
 
 - Name/text entity matching — ALWAYS use ILIKE, never exact =:
   * dosen:    WHERE nama_dosen ILIKE '%%yani%%'
-  * prodi:    WHERE kode_prodi ILIKE '%%IF%%' OR nama_prodi ILIKE '%%informatika%%'
+  * prodi:    WHERE singkatan_prodi ILIKE '%%IF%%' OR nama_prodi ILIKE '%%informatika%%'
   * fakultas: WHERE kode_fakultas ILIKE '%%STEI%%' OR nama_fakultas ILIKE '%%elektro%%'
-  * kelompok keahlian: WHERE nama_kk ILIKE '%%rekayasa perangkat lunak%%' — KK stands for "Kelompok Keahlian" (Research Group), NOT "Kurikulum Kompetensi"
+  * kelompok keahlian: WHERE nama_kk ILIKE '%%rekayasa perangkat lunak%%'
+    KK = "Kelompok Keahlian" (Research Group), NOT "Kurikulum Kompetensi"
   * mata kuliah: WHERE nama_mk ILIKE '%%basis data%%' OR nama_mk_en ILIKE '%%basis data%%'
   * Strip honorifics mentally: "bu yani" → search for 'yani', "pak budi" → 'budi'
 
@@ -126,6 +138,8 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
     WHERE {SCOPE_FILTER} AND matkul_id = 'uuid'::uuid
   * If resolved_prodi_id is set → use it directly:
     WHERE {SCOPE_FILTER} AND prodi_id = 'uuid'::uuid
+  * If singkatan_prodi is set (no UUID) → filter with ILIKE:
+    WHERE {SCOPE_FILTER} AND singkatan_prodi ILIKE '%%IF%%'
   * If a resolved_* UUID is NOT set but entity_candidates[field] is populated:
     the match was ambiguous. Use the top candidate's display name with ILIKE:
     WHERE {SCOPE_FILTER} AND nama_dosen ILIKE '%%<top candidate nama_dosen>%%'
@@ -134,4 +148,3 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
 - For person detail queries ("siapa itu X", "info lengkap"): JOIN kelompok_keahlian and
   fakultas to return d.nama_dosen, kk.nama_kk, f.nama_fakultas.
 """
-

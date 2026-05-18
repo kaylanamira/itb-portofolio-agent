@@ -1,22 +1,30 @@
 """SQL pipeline node — bridges AgentState to the domain-agnostic SQLTool."""
 
+from typing import Optional
+import logging
 from agent.state import AgentState, DetectedEntities, QueryType
 from agent.tools.sql import build_sql_pipeline
 from agent.tools.schema_loader import load_schema_context
-from agent.tools.fuzzy_search import fuzzy_resolve_entities
+from agent.tools.fuzzy_search import fuzzy_resolve_entities, FuzzyResolutionError
 from agent.tools.few_shot_retriever import retrieve_few_shots
 from agent.tools.academic_calendar import get_current_academic_period
 from agent.prompts.schema_linker import SCHEMA_LINKER_SYSTEM_PROMPT, build_schema_linker_human_message, PORTFOLIO_SQL_DOMAIN_RULES
 from core.config import settings
 from core.scope import UserScope
 
+logger = logging.getLogger(__name__)
+
 async def _portfolio_entity_resolver(entities_dict: dict):
     """Resolves raw LLM-extracted entity dict to DetectedEntities.
     """
     valid_fields = DetectedEntities.model_fields.keys()
     filtered = {k: v for k, v in entities_dict.items() if k in valid_fields and v is not None}
-    return await fuzzy_resolve_entities(DetectedEntities(**filtered))
-    # return DetectedEntities(**filtered)
+    raw_entities = DetectedEntities(**filtered)
+    try:
+        return await fuzzy_resolve_entities(raw_entities)
+    except FuzzyResolutionError as exc:
+        logger.warning("Fuzzy entity resolution failed (DB error): %s", exc)
+        return raw_entities
 
 
 def _portfolio_few_shot_examples(query_type: str | None) -> str:
@@ -29,9 +37,24 @@ def _portfolio_few_shot_examples(query_type: str | None) -> str:
         return "(no examples)"
 
 
+def _build_plan_context(state: AgentState) -> str | None:
+    """Summarize previous completed steps for plan-aware schema linking."""
+    steps = state.get("steps_completed", [])
+    if not steps:
+        return None
+
+    summaries = []
+    for step in steps:
+        summaries.append(
+            f"Step {step.step_number} ({step.action}): {step.observation}"
+        )
+    return "; ".join(summaries)
+
+
 def _portfolio_human_message_builder(
     task: str,
     user_scope: UserScope,
+    plan_context: Optional[str],
 ) -> str:
     """Builds the schema linker human message with ITB academic calendar context."""
     current_semester, current_tahun_ajaran = get_current_academic_period()
@@ -40,6 +63,7 @@ def _portfolio_human_message_builder(
         current_semester=current_semester,
         current_tahun_ajaran=current_tahun_ajaran,
         user_role=user_scope.role.value,
+        plan_context=plan_context,
     )
 
 
@@ -69,6 +93,7 @@ async def sql_pipeline(state: AgentState) -> dict:
         "question": state["effective_query"],
         "user_scope": state["user_scope"],
         "plan_step_context": plan_step,
+        "plan_context": _build_plan_context(state),
         "query_type": query_type.value if query_type else None,
         "error_history": [],
         "attempt_count": 0,
@@ -99,4 +124,3 @@ def route_after_sql_pipeline(state: AgentState) -> str:
     if state.get("is_aborted", False):
         return "synthesizer"
     return "step_reasoner"
-

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Callable, Optional
 
 from langgraph.graph import StateGraph, END
-
+from agent.tools.error_taxonomy import classify_sql_error
 from agent.tools.sql.state import SQLState
 from agent.tools.sql.tool import SQLTool
 
@@ -42,6 +42,7 @@ def build_sql_pipeline(
             question=state["question"],
             user_scope=state["user_scope"],
             plan_step_context=state.get("plan_step_context"),
+            plan_context=state.get("plan_context"),
         )
         return {
             "detected_entities": result["detected_entities"],
@@ -65,6 +66,7 @@ def build_sql_pipeline(
     async def sql_validator(state: SQLState) -> dict:
         result = await tool.validate_sql(state.get("generated_sql", ""))
         if result["validation_status"] != "pass":
+            error_cat, correction_hint = classify_sql_error(result["error"])
             return {
                 "validation_status": result["validation_status"],
                 "validation_errors": [result["error"]],
@@ -73,6 +75,8 @@ def build_sql_pipeline(
                     "sql": state.get("generated_sql", ""),
                     "error": result["error"],
                     "type": result["error_type"],
+                    "error_category": error_cat.value,
+                    "correction_hint": correction_hint,
                 }],
             }
         return {"validation_status": "pass"}
@@ -93,6 +97,9 @@ def build_sql_pipeline(
             plan_step_context=state.get("plan_step_context"),
         )
         if not result["answer_is_valid"]:
+            error_cat, correction_hint = classify_sql_error(
+                f"Answer validation failed: {result.get('reason', '')}"
+            )
             return {
                 "answer_is_valid": False,
                 "error_history": [{
@@ -100,6 +107,8 @@ def build_sql_pipeline(
                     "sql": state.get("generated_sql", ""),
                     "error": f"Answer validation failed: {result.get('reason', '')}",
                     "type": "answer_invalid",
+                    "error_category": error_cat.value,
+                    "correction_hint": correction_hint,
                 }],
             }
         return {"answer_is_valid": True}
