@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
     ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
     OPENROUTER_API_KEY: str | None = os.getenv("OPENROUTER_API_KEY")
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
     
     # Agent
     MAX_SQL_ATTEMPTS: int = 3

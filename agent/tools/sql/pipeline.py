@@ -15,8 +15,10 @@ def build_sql_pipeline(
     entity_resolver: Callable[[dict], Any],
     few_shot_examples: Callable[[Optional[str]], str],
     schema_context: str,
-    default_table: str = "mv_kelas",
+    default_table: str,
     max_attempts: int = 3,
+    human_message_builder: Optional[Callable] = None,
+    domain_rules: str = "",
 ):
     """
     Builds a compiled LangGraph subgraph for the SQL pipeline.
@@ -31,6 +33,8 @@ def build_sql_pipeline(
         schema_context=schema_context,
         default_table=default_table,
         max_attempts=max_attempts,
+        human_message_builder=human_message_builder,
+        domain_rules=domain_rules,
     )
 
     async def schema_linker(state: SQLState) -> dict:

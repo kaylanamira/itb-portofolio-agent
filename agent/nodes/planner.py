@@ -1,9 +1,9 @@
 from core.utils import extract_json_from_llm
 from agent.state import AgentState, QueryType
 from agent.prompts.planner import PLANNER_SYSTEM_PROMPT, build_planner_human_message
+from agent.utils.plan_optimizer import optimize_plan
 from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
-from agent.state import QueryType
 from agent.prompts.planner import FEW_SHOT_EXAMPLES
 
 async def planner(state: AgentState) -> dict:
@@ -47,10 +47,20 @@ async def planner(state: AgentState) -> dict:
         qtype = QueryType.CLARIFICATION_NEEDED
         plan = [{"task": "Minta klarifikasi dari pengguna.", "tool": "clarification"}]
         reasoning = "Gagal memproses query, butuh klarifikasi."
+
+    plan, optimization_note = optimize_plan(
+        query=state["effective_query"],
+        plan=plan,
+        query_type=qtype,
+    )
+
+    reasoning_hist = [f"PLAN: {reasoning}"]
+    if optimization_note:
+        reasoning_hist.append(optimization_note)
         
     return {
         "query_type": qtype,
         "plan": plan,
         "current_step_index": 0,
-        "reasoning_history": [f"PLAN: {reasoning}"]
+        "reasoning_history": reasoning_hist
     }

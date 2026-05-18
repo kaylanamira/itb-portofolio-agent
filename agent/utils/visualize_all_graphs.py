@@ -44,13 +44,13 @@ def main():
 
     # 4. Draw Portfolio Agent Graph
     print("Generating portfolio_agent_graph.png...")
-    portfolio_png = portfolio_graph.get_graph(xray=False).draw_mermaid_png()
+    portfolio_png = portfolio_graph.get_graph(xray=True).draw_mermaid_png()
     with open(os.path.join(output_dir, "portfolio_agent_graph.png"), "wb") as f:
         f.write(portfolio_png)
 
     # 5. Draw SQL Pipeline Graph
     print("Generating sql_pipeline_graph.png...")
-    sql_png = sql_pipeline_graph.get_graph(xray=False).draw_mermaid_png()
+    sql_png = sql_pipeline_graph.get_graph(xray=True).draw_mermaid_png()
     with open(os.path.join(output_dir, "sql_pipeline_graph.png"), "wb") as f:
         f.write(sql_png)
 
@@ -62,3 +62,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# how to run : uv run python utils/visualize_all_graphs.py

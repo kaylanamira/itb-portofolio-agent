@@ -37,3 +37,6 @@ dependencies = [
 [project.scripts]
 ingest-master = "ingestion.ingest_master:main"
 ingest-kelas  = "ingestion.ingest_kelas:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

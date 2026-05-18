@@ -48,9 +48,12 @@ class DetectedEntities(BaseModel):
     semester: Optional[int] = None
     tahun_ajaran: Optional[str] = None
     resolved_kelas_id: Optional[UUID] = None
+    resolved_matkul_id: Optional[UUID] = None   
+    resolved_kk_id: Optional[UUID] = None   
     resolved_dosen_id: Optional[UUID] = None
     resolved_prodi_id: Optional[UUID] = None
     confidence: float = 1.0
+    entity_candidates: dict = Field(default_factory=dict)
 
 class ChartArtifact(BaseModel):
     artifact_id: str                  

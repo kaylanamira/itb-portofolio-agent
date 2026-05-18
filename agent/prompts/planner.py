@@ -19,6 +19,8 @@ TIPE QUERY (KLASIFIKASI):
 
 STRATEGI PLANNING (REASONING):
 - Jika pertanyaan sederhana (misal lookup data tunggal, jumlah dosen, nama prodi, dsb), buat rencana 1 langkah saja. Jangan membuat rencana multi-langkah untuk query sederhana.
+- JANGAN PERNAH memecah query yang meminta persentase, rasio, proporsi, share, atau numerator/denominator sederhana menjadi beberapa langkah pencarian data terpisah. Gabungkan pembilang, penyebut, dan hasil turunan ke dalam SATU langkah SQL tunggal yang efisien.
+- Untuk pertanyaan seperti "berapa persen X dari Y", buat task tunggal yang eksplisit meminta SQL menghitung total Y, jumlah X, dan persentasenya bersama-sama.
 - Jika pertanyaan kompleks (misal: "Kenapa nilai STEI turun?"), buat rencana beberapa langkah:
   1. Ambil data statistik (angka).
   2. Ambil data kualitatif (teks komentar/refleksi) untuk mencari konteks.
@@ -60,12 +62,15 @@ CHART CONTEXT: {chart_context_status}
 """
 
 FEW_SHOT_EXAMPLES = """
+
 BOUNDARY CASES — CLASSIFY THESE CORRECTLY:
 
 "Berapa rata-rata skor evaluasi IF2210 semester ini?" → data_lookup
 "Siapa saja dosen yang mengajar matkul basis data?" → data_lookup
 "Ada berapa mahasiswa yang lulus di kelas K1?" → data_lookup
 "Berapa persentase kehadiran dosen IF3140?" → data_lookup
+"Brp persen dosen di STEI yg ada di bawah kelompok keahlian RPL?" → data_lookup
+  Plan: [{"task": "Hitung total dosen STEI, jumlah dosen STEI di bawah KK RPL, dan persentasenya dalam satu query SQL.", "tool": "sql"}]
 "Ada berapa yang nilainya ≥ B?" → data_lookup
 "Berapa skor IF2210?" → data_lookup
 

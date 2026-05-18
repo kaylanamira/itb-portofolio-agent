@@ -29,7 +29,15 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
         (
             "Berapa persentase kehadiran dosen IF3140?",
             "SELECT pct_kehadiran_dosen FROM mv_kelas WHERE {SCOPE_FILTER} AND kode_mk = 'IF3140';",
-        )
+        ),
+        (
+            "Brp persen dosen di STEI yg ada di bawah kelompok keahlian RPL?",
+            "WITH stei_dosen AS (SELECT DISTINCT d.dosen_id, kk.nama_kk, f.kode_fakultas, f.nama_fakultas FROM dosen d JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id JOIN fakultas f ON f.fakultas_id = kk.fakultas_id WHERE {SCOPE_FILTER} AND f.kode_fakultas = 'STEI' AND d.is_active = TRUE AND f.is_active = TRUE), summary AS (SELECT kode_fakultas, nama_fakultas, COUNT(*) AS total_dosen, COUNT(*) FILTER (WHERE nama_kk ILIKE '%%Rekayasa Perangkat Lunak%%') AS total_dosen_rpl FROM stei_dosen GROUP BY kode_fakultas, nama_fakultas) SELECT nama_fakultas, kode_fakultas, total_dosen, total_dosen_rpl, ROUND(total_dosen_rpl * 100.0 / NULLIF(total_dosen, 0), 2) AS persentase_dosen_rpl FROM summary;",
+        ),
+        (
+            "Berapa total prodi di fakultas saya?",
+            "SELECT COUNT(*) AS total_prodi FROM program_studi WHERE {SCOPE_FILTER} AND is_active = TRUE;",
+        ),
     ],
 
     QueryType.ANALYTICAL_NUMERIC: [
@@ -72,13 +80,6 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
         ),
     ],
 
-    QueryType.DATA_LOOKUP: [
-        # Dosen-scoped general info about their prodi (read-only, lookup tables)
-        (
-            "Berapa total prodi di fakultas saya?",
-            "SELECT COUNT(*) AS total_prodi FROM program_studi WHERE {SCOPE_FILTER} AND is_active = TRUE;",
-        ),
-    ],
 }
 
 
