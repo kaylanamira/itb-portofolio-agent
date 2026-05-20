@@ -143,8 +143,27 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
   * If a resolved_* UUID is NOT set but entity_candidates[field] is populated:
     the match was ambiguous. Use the top candidate's display name with ILIKE:
     WHERE {SCOPE_FILTER} AND nama_dosen ILIKE '%%<top candidate nama_dosen>%%'
+  * ALWAYS use the exact string provided in ENTITIES for your ILIKE match (e.g. from entity_candidates or the field itself). Do NOT use the spelling from the user's raw query.
   * NEVER fabricate or guess UUIDs. Only use UUIDs that appear literally in ENTITIES.
 
 - For person detail queries ("siapa itu X", "info lengkap"): JOIN kelompok_keahlian and
   fakultas to return d.nama_dosen, kk.nama_kk, f.nama_fakultas.
+
+- Common SQL Patterns:
+  * Institutional fact queries (use lookup tables, scope filter = TRUE):
+    SELECT COUNT(*) AS total_fakultas FROM fakultas WHERE is_active = TRUE AND {SCOPE_FILTER};
+  * Dosen in a specific faculty (join through kelompok_keahlian):
+    SELECT d.nama_dosen FROM dosen d JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id JOIN fakultas f ON f.fakultas_id = kk.fakultas_id WHERE f.kode_fakultas = 'STEI' AND d.is_active = TRUE AND {SCOPE_FILTER};
+  * Compare total dosen between faculties:
+    SELECT f.kode_fakultas, COUNT(d.dosen_id) AS total_dosen FROM dosen d JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id JOIN fakultas f ON f.fakultas_id = kk.fakultas_id WHERE f.kode_fakultas IN ('FTTM', 'STEI') AND d.is_active = TRUE AND {SCOPE_FILTER} GROUP BY f.kode_fakultas;
+  * All classes for a specific matkul in a semester:
+    SELECT * FROM mv_kelas WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun_ajaran = '2024/2025' AND {SCOPE_FILTER} ORDER BY no_kelas;
+  * Dosen's own classes:
+    SELECT kode_mk, no_kelas, rata_rata_nilai, skor_avg_overall FROM mv_kelas WHERE '<dosen_uuid>'::uuid = ANY(semua_dosen_id) AND tahun_ajaran = '2024/2025' AND {SCOPE_FILTER} ORDER BY kode_mk, no_kelas;
+  * Compare prodi statistics:
+    SELECT singkatan_prodi, avg_nilai, avg_skor_overall, avg_kehadiran_dosen FROM mv_statistik_prodi WHERE fakultas_id = 'xxx'::uuid AND semester = 1 AND tahun_ajaran = '2024/2025' AND {SCOPE_FILTER} ORDER BY avg_skor_overall DESC;
+  * Grade distribution for a class:
+    SELECT kode_mk, no_kelas, dist_jumlah_A, dist_jumlah_AB, dist_jumlah_B, dist_jumlah_BC, dist_jumlah_C, dist_jumlah_D, dist_jumlah_E, dist_pct_lulus FROM mv_kelas WHERE kode_mk = 'IF2210' AND {SCOPE_FILTER};
+  * Dosen performance trend:
+    SELECT semester, tahun_ajaran, avg_skor_overall, avg_nilai FROM mv_statistik_dosen WHERE dosen_id = 'xxx'::uuid AND {SCOPE_FILTER} ORDER BY tahun_ajaran, semester;
 """

@@ -7,10 +7,12 @@ from agent.tools.sql import build_sql_pipeline
 from agent.tools.schema_loader import load_schema_context
 from agent.tools.fuzzy_search import fuzzy_resolve_entities, FuzzyResolutionError
 from agent.tools.few_shot_retriever import retrieve_few_shots
+from agent.tools.schema_retriever import describe_tables
 from agent.tools.academic_calendar import get_current_academic_period
 from agent.prompts.schema_linker import SCHEMA_LINKER_SYSTEM_PROMPT, build_schema_linker_human_message, PORTFOLIO_SQL_DOMAIN_RULES
 from core.config import settings
 from core.scope import UserScope
+from core.sql_executor import PsycopgExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +74,10 @@ _portfolio_sql_pipeline = build_sql_pipeline(
     entity_resolver=_portfolio_entity_resolver,
     few_shot_examples=_portfolio_few_shot_examples,
     human_message_builder=_portfolio_human_message_builder,
-    schema_context=load_schema_context(),
+    schema_context=describe_tables,
+    # schema_context=load_schema_context(),
     default_table="mv_kelas",
+    executor=PsycopgExecutor(),
     max_attempts=settings.MAX_SQL_ATTEMPTS,
     domain_rules=PORTFOLIO_SQL_DOMAIN_RULES,
 )

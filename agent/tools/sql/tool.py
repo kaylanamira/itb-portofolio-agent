@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional
 
 import sqlglot
 from sqlglot import exp
+import asyncio
 from langchain_core.messages import SystemMessage, HumanMessage
 from agent.llm import get_llm
 from agent.prompts.sql_generator import SQL_GENERATOR_SYSTEM, SQL_GENERATOR_RETRY
@@ -18,7 +19,7 @@ from agent.tools.error_taxonomy import classify_sql_error
 from agent.tools.fuzzy_search import FuzzyResolutionError
 from agent.state import DetectedEntities
 from agent.tools.sql.state import SQLState
-from core.database import get_db_connection
+from core.sql_executor import QueryExecutor
 from core.scope import UserScope
 from core.utils import extract_json_from_llm
 
@@ -51,8 +52,9 @@ class SQLTool:
         schema_linker_prompt: str,
         entity_resolver: Callable[[dict], Any],
         few_shot_examples: Callable[[Optional[str]], str],
-        schema_context: str,
+        schema_context: str | Callable[[list[str]], str],
         default_table: str,
+        executor: QueryExecutor,
         max_attempts: int = 3,
         human_message_builder: Optional[Callable] = None,
         domain_rules: str = "",
@@ -62,6 +64,7 @@ class SQLTool:
         self.few_shot_examples = few_shot_examples
         self.schema_context = schema_context
         self.default_table = default_table
+        self.executor = executor
         self.max_attempts = max_attempts
         self.domain_rules = domain_rules
         self._human_message_builder = human_message_builder or self._default_human_message
@@ -113,7 +116,7 @@ class SQLTool:
             )
             state["generated_sql"] = generated_sql
 
-            val = await self.validate_sql(generated_sql)
+            val = await self.validate_sql(generated_sql, user_scope)
             state["validation_status"] = val["validation_status"]
 
             if val["validation_status"] != "pass":
@@ -279,8 +282,16 @@ class SQLTool:
         entities_str = self._format_entities(detected_entities)
         few_shots = self.few_shot_examples(query_type)
 
+        if callable(self.schema_context):
+            if asyncio.iscoroutinefunction(self.schema_context):
+                schema_str = await self.schema_context(relevant_tables)
+            else:
+                schema_str = self.schema_context(relevant_tables)
+        else:
+            schema_str = self.schema_context
+
         sys_prompt = SQL_GENERATOR_SYSTEM.format(
-            schema_context=self.schema_context,
+            schema_context=schema_str,
             domain_rules=self.domain_rules or "(none)",
             detected_entities=entities_str,
             scope_description=scope_desc,
@@ -309,12 +320,13 @@ class SQLTool:
         response = await llm.ainvoke(messages)
         return self._extract_sql(response.content)
 
-    async def validate_sql(self, generated_sql: str) -> dict:
+    async def validate_sql(self, generated_sql: str, user_scope: Optional[UserScope] = None) -> dict:
         """
-        Validates SQL for security and syntax.
+        Validates SQL for security, syntax, and scope enforcement policy.
 
         Args:
             generated_sql: SQL string to validate.
+            user_scope: Optional UserScope to check against protected tables.
 
         Returns:
             Dict with 'validation_status' ('pass'|'fail'), 'error', 'error_type'.
@@ -330,6 +342,17 @@ class SQLTool:
             is_cte = isinstance(parsed, sqlglot.exp.With) and isinstance(parsed.this, sqlglot.exp.Select)
             if not (is_select or is_cte):
                 raise ValueError("Query must be a SELECT statement.")
+                
+            # AST Scope Validation: ensuring {SCOPE_FILTER} is used if any protected table is queried
+            tables = [t.name.lower() for t in parsed.find_all(exp.Table) if t.name]
+            protected_tables = [t for t in tables if t not in UserScope.LOOKUP_TABLES]
+            
+            if protected_tables and "{SCOPE_FILTER}" not in generated_sql:
+                return {
+                    "validation_status": "fail", 
+                    "error": "Missing {SCOPE_FILTER} placeholder for protected tables.", 
+                    "error_type": "security_violation"
+                }
         except Exception as e:
             return {"validation_status": "fail", "error": f"SQL Parse Error: {str(e)}", "error_type": "parse_error"}
 
@@ -355,7 +378,11 @@ class SQLTool:
         try:
             parsed = sqlglot.parse_one(generated_sql, read="postgres")
             tables = [t.name.lower() for t in parsed.find_all(exp.Table) if t.name]
-            target_table = tables[0] if tables else self.default_table
+            
+            # Policy: if multiple tables, use the first protected table for scope rules, 
+            # or default table if none found.
+            protected_tables = [t for t in tables if t not in UserScope.LOOKUP_TABLES]
+            target_table = protected_tables[0] if protected_tables else (tables[0] if tables else self.default_table)
         except Exception:
             target_table = relevant_tables[0] if relevant_tables else self.default_table
 
@@ -363,34 +390,16 @@ class SQLTool:
         escaped_sql = generated_sql.replace("%", "%%")
         sql_with_scope = escaped_sql.replace("{SCOPE_FILTER}", f"({scope_where})")
 
-        logger.info("Executing SQL (table=%s):\n%s", target_table, sql_with_scope)
+        logger.info("Prepared SQL for execution (table=%s):\n%s", target_table, sql_with_scope)
 
-        try:
-            async with get_db_connection() as conn:
-                await conn.execute(f"SET LOCAL app.user_id = '{user_scope.user_id}'")
-                cursor = await conn.execute(sql_with_scope, scope_params)
-                rows = await cursor.fetchall()
-
-                if cursor.description:
-                    columns = [desc[0] for desc in cursor.description]
-                    result = [dict(zip(columns, row)) for row in rows]
-                else:
-                    result = []
-
-                return {
-                    "sql_with_scope": sql_with_scope,
-                    "sql_result": result,
-                    "sql_error": None,
-                    "sql_row_count": len(result),
-                }
-        except Exception as e:
-            logger.error("SQL Execution Error: %s", e)
-            return {
-                "sql_with_scope": sql_with_scope,
-                "sql_result": None,
-                "sql_error": str(e),
-                "sql_row_count": 0,
-            }
+        exec_result = await self.executor.execute(sql_with_scope, scope_params, user_scope)
+        
+        return {
+            "sql_with_scope": sql_with_scope,
+            "sql_result": exec_result.rows,
+            "sql_error": exec_result.error,
+            "sql_row_count": exec_result.row_count,
+        }
 
     async def validate_answer(
         self,
@@ -419,9 +428,10 @@ class SQLTool:
         try:
             llm = get_llm("answer_validation")
             task = plan_step_context.get("task", question) if plan_step_context else question
+            step_desc = f"Plan Step: {plan_step_context.get('step', 'unknown')}" if plan_step_context else "Single-step query"
 
             prompt_content = ANSWER_VALIDATOR_PROMPT.format(
-                raw_query=task,
+                raw_query=f"[{step_desc}] {task}",
                 generated_sql=generated_sql,
                 row_count=sql_row_count,
                 sql_result=str(sql_result)[:1000],
@@ -433,13 +443,18 @@ class SQLTool:
             ])
 
             result = extract_json_from_llm(response.content)
+            is_valid = result.get("is_valid", True)
+            reason = result.get("reason", "Answer checked.")
+            
+            logger.info("Answer validation outcome: is_valid=%s, reason=%s, row_count=%d", is_valid, reason, sql_row_count)
+            
             return {
-                "answer_is_valid": result.get("is_valid", True),
-                "reason": result.get("reason", "Answer checked."),
+                "answer_is_valid": is_valid,
+                "reason": reason,
             }
         except Exception as e:
             logger.error("Answer validation failed: %s", e)
-            return {"answer_is_valid": True, "reason": "Validation failed, defaulting to valid."}
+            return {"answer_is_valid": False, "reason": "Validation failed, defaulting to valid."}
 
     def _build_scope_context(self, user_scope: UserScope, relevant_tables: list[str]) -> tuple[str, str]:
         """
@@ -527,8 +542,6 @@ class SQLTool:
         cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE)
         cleaned = re.sub(r"/\*.*?\*/", "", cleaned, flags=re.DOTALL).strip()
 
-        # Prefer SQL starters at the beginning of a line. This preserves CTEs:
-        # WITH cte AS (SELECT ...) SELECT ... must not be cut at the inner SELECT.
         statement_match = re.search(r"(?im)^\s*(WITH|SELECT)\b", cleaned)
         if statement_match:
             return cleaned[statement_match.start():].strip()

@@ -4,7 +4,7 @@ DATABASE SCHEMA (use ONLY the tables and columns defined here):
 {schema_context}
 
 ═══════════════════════════════════════════════════════
-STEP 1 — THINK BEFORE YOU WRITE SQL (Chain-of-Thought)
+STEP 1 — THINK BEFORE YOU WRITE SQL 
 ═══════════════════════════════════════════════════════
 Before writing any SQL, briefly reason through these points in a short comment block:
 
@@ -22,7 +22,7 @@ Then write the SQL immediately after the comment block.
 STEP 2 — MANDATORY SQL RULES
 ═══════════════════════════════════════════════
 
-SECURITY (non-negotiable):
+SECURITY:
 1. Generate ONLY SELECT statements. No INSERT, UPDATE, DELETE, DROP, TRUNCATE.
 2. Every query MUST contain exactly ONE WHERE clause starting with {{SCOPE_FILTER}}.
    CORRECT: WHERE {{SCOPE_FILTER}}
@@ -35,9 +35,9 @@ CORRECTNESS:
 4. LIMIT 100 unless the query is a pure aggregation (COUNT/AVG/SUM with no detail rows).
 5. Text/name searches: always use ILIKE with wildcards — `column ILIKE '%%keyword%%'`. Never exact =.
 6. ORDER BY for all list queries.
-7. COALESCE for nullable columns: skor_q*, dist_*, pct_* — e.g. COALESCE(skor_q1, 0).
+7. COALESCE for nullable score/metric columns: e.g. COALESCE(nullable_col, 0).
 8. Table aliases on all columns when joining multiple tables — no bare column names.
-9. Explicit type casts: UUID comparisons need ::uuid. E.g. 'abc'::uuid = ANY(semua_dosen_id).
+9. Explicit type casts: UUID comparisons need ::uuid. E.g. 'uuid-string'::uuid = ANY(uuid_array_column).
 10. COMPARATIVE queries: use GROUP BY + aggregate functions (not multiple hardcoded COUNT aliases).
 
 RATIO / PROPORTION QUERIES:
@@ -48,30 +48,30 @@ RATIO / PROPORTION QUERIES:
 
 CLAUSE-SPECIFIC RULES:
 12. HAVING — filter on aggregated values AFTER GROUP BY:
-    SELECT prodi_id, AVG(rata_rata_nilai) AS avg_nilai
-    FROM mv_kelas WHERE {{SCOPE_FILTER}}
-    GROUP BY prodi_id
-    HAVING AVG(rata_rata_nilai) > 3.0
+    SELECT category_id, AVG(score) AS avg_score
+    FROM my_table WHERE {{SCOPE_FILTER}}
+    GROUP BY category_id
+    HAVING AVG(score) > 3.0
 
 13. WINDOW FUNCTIONS — use for ranking within partitions:
-    RANK() OVER (PARTITION BY kode_prodi ORDER BY skor_avg_overall DESC)
-    ROW_NUMBER() OVER (ORDER BY rata_rata_nilai DESC)
+    RANK() OVER (PARTITION BY category_id ORDER BY score DESC)
+    ROW_NUMBER() OVER (ORDER BY score DESC)
     Use DISTINCT ON (column) for "latest per entity" queries.
 
-14. UNION ALL — when combining grade breakdown rows:
+14. UNION ALL — when combining rows:
     Every UNION branch MUST have its own {{SCOPE_FILTER}} in its WHERE clause.
-    SELECT 'A' AS grade, dist_jumlah_A FROM mv_kelas WHERE {{SCOPE_FILTER}} AND ...
+    SELECT 'TypeA' AS type, count_a FROM my_table WHERE {{SCOPE_FILTER}} AND ...
     UNION ALL
-    SELECT 'B' AS grade, dist_jumlah_B FROM mv_kelas WHERE {{SCOPE_FILTER}} AND ...
+    SELECT 'TypeB' AS type, count_b FROM my_table WHERE {{SCOPE_FILTER}} AND ...
 
 15. GROUP BY completeness — ALL non-aggregate columns in SELECT must appear in GROUP BY.
     Aggregated: COUNT(), AVG(), SUM(), MAX(), MIN(), array_agg(), string_agg().
     Everything else goes in GROUP BY.
 
 16. DISTINCT ON (PostgreSQL-specific) — for "latest/first per entity":
-    SELECT DISTINCT ON (dosen_id) dosen_id, nama_dosen, tahun_ajaran
-    FROM mv_statistik_dosen WHERE {{SCOPE_FILTER}}
-    ORDER BY dosen_id, tahun_ajaran DESC
+    SELECT DISTINCT ON (entity_id) entity_id, entity_name, date_field
+    FROM my_table WHERE {{SCOPE_FILTER}}
+    ORDER BY entity_id, date_field DESC
 
 ═══════════════════════════════════════════════
 DOMAIN-SPECIFIC RULES

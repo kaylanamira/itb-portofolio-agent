@@ -31,4 +31,5 @@ docs/
 CLAUDE.md
 AGENTS.md
 .kiro/
+.antigravitycli/
 .pytest_cache/
