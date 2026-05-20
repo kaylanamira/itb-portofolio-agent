@@ -1,0 +1,20 @@
+kd_pertanyaan,pertanyaan,deskripsi,kd_grup
+1,Metode Perkuliahan,"Uraian metode yang digunakan dalam pembelajaran, misalnya diskusi, collaborative learning, kuliah tamu, maupun project.",2
+12,Metode Perkuliahan,"Uraian metode yang digunakan dalam pembelajaran, misalnya diskusi, collaborative learning, kuliah tamu, maupun project.",6
+2,Outcomes Matakuliah,"",1
+3,Sistem Penilaian,"Komponen-komponen penilaian yang digunakan dalam menghasilkan nilai akhir mata kuliah, seperti ujian tengah semester, ujian akhir semester, kuis, pemberian tugas, praktikum, presentasi, dll., berikut bobot yang diterapkan untuk setiap komponen. Cantumkan pula standar konversi nilai ke indeks yang digunakan.",1
+13,Sistem Penilaian,"Komponen-komponen penilaian yang digunakan dalam menghasilkan nilai akhir mata kuliah, seperti ujian tengah semester, ujian akhir semester, kuis, pemberian tugas, praktikum, presentasi, dll., berikut bobot yang diterapkan untuk setiap komponen. Cantumkan pula standar konversi nilai ke indeks yang digunakan pada bagian Penjelasan.",6
+7,Statistik Kelas,"Tingkat kehadiran, distribusi nilai ujian, PR, kuis dan bentuk penilaian lainnya, distribusi nilai akhir, serta data penting lainnya.",2
+14,Statistik Kelas,"Distribusi nilai ujian, PR, kuis dan bentuk penilaian lainnya, serta data penting lainnya.",7
+4,Uraian terhadap Hasil Kuesioner dan Statistik Kelas,"",3
+8,Analisis terhadap Statistik Kelas dan Ketercapaian Outcomes,"Uraian tentang tingkat keberhasilan pembelajaran dan ketercapaian outcomes beserta faktor-faktor yang mempengaruhinya, berdasarkan data yang terkumpul.",1
+15,Analisis terhadap Statistik Kelas dan Ketercapaian Outcomes,"Uraian tentang tingkat keberhasilan pembelajaran dan ketercapaian outcomes beserta faktor-faktor yang mempengaruhinya, berdasarkan data yang terkumpul.",7
+9,Komentar terhadap Hasil Kuesioner Mahasiswa,Tanggapan terhadap penilaian mahasiswa yang diberikan melalui pengisian kuesioner.,3
+16,Komentar terhadap Hasil Kuesioner Mahasiswa,Tanggapan terhadap penilaian mahasiswa yang diberikan melalui pengisian kuesioner.,8
+5,Refleksi Pelaksanaan Perkuliahan,"Uraian tentang pelaksanaan perkuliahan, yang meliputi aspek keberhasilan dan kegagalan rencana, masalah belajar mahasiswa, persoalan yang dihadapi dosen, serta temuan penting lainnya.",3
+17,Refleksi Pelaksanaan Perkuliahan,"Uraian tentang pelaksanaan perkuliahan, yang meliputi aspek keberhasilan dan kegagalan rencana, masalah belajar mahasiswa, persoalan yang dihadapi dosen, serta temuan penting lainnya.",8
+10,Rekomendasi Perbaikan oleh Dosen Berikutnya,Hal-hal yang perlu dan dapat dilakukan oleh dosen pengampu pada perkuliahan mendatang untuk meningkatkan kualitas dan keberhasilan pembelajaran.,5
+18,Usulan Perbaikan oleh Dosen Berikutnya,Hal-hal yang perlu dan dapat dilakukan oleh dosen pengampu pada perkuliahan mendatang untuk meningkatkan kualitas dan keberhasilan pembelajaran.,9
+6,Rencana Tindak Lanjut,"",4
+11,Rekomendasi Perbaikan oleh ITB,"Hal-hal yang perlu dilakukan oleh ITB, baik pada tingkat institut, fakultas/sekolah dan prodi, untuk mendukung keberhasilan perkuliahan, yang antara lain meliputi aspek-aspek kurikulum, sarana prasarana, dan fasilitas lainnya.",5
+19,Usulan Perbaikan oleh ITB,"Hal-hal yang perlu dilakukan oleh ITB, baik pada tingkat institut, fakultas/sekolah dan prodi, untuk mendukung keberhasilan perkuliahan, yang antara lain meliputi aspek-aspek kurikulum, sarana prasarana, dan fasilitas lainnya.",9
