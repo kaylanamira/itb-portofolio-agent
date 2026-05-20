@@ -1,5 +1,5 @@
 """
-ingest.py — Ingestion penuh data Portofolio & Kuesioner Akademik ITB
+Ingestion penuh data Portofolio & Kuesioner Akademik ITB
 =====================================================================
 Menjalankan 6 phase secara berurutan:
 
@@ -577,9 +577,13 @@ async def ingest_dosen_csv(conn, rows: list[dict]) -> tuple[dict, dict]:
     return mapping, {"new": new, "upd": upd, "skip": skip, "fail": fail, "errors": errors}
 
 
-async def ingest_matkul_csv(conn, rows: list[dict]) -> tuple[dict, dict]:
+async def ingest_matkul_csv(conn, rows: list[dict],
+                            nama_mk_en_map: dict[str, str] | None = None) -> tuple[dict, dict]:
     """INSERT mata_kuliah dari CSV dengan Opsi B prefix matching.
+    nama_mk_en_map: {kd_kuliah: nama_mk_en} dari matkul.json (opsional).
     Return ({six_matkul_id(int): matkul_id(str)}, stats)"""
+    if nama_mk_en_map is None:
+        nama_mk_en_map = {}
 
     # Build singkatan_prodi lookup dari DB (sudah diisi Phase 1)
     async with conn.cursor() as cur:
@@ -614,28 +618,32 @@ async def ingest_matkul_csv(conn, rows: list[dict]) -> tuple[dict, dict]:
                         "pesan": f"Prefix {prefix!r} ambigu → {[p['jenjang'] for p in candidates]}",
                     })
 
+            nama_mk_en = nama_mk_en_map.get(kd) or None
+
             try:
                 await cur.execute("""
                     INSERT INTO mata_kuliah
-                        (six_matkul_id, prodi_id, kd_kuliah, nama_mk, th_kur, sks)
+                        (six_matkul_id, prodi_id, kd_kuliah, nama_mk, nama_mk_en, th_kur, sks)
                     VALUES
                         (%(six_id)s, %(prodi_id)s, %(kd_kuliah)s, %(nama_mk)s,
-                         %(th_kur)s, %(sks)s)
+                         %(nama_mk_en)s, %(th_kur)s, %(sks)s)
                     ON CONFLICT (six_matkul_id) DO UPDATE
                         SET kd_kuliah  = EXCLUDED.kd_kuliah,
                             nama_mk    = EXCLUDED.nama_mk,
+                            nama_mk_en = COALESCE(EXCLUDED.nama_mk_en, mata_kuliah.nama_mk_en),
                             th_kur     = EXCLUDED.th_kur,
                             sks        = EXCLUDED.sks,
                             prodi_id   = COALESCE(mata_kuliah.prodi_id, EXCLUDED.prodi_id),
                             updated_at = NOW()
                     RETURNING (xmax = 0) AS is_new
                 """, {
-                    "six_id":   six_id,
-                    "prodi_id": prodi_id,
-                    "kd_kuliah": kd,
-                    "nama_mk":  r["nama"],
-                    "th_kur":   int(r["th_kur"]) if r.get("th_kur") else None,
-                    "sks":      int(r["sks"]),
+                    "six_id":     six_id,
+                    "prodi_id":   prodi_id,
+                    "kd_kuliah":  kd,
+                    "nama_mk":    r["nama"],
+                    "nama_mk_en": nama_mk_en,
+                    "th_kur":     int(r["th_kur"]) if r.get("th_kur") else None,
+                    "sks":        int(r["sks"]),
                 })
                 if (await cur.fetchone())["is_new"]:
                     new += 1
@@ -1332,9 +1340,16 @@ async def main():
         await conn.commit()
 
         rows_mk = load_csv(d / "mata_kuliah.csv")
+        matkul_json_path = d / "matkul.json"
+        if matkul_json_path.exists():
+            rows_mkj = load_json(matkul_json_path)
+            nama_mk_en_map = {r["kode_mk"]: r.get("nama_mk_en") or None for r in rows_mkj}
+        else:
+            nama_mk_en_map = {}
+            console.print("[yellow]  ⚠ matkul.json tidak ditemukan, nama_mk_en akan NULL[/yellow]")
         log_id  = await log_file_start(conn, batch_id, "mata_kuliah",
                                        "mata_kuliah.csv", len(rows_mk))
-        matkul_map, stats = await ingest_matkul_csv(conn, rows_mk)
+        matkul_map, stats = await ingest_matkul_csv(conn, rows_mk, nama_mk_en_map)
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()

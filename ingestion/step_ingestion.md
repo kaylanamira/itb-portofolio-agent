@@ -11,7 +11,7 @@
    docker compose up -d
 
 5. Buat akun admin:
-   uv run python seed_admin.py
+   uv run python ingestion/seed_admin.py
 
 6. Jalankan ingestion:
-   uv run python ingest.py --data-dir ./data/raw
+   uv run python ingestion/ingest_academic.py --data-dir ./data/raw
