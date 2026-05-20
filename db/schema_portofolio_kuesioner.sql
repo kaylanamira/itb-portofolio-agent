@@ -160,6 +160,7 @@ CREATE TABLE mata_kuliah (
     -- Bukan UNIQUE sendirian: MK yang sama bisa ada di beberapa th_kur.
 
     nama_mk         VARCHAR(300)   NOT NULL,
+    nama_mk_en         VARCHAR(300),
     th_kur          SMALLINT,
     -- Tahun kurikulum: 2019, 2024, 2026.
 
