@@ -91,7 +91,6 @@ CREATE TABLE fakultas (
     kode_fakultas       VARCHAR(20)  UNIQUE NOT NULL,
     -- e.g. 'FMIPA', 'STEI', 'FITB', 'SBM'
     nama_fakultas       VARCHAR(200) NOT NULL,
-    singkatan           VARCHAR(20),
     is_active           BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW()
@@ -131,7 +130,7 @@ CREATE INDEX idx_prodi_kode     ON program_studi (kode_prodi);
 -- ── 2.4 Dosen ────────────────────────────────────────────────────────────────
 CREATE TABLE dosen (
     dosen_id        UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    six_dosen_id    INTEGER      UNIQUE NOT NULL,
+    six_dosen_id    INTEGER      UNIQUE,
     -- Natural key dari dosen.csv SIX ITB (kolom dosen_id).
 
     kk_id           UUID         REFERENCES kelompok_keahlian(kk_id) ON DELETE SET NULL,
@@ -149,7 +148,7 @@ CREATE INDEX idx_dosen_nama_trgm ON dosen USING GIN (nama_dosen gin_trgm_ops);
 -- ── 2.5 Mata Kuliah ──────────────────────────────────────────────────────────
 CREATE TABLE mata_kuliah (
     matkul_id       UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
-    six_matkul_id   INTEGER        UNIQUE NOT NULL,
+    six_matkul_id   INTEGER        UNIQUE,
     -- Natural key dari mata_kuliah.csv SIX ITB (kolom mata_kuliah_id).
 
     prodi_id        UUID           REFERENCES program_studi(prodi_id) ON DELETE SET NULL,
@@ -270,7 +269,7 @@ CREATE INDEX idx_pp_is_active ON pertanyaan_portofolio (is_active);
 
 CREATE TABLE kelas (
     kelas_id        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    six_kelas_id    INTEGER     UNIQUE NOT NULL,
+    six_kelas_id    INTEGER     UNIQUE,
     -- Natural key dari kelas.csv SIX ITB (kolom kelas_id).
 
     matkul_id       UUID        NOT NULL REFERENCES mata_kuliah(matkul_id) ON DELETE RESTRICT,
@@ -516,17 +515,18 @@ CREATE TABLE teks_portofolio (
     teks_portofolio_id       UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     kelas_id                 UUID        NOT NULL REFERENCES kelas(kelas_id) ON DELETE CASCADE,
     pertanyaan_portofolio_id UUID        NOT NULL REFERENCES pertanyaan_portofolio(pertanyaan_portofolio_id),
-    -- FK ke pertanyaan (bukan enum) untuk scalability jika pertanyaan bertambah.
+
     teks_raw                 TEXT,
     -- Konten asli dari JSON SIX ITB. Dapat mengandung HTML tags. Disimpan as-is.
+
     teks_bersih              TEXT GENERATED ALWAYS AS (
         regexp_replace(COALESCE(teks_raw, ''), E'<[^>]*>', '', 'g')
     ) STORED,
-    -- Generated: teks_raw dengan HTML tags di-strip. HTML entities masih mungkin ada.
-    -- Digunakan untuk FTS dan input embedding pipeline.
+
     is_embedded              BOOLEAN     NOT NULL DEFAULT FALSE,
     embedded_at              TIMESTAMPTZ,
     -- NULL = belum di-embed. Diisi pipeline setelah sukses embed ke vector store.
+
     created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, pertanyaan_portofolio_id)
@@ -578,9 +578,10 @@ CREATE TABLE komentar_mahasiswa (
     kelas_id                UUID        NOT NULL REFERENCES kelas(kelas_id) ON DELETE CASCADE,
     pertanyaan_kuesioner_id UUID        NOT NULL REFERENCES pertanyaan_kuesioner(pertanyaan_kuesioner_id),
     -- FK ke pertanyaan_kuesioner (Q103 = kd_pertanyaan 103).
-    -- Menggunakan FK (bukan enum) untuk scalability jika ada Q teks bebas lain.
+
     komentar_raw            TEXT,
     -- Teks saran mahasiswa as-is. Dapat mengandung HTML.
+
     komentar_bersih         TEXT GENERATED ALWAYS AS (
         regexp_replace(COALESCE(komentar_raw, ''), E'<[^>]*>', '', 'g')
     ) STORED,
