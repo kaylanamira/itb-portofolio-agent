@@ -1,4 +1,4 @@
-# Perubahan Schema: `schema.sql` → `schema_portofolio_kuesioner.sql` + `schema_auth_session.sql`
+# Perubahan Schema: `schema.sql` → `schema_portofolio_kuesioner.sql` + `schema_auth_and_ingestion.sql`
 
 Dokumen ini menjelaskan seluruh perubahan yang dilakukan dari schema awal (`schema.sql`)
 ke schema versi 2.0 yang terbagi menjadi dua file. Perubahan dilakukan berdasarkan hasil
@@ -15,7 +15,7 @@ tabel pengguna, tabel upload, MV, RLS, dan trigger. Schema baru memisahkan conce
 | File | Isi |
 |---|---|
 | `schema_portofolio_kuesioner.sql` | Semua tabel yang berhubungan langsung dengan data akademik dari CSV SIX ITB: kelas, dosen, mata kuliah, kuesioner, portofolio, dan AI/vector |
-| `schema_auth_session.sql` | Semua tabel yang berhubungan dengan sistem: pengguna, peran, session login, dan log ingestion CSV |
+| `schema_auth_and_ingestion.sql` | Semua tabel yang berhubungan dengan sistem: pengguna, peran, session login, dan log ingestion CSV |
 
 Alasan pemisahan: keduanya punya lifecycle update yang berbeda. Tabel data akademik
 berubah setiap kali CSV baru di-ingest. Tabel sistem berubah saat ada perubahan
@@ -137,6 +137,7 @@ six_matkul_id INTEGER UNIQUE  -- natural key dari CSV
 prodi_id      UUID REFERENCES ... ON DELETE SET NULL  -- nullable, CSV tidak ada prodi per MK
 kd_kuliah     VARCHAR(20) NOT NULL     -- rename dari kode_mk sesuai header CSV
 nama_mk       VARCHAR(300) NOT NULL
+nama_mk_en    VARCHAR(300)
 th_kur        SMALLINT                 -- tahun kurikulum: 2019, 2024, 2026 (ada di CSV)
 sks           SMALLINT NOT NULL        -- DIPINDAH dari tabel kelas ke sini (sesuai CSV)
 jenis_nilai   jenis_nilai_mk           -- nullable, tidak ada di CSV
