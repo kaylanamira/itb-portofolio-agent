@@ -11,7 +11,9 @@
    docker compose up -d
 
 5. Buat akun admin:
-   uv run python ingestion/seed_admin.py
+   uv run python ingestion/seed_admin.py --skip-test
 
 6. Jalankan ingestion:
    uv run python ingestion/ingest_academic.py --data-dir ./data/raw
+
+7. Buat akun testing ITB : uv run python ingestion/seed_admin.py --only-test

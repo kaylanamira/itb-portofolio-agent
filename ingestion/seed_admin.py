@@ -361,13 +361,17 @@ def _get_password_interaktif() -> str:
 
 
 async def run(admin_email: str, admin_nama: str,
-               admin_password: str, skip_test: bool):
+               admin_password: str, skip_test: bool, only_test: bool):
     dsn = _build_dsn()
     console.print(f"[dim]DB: {dsn.split('@')[-1]}[/dim]\n")
 
     # 1. Admin (password-based)
     console.print("[bold cyan]── 1. Seed akun admin ──[/bold cyan]")
     await seed_admin(admin_email, admin_nama, admin_password)
+
+    if not only_test:
+        console.print("[bold cyan]── 1. Seed akun admin ──[/bold cyan]")
+        await seed_admin(admin_email, admin_nama, admin_password)
 
     if skip_test:
         console.print("[dim]--skip-test aktif, akun testing dilewati.[/dim]")
@@ -438,7 +442,10 @@ def main():
                         help="Nama lengkap admin")
     parser.add_argument("--skip-test", action="store_true",
                         help="Lewati seeding akun testing, hanya buat admin")
+    parser.add_argument("--only-test", action="store_true",
+                    help="Hanya seed akun testing (skip admin), jalankan setelah ingestion")
     args = parser.parse_args()
+
 
     console.print("\n[bold cyan]══════════════════════════════════════════════[/bold cyan]")
     console.print("[bold cyan]  ITB Analytics — Seed Admin & Test Accounts  [/bold cyan]")
@@ -446,11 +453,14 @@ def main():
     console.print(f"Admin email : {args.email}")
     console.print(f"Admin nama  : {args.nama}\n")
 
-    password = _get_password_interaktif()
+    if args.only_test:
+        password = ""
+    else:
+        password = _get_password_interaktif()
 
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    asyncio.run(run(args.email, args.nama, password, args.skip_test))
+    asyncio.run(run(args.email, args.nama, password, args.skip_test, args.only_test))
 
 
 if __name__ == "__main__":
