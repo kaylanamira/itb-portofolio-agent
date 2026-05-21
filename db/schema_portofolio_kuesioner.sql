@@ -391,9 +391,9 @@ CREATE INDEX idx_kelas_prodi_tahun_sem ON kelas (prodi_id, tahun, semester);
 -- "semua kelas prodi X semester Y tahun Z". Menggabungkan 3 WHERE sekaligus.
 COMMENT ON TABLE  kelas IS
     '1 baris = 1 penyelenggaraan kelas dalam 1 semester. '
-    'Menyimpan no_ps (natural key SIX) dan prodi_id (UUID FK) secara bersamaan '
+    'Menyimpan no_ps (natural key SIX) dan prodi_id (UUID FK) secara bersamaan ';
 COMMENT ON COLUMN kelas.six_kelas_id IS
-    'Natural key integer dari SIX ITB (kolom kelas_id di kelas.csv). '
+    'Natural key integer dari SIX ITB (kolom kelas_id di kelas.csv). ';
 COMMENT ON COLUMN kelas.no_kelas IS
     'Nomor kelas paralel';
 COMMENT ON COLUMN kelas.semester IS
