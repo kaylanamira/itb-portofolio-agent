@@ -6,6 +6,7 @@
 -- ── EXTENSIONS ────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 
@@ -125,7 +126,17 @@ CREATE TABLE IF NOT EXISTS dosen (
 );
 
 CREATE INDEX idx_dosen_kk ON dosen(kk_id);
--- Filter semua dosen dalam satu kk
+
+-- GIN trigram indexes for similarity() and ILIKE searches on name/code columns
+CREATE INDEX idx_trgm_nama_dosen    ON dosen              USING GIN (nama_dosen          gin_trgm_ops);
+CREATE INDEX idx_trgm_nama_mk       ON mata_kuliah        USING GIN (nama_mk             gin_trgm_ops);
+CREATE INDEX idx_trgm_nama_mk_en    ON mata_kuliah        USING GIN (nama_mk_en          gin_trgm_ops);
+CREATE INDEX idx_trgm_kode_mk       ON mata_kuliah        USING GIN (kode_mk             gin_trgm_ops);
+CREATE INDEX idx_trgm_nama_prodi    ON program_studi      USING GIN (nama_prodi          gin_trgm_ops);
+CREATE INDEX idx_trgm_kode_prodi    ON program_studi      USING GIN (kode_prodi          gin_trgm_ops);
+CREATE INDEX idx_trgm_nama_fakultas ON fakultas           USING GIN (nama_fakultas       gin_trgm_ops);
+CREATE INDEX idx_trgm_kode_fakultas ON fakultas           USING GIN (kode_fakultas       gin_trgm_ops);
+CREATE INDEX idx_trgm_nama_kk       ON kelompok_keahlian  USING GIN (nama_kk             gin_trgm_ops);
 
 CREATE TABLE IF NOT EXISTS kelas (
     kelas_id            UUID                    PRIMARY KEY DEFAULT gen_random_uuid(),

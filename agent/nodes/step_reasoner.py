@@ -1,6 +1,7 @@
 from agent.state import AgentState, StepResult, ValidationStatus
 from langchain_core.messages import SystemMessage, HumanMessage
 from agent.llm import get_llm
+from agent.prompts.step_reasoner import STEP_REASONER_SYSTEM_PROMPT, build_step_reasoner_human_message
 from core.utils import extract_json_from_llm
 
 async def step_reasoner(state: AgentState) -> dict:
@@ -32,27 +33,17 @@ async def step_reasoner(state: AgentState) -> dict:
 
     llm = get_llm("step_reasoning")
     step_desc = plan[idx].get("task", "") if idx < len(plan) else "Final step"
-    
-    # Generate the system prompt dynamically inside function scope to safely include effective_query
-    system_prompt = f"""Kamu adalah analis data ITB Academic Portfolio.
-Berikan observasi 1-2 kalimat tentang apa yang ditemukan dari data langkah ini.
-Tentukan juga apakah data yang dikumpulkan saat ini sudah SEPENUHNYA menjawab pertanyaan asli pengguna secara tuntas sehingga kita bisa langsung menyusun kesimpulan tanpa langkah/tindakan lanjutan.
-
-Pertanyaan Asli Pengguna: "{state.get('effective_query', '')}"
-
-Balas HANYA dengan JSON format berikut:
-{{
-  "observation": "Observasi singkat tentang data langkah ini...",
-  "fully_answered": true | false
-}}
-Jangan tulis teks lainnya selain JSON.
-"""
 
     fully_answered = False
     try:
+        human_content = build_step_reasoner_human_message(
+            step_desc=step_desc,
+            result_data=result_data,
+            effective_query=state.get("effective_query", ""),
+        )
         response = await llm.ainvoke([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=f"Step Task: {step_desc}\nStep Data: {str(result_data)[:800]}")
+            SystemMessage(content=STEP_REASONER_SYSTEM_PROMPT),
+            HumanMessage(content=human_content),
         ])
         analysis = extract_json_from_llm(response.content)
         observation = analysis.get("observation", "Data retrieved successfully.")
@@ -88,5 +79,5 @@ Jangan tulis teks lainnya selain JSON.
         "rag_chunks": None,
         "answer_is_valid": None,
         "next_step": None,
-        "attempt_count": 0, 
+        "attempt_count": 0,
     }

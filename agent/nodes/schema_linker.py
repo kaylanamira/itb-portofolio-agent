@@ -1,5 +1,4 @@
 from core.utils import extract_json_from_llm
-import json
 from agent.state import AgentState, DetectedEntities
 from agent.prompts.schema_linker import SCHEMA_LINKER_SYSTEM_PROMPT, build_schema_linker_human_message
 from agent.llm import get_llm
@@ -7,6 +6,24 @@ from agent.tools.schema_loader import load_schema_context
 from agent.tools.fuzzy_search import fuzzy_resolve_entities
 from langchain_core.messages import SystemMessage, HumanMessage
 from agent.tools.academic_calendar import get_current_academic_period
+
+
+def _build_plan_context(state: AgentState) -> str | None:
+    """
+    Summarizes what previous steps already retrieved so the schema linker
+    can avoid selecting redundant tables in multi-step plans.
+    """
+    steps = state.get("steps_completed", [])
+    if not steps:
+        return None
+
+    summaries = []
+    for step in steps:
+        summaries.append(
+            f"Step {step.step_number} ({step.action}): {step.observation}"
+        )
+    return "; ".join(summaries)
+
 
 async def schema_linker(state: AgentState) -> dict:
     """LangGraph node: Extract entities and select relevant tables from the query."""
@@ -20,11 +37,14 @@ async def schema_linker(state: AgentState) -> dict:
     idx = state.get("current_step_index", 0)
     current_task = plan[idx].get("task") if plan and idx < len(plan) else state["effective_query"]
 
+    plan_context = _build_plan_context(state)
+
     human_content = build_schema_linker_human_message(
         query=current_task,
         current_semester=current_semester,
         current_tahun_ajaran=current_tahun_ajaran,
         user_role=user_role,
+        plan_context=plan_context,
     )
 
     messages = [

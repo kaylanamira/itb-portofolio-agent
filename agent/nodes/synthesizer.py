@@ -1,21 +1,9 @@
 from core.utils import extract_json_from_llm
 import uuid
 from agent.state import AgentState, FormattedResponse, TableArtifact, ChartArtifact
-from agent.prompts.synthesizer import SYNTHESIZER_SYSTEM_PROMPT, build_synthesizer_human_message
+from agent.prompts.synthesizer import SYNTHESIZER_SYSTEM_PROMPT, REJECTION_SYSTEM_PROMPT, build_synthesizer_human_message
 from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
-
-REJECTION_SYSTEM_PROMPT = """Kamu adalah asisten ITB Academic Portfolio.
-Tugasmu adalah menolak permintaan pengguna secara sopan, personal, dan profesional karena alasan tertentu (Alasan Penolakan).
-Deteksi bahasa dari pertanyaan user (Indonesian, English, dll) dan selalu gunakan bahasa yang SAMA dengan pertanyaan tersebut.
-
-Balas HANYA dengan JSON format berikut:
-{
-  "narrative": "Pesan penolakan yang sopan, personal, menjelaskan alasan penolakan secara halus sesuai bahasa user.",
-  "follow_up_suggestions": ["Saran pertanyaan 1 terkait portfolio akademik", "Saran pertanyaan 2 terkait portfolio akademik"]
-}
-Jangan sertakan key 'artifacts' atau key lainnya. Jangan sertakan grafik atau tabel karena data tidak tersedia.
-"""
 
 async def synthesizer(state: AgentState) -> dict:
     llm = get_llm("synthesis")

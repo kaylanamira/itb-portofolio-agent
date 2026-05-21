@@ -16,7 +16,9 @@ async def sql_validator(state: AgentState) -> dict:
     
     try:
         parsed = sqlglot.parse_one(sql, read="postgres")
-        if not isinstance(parsed, sqlglot.exp.Select):
+        is_select = isinstance(parsed, sqlglot.exp.Select)
+        is_cte = isinstance(parsed, sqlglot.exp.With) and isinstance(parsed.this, sqlglot.exp.Select)
+        if not (is_select or is_cte):
             raise ValueError("Query must be a SELECT statement.")
     except Exception as e:
         error_msg = f"SQL Parse Error: {str(e)}"

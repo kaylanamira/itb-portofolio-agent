@@ -1,3 +1,4 @@
+from pydantic import BaseModel, Field
 from core.utils import extract_json_from_llm
 import logging
 from agent.state import AgentState, AgentDomain
@@ -7,7 +8,10 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 logger = logging.getLogger(__name__)
 
-
+class DomainRoute(BaseModel):
+    domain: AgentDomain = Field(..., description="The domain of the query.")
+    reason: str = Field(..., description="Reason for the domain choice.")
+    
 async def intent_classifier(state: AgentState) -> dict:
     llm = get_llm("intent_classification")
     
@@ -25,9 +29,11 @@ async def intent_classifier(state: AgentState) -> dict:
     
     try:
         content = extract_json_from_llm(response.content)
-        domain = AgentDomain(content.get("domain", "out_of_scope"))
-        reason = content.get("reason", "Topik ini di luar pengetahuan saya.")
-    except Exception:
+        route = DomainRoute(**content)
+        domain = route.domain
+        reason = route.reason
+    except Exception as e:
+        logger.error(f"Failed to parse DomainRoute: {e}")
         domain = AgentDomain.OUT_OF_SCOPE
         reason = "Maaf, terjadi kesalahan saat memahami pertanyaan Anda."
         

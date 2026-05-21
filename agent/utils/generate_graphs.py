@@ -23,5 +23,5 @@ def generate_graphs():
 if __name__ == "__main__":
     generate_graphs()
 
-# how to run : uv run python generate_graphs.py
+# how to run : uv run python utils/generate_graphs.py
 # how to see : copy the contents of those files and paste them into https://mermaid.live/.

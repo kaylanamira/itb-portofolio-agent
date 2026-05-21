@@ -1,6 +1,6 @@
 import os
 
-SCHEMA_PATH = "db/schema_for_agent.md"
+SCHEMA_PATH = os.getenv("AGENT_SCHEMA_PATH", "db/schema_for_agent.md")
 
 def load_schema_context() -> str:
     """Loads the schema markdown file into a string for the LLM context."""
@@ -8,4 +8,4 @@ def load_schema_context() -> str:
         with open(SCHEMA_PATH, "r") as f:
             return f.read()
     except FileNotFoundError:
-        return "Warning: Schema context file not found at db/schema_for_agent.md"
+        return f"Warning: Schema context file not found at {SCHEMA_PATH}"

@@ -12,7 +12,6 @@ PROMPT_INJECTION_PATTERNS = [
     r"\bsekarang\s+kamu\s+adalah\b",
     r"\bact\s+as\b",
     r"\bberperan\s+sebagai\b",
-    r"\bDAN\b",
 ]
 
 SQL_FRAGMENT_PATTERNS = [

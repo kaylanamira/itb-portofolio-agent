@@ -76,6 +76,18 @@ def get_llm(task_type: str = "general", force_json: bool = True):
             "max_retries": 3,
         }
         return ChatAnthropic(**kwargs)
+
+    elif provider == "ollama":
+        # Local Ollama — OpenAI-compatible, no API key needed.
+        # Run: ollama pull qwen2.5-coder:7b && ollama serve
+        kwargs = {
+            "base_url": settings.OLLAMA_BASE_URL,
+            "model": model_name,
+            "temperature": 0.0,
+        }
+        if force_json:
+            kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+        return ChatOpenAI(api_key="ollama", **kwargs)
         
     kwargs = {
         "api_key": settings.GROQ_API_KEY,
