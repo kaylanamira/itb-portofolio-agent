@@ -100,8 +100,7 @@ CREATE INDEX idx_fakultas_parent ON fakultas (parent_fakultas_id);
 -- ── 2.2 Kelompok Keahlian ────────────────────────────────────────────────────
 CREATE TABLE kelompok_keahlian (
     kk_id       UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    fakultas_id UUID         REFERENCES fakultas(fakultas_id) ON DELETE SET NULL,
-    kode_kk     VARCHAR(30)  UNIQUE,
+    fakultas_id UUID         NOT NULL REFERENCES fakultas(fakultas_id) ON DELETE RESTRICT,
     nama_kk     VARCHAR(300) NOT NULL,
     is_active   BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -112,11 +111,11 @@ CREATE INDEX idx_kk_fakultas ON kelompok_keahlian (fakultas_id);
 -- ── 2.3 Program Studi ────────────────────────────────────────────────────────
 CREATE TABLE program_studi (
     prodi_id        UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-    fakultas_id     UUID          REFERENCES fakultas(fakultas_id) ON DELETE SET NULL,
-    kode_prodi      VARCHAR(20)   UNIQUE NOT NULL,
+    fakultas_id     UUID          NOT NULL REFERENCES fakultas(fakultas_id) ON DELETE RESTRICT,
+    kode_prodi      VARCHAR(10)   UNIQUE NOT NULL,
     -- HARUS identik dengan no_ps di kelas.csv SIX ITB.
     -- e.g. '102'=Fisika, '230'=Teknik Kimia.
-    singkatan_prodi VARCHAR(20),
+    singkatan_prodi VARCHAR(10),
     nama_prodi      VARCHAR(300)  NOT NULL,
     jenjang         jenjang_prodi NOT NULL DEFAULT 'S1',
     is_active       BOOLEAN       NOT NULL DEFAULT TRUE,
@@ -133,9 +132,9 @@ CREATE TABLE dosen (
     six_dosen_id    INTEGER      UNIQUE,
     -- Natural key dari dosen.csv SIX ITB (kolom dosen_id).
 
-    kk_id           UUID         REFERENCES kelompok_keahlian(kk_id) ON DELETE SET NULL,
+    kk_id           UUID         NOT NULL REFERENCES kelompok_keahlian(kk_id) ON DELETE RESTRICT,
     -- NULLABLE. Tidak ada di CSV SIX. Diisi manual admin setelah import.
-
+    prodi_id UUID REFERENCES program_studi(prodi_id),
     nama_dosen      VARCHAR(300) NOT NULL,
     is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -155,13 +154,13 @@ CREATE TABLE mata_kuliah (
     -- NULLABLE. CSV tidak menyertakan prodi per MK.
     -- MK lintas-prodi (prefix WI) dibiarkan NULL.
 
-    kd_kuliah       VARCHAR(20)    NOT NULL,
+    kode_mk       VARCHAR(20)    NOT NULL,
     -- e.g. 'FI1101', 'TK3101', 'WI1111'.
     -- Bukan UNIQUE sendirian: MK yang sama bisa ada di beberapa th_kur.
 
     nama_mk         VARCHAR(300)   NOT NULL,
     nama_mk_en         VARCHAR(300),
-    th_kur          SMALLINT,
+    tahun_kurikulum          SMALLINT NOT NULL,
     -- Tahun kurikulum: 2019, 2024, 2026.
 
     sks             SMALLINT       NOT NULL CHECK (sks > 0 AND sks <= 12),
@@ -174,9 +173,9 @@ CREATE TABLE mata_kuliah (
     created_at      TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_matkul_prodi  ON mata_kuliah (prodi_id);
-CREATE INDEX idx_matkul_kd     ON mata_kuliah (kd_kuliah);
-CREATE INDEX idx_matkul_th_kur ON mata_kuliah (th_kur);
+CREATE INDEX idx_mata_kuliah_prodi  ON mata_kuliah (prodi_id);
+CREATE INDEX idx_mata_kuliah_kode_mk     ON mata_kuliah (kode_mk);
+CREATE INDEX idx_mata_kuliah_th_kur ON mata_kuliah (tahun_kurikulum);
 
 -- ============================================================
 -- SECTION 3 — QUESTIONNAIRE & PORTFOLIO REFERENCE TABLES
@@ -208,11 +207,14 @@ CREATE TABLE pertanyaan_kuesioner (
     is_spesifik_dosen       BOOLEAN  NOT NULL DEFAULT FALSE,
     -- TRUE untuk Q25,26,27. Skor di skor_kuesioner_dosen (per dosen per kelas).
     -- FALSE → skor di skor_kuesioner_kelas (level kelas, identik untuk semua dosen).
+    -- tambahin comment di table
 
     is_teks_bebas           BOOLEAN  NOT NULL DEFAULT FALSE,
     -- TRUE untuk Q103. Tidak ada skor numerik. Teks di komentar_mahasiswa.
 
-    is_active               BOOLEAN  NOT NULL DEFAULT TRUE
+    is_active               BOOLEAN  NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 -- ── 3.2 Grup Pertanyaan Portofolio ───────────────────────────────────────────
@@ -227,9 +229,13 @@ CREATE TABLE pertanyaan_grup_portofolio (
     -- 1=Pencapaian, 2=Pelaksanaan, 3=Refleksi, 4=RTL, 5=Rekomendasi (lama)
     -- 6=Penyelenggaraan, 7=Ketercapaian, 8=Refleksi Dosen, 9=Rekomendasi (baru)
 
+
     nama_grup           TEXT     NOT NULL,
-    is_active           BOOLEAN  NOT NULL DEFAULT TRUE
+    is_active           BOOLEAN  NOT NULL DEFAULT TRUE,
     -- FALSE untuk kd_grup 1–5 (format lama). TRUE untuk kd_grup 6–9 (aktif).
+    -- tambah comment kalau is_active = true pertanyaan terpakai atau masih aktif sekarang, kalau false sudah tidak aktif
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
 
 -- ── 3.3 Pertanyaan Portofolio ────────────────────────────────────────────────
@@ -251,8 +257,11 @@ CREATE TABLE pertanyaan_portofolio (
     deskripsi                TEXT,
     -- Panduan pengisian dosen. Dari kolom deskripsi CSV.
 
-    is_active                BOOLEAN  NOT NULL DEFAULT TRUE
+    is_active                BOOLEAN  NOT NULL DEFAULT TRUE,
     -- FALSE untuk kd 1–11 (lama). TRUE untuk kd 12–19 (baru aktif).
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+    
 );
 CREATE INDEX idx_pp_grup      ON pertanyaan_portofolio (pertanyaan_grup_id);
 CREATE INDEX idx_pp_is_active ON pertanyaan_portofolio (is_active);
@@ -274,20 +283,20 @@ CREATE TABLE kelas (
     -- Natural key dari kelas.csv SIX ITB (kolom kelas_id).
 
     matkul_id       UUID        NOT NULL REFERENCES mata_kuliah(matkul_id) ON DELETE RESTRICT,
-    prodi_id        UUID        NOT NULL REFERENCES program_studi(prodi_id) ON DELETE RESTRICT,
-    
-    -- Lookup: no_ps → kode_prodi di program_studi → prodi_id.
-    no_ps           SMALLINT    NOT NULL,
-    -- Natural key SIX ITB dari kolom no_ps kelas.csv. Disimpan untuk ETL traceability.
-
-    tahun           SMALLINT    NOT NULL,
-    -- Tahun ajaran dimulai. e.g. 2024 = TA 2024/2025.
-
-    semester        SMALLINT    NOT NULL CHECK (semester IN (1, 2, 3)),
-    -- 1=Ganjil, 2=Genap, 3=Semester Pendek.
-
     no_kelas        SMALLINT    NOT NULL,
     -- Nomor kelas paralel, e.g. 1, 2, 3, 41, 42. Dari kolom no_kelas CSV.
+    
+    semester        SMALLINT    NOT NULL CHECK (semester IN (1, 2, 3)),
+    -- 1=Ganjil, 2=Genap, 3=Semester Pendek.
+    
+    tahun           SMALLINT    NOT NULL,
+    -- Tahun ajaran dapat diinfer dari semester, kalau tahun 2024 semester ganjil, berarti nanti tahun ajaran 2024/2025, kalau semester genap berarti 2023/2024
+
+    prodi_id        UUID        NOT NULL REFERENCES program_studi(prodi_id) ON DELETE RESTRICT,
+    -- Lookup: no_ps → kode_prodi di program_studi → prodi_id.
+
+    no_ps           SMALLINT    NOT NULL,
+    -- Natural key SIX ITB dari kolom no_ps kelas.csv. Disimpan untuk ETL traceability.
 
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -335,20 +344,21 @@ CREATE TABLE statistik_kelas (
     kelas_id        UUID         PRIMARY KEY REFERENCES kelas(kelas_id) ON DELETE CASCADE,
     -- Shared PK: 1:1 dengan kelas. Kelas_id langsung sebagai PK.
 
-    hadir_mhs       NUMERIC(5,2) CHECK (hadir_mhs IS NULL OR hadir_mhs BETWEEN 0 AND 100),
+    pct_kehadiran_mahasiswa       NUMERIC(5,2) CHECK (pct_kehadiran_mahasiswa IS NULL OR pct_kehadiran_mahasiswa BETWEEN 0 AND 100),
 
-    hadir_dosen     NUMERIC(5,2) CHECK (hadir_dosen IS NULL OR hadir_dosen BETWEEN 0 AND 100),
+    pct_kehadiran_dosen     NUMERIC(5,2) CHECK (pct_kehadiran_dosen IS NULL OR pct_kehadiran_dosen BETWEEN 0 AND 100),
     -- NULLABLE — tidak ada di CSV SIX saat ini. 
 
     ip_mhs          NUMERIC(4,2) CHECK (ip_mhs IS NULL OR ip_mhs BETWEEN 0 AND 4),
 
     jumlah_mahasiswa SMALLINT    CHECK (jumlah_mahasiswa IS NULL OR jumlah_mahasiswa >= 0),
     -- Total peserta kelas. NULLABLE — bisa diisi dari sumber suplemen.
+    -- di csv juga tidak ada jumlah_mahasiswa
 
-    skor_dna        SMALLINT,
+    skor_dna        SMALLINT NOT NULL,
     -- Skor dari sistem DNA SIX ITB. Makna resmi belum terkonfirmasi.
 
-    ts_dna_raw      TEXT,
+    ts_dna_raw      TEXT NOT NULL,
     -- Nilai ts_dna as-is dari CSV SIX ITB. Format belum dikonfirmasi.
     -- Disimpan untuk audit/traceability. Kleppmann (DDIA, 2017): raw source
     -- memungkinkan re-parse jika format berubah di masa depan.
@@ -391,10 +401,10 @@ COMMENT ON TABLE  distribusi_nilai IS 'Distribusi nilai per kelas, row-based. 1 
 
 -- ── 5.3 Nilai Dosen ───────────────────────────────────────────────────────────
 -- Final composite score per dosen per kelas.
--- PRIVAT: dosen hanya bisa akses nilai_akhir miliknya sendiri. 
+-- PRIVAT: dosen hanya bisa akses nilai_akhir miliknya sendiri. dipisah dari pengajar_kelas untuk mendukung rls.
 
 -- Detail per pertanyaan → skor_kuesioner_dosen.
--- Skor dimensi agregat (key 1,2,3) → skor_dimensi_dosen.
+-- Skor dimensi agregat (key 1,2,3) → skor_agregat_kuesioner_dosen.
 
 CREATE TABLE nilai_dosen (
     nilai_dosen_id  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -410,10 +420,10 @@ CREATE TABLE nilai_dosen (
     updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, dosen_id)
 );
-CREATE INDEX idx_nd_dosen ON nilai_dosen (dosen_id);
--- idx_nd_dosen: KRITIS untuk RLS — filter per dosen di setiap query dosen.
-CREATE INDEX idx_nd_kelas ON nilai_dosen (kelas_id);
-COMMENT ON TABLE  nilai_dosen IS 'Nilai akhir komposit per dosen per kelas. PRIVAT (RLS). Range aktual 2.016–4.000. Detail skor per Q di skor_kuesioner_dosen, skor dimensi di skor_dimensi_dosen.';
+CREATE INDEX idx_nilai_dosen_dosen ON nilai_dosen (dosen_id);
+-- idx_nilai_dosen_dosen: KRITIS untuk RLS — filter per dosen di setiap query dosen.
+CREATE INDEX idx_nilai_dosen_kelas ON nilai_dosen (kelas_id);
+COMMENT ON TABLE  nilai_dosen IS 'Nilai akhir komposit per dosen per kelas. PRIVAT (RLS). Range aktual 2.016–4.000. Detail skor per Q di skor_kuesioner_dosen, skor dimensi di skor_agregat_kuesioner_dosen.';
 
 
 -- ============================================================
@@ -431,14 +441,14 @@ CREATE TABLE skor_kuesioner_kelas (
     skor_kelas_id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     kelas_id                UUID         NOT NULL REFERENCES kelas(kelas_id) ON DELETE CASCADE,
     pertanyaan_kuesioner_id UUID         NOT NULL REFERENCES pertanyaan_kuesioner(pertanyaan_kuesioner_id),
-    skor                    NUMERIC(5,4) NOT NULL CHECK (skor BETWEEN 1 AND 4),
+    rata_skor                    NUMERIC(5,4) NOT NULL CHECK (rata_skor BETWEEN 1 AND 4),
     -- Skor Likert rata-rata 1.0000–4.0000. NOT NULL: semua Q di nilai_kelas.csv punya nilai.
     created_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, pertanyaan_kuesioner_id)
 );
-CREATE INDEX idx_skk_kelas      ON skor_kuesioner_kelas (kelas_id);
-CREATE INDEX idx_skk_pertanyaan ON skor_kuesioner_kelas (pertanyaan_kuesioner_id);
+CREATE INDEX idx_skor_kuesioner_kelas_kelas      ON skor_kuesioner_kelas (kelas_id);
+CREATE INDEX idx_skor_kuesioner_kelas_pertanyaan ON skor_kuesioner_kelas (pertanyaan_kuesioner_id);
 COMMENT ON TABLE  skor_kuesioner_kelas IS 'Skor Likert rata-rata per pertanyaan per kelas (level kelas). Source: nilai_kelas.csv JSON. Pertanyaan: Q21,22,23,24,28,29,30,35,37 (TERVERIFIKASI). Tidak ada RLS ketat — data kelas tidak privat per dosen.';
 
 
@@ -456,15 +466,15 @@ CREATE TABLE skor_kuesioner_dosen (
     kelas_id                UUID         NOT NULL REFERENCES kelas(kelas_id) ON DELETE CASCADE,
     dosen_id                UUID         NOT NULL REFERENCES dosen(dosen_id) ON DELETE RESTRICT,
     pertanyaan_kuesioner_id UUID         NOT NULL REFERENCES pertanyaan_kuesioner(pertanyaan_kuesioner_id),
-    skor                    NUMERIC(5,4) NOT NULL CHECK (skor BETWEEN 1 AND 4),
+    rata_skor                    NUMERIC(5,4) NOT NULL CHECK (rata_skor BETWEEN 1 AND 4),
     created_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, dosen_id, pertanyaan_kuesioner_id)
 );
-CREATE INDEX idx_skd_dosen      ON skor_kuesioner_dosen (dosen_id);
--- idx_skd_dosen: KRITIS untuk RLS — setiap query dosen filter by dosen_id.
-CREATE INDEX idx_skd_kelas      ON skor_kuesioner_dosen (kelas_id);
-CREATE INDEX idx_skd_pertanyaan ON skor_kuesioner_dosen (pertanyaan_kuesioner_id);
+CREATE INDEX idx_skor_kuesioner_dosen_dosen      ON skor_kuesioner_dosen (dosen_id);
+-- idx_skor_kuesioner_dosen_dosen: KRITIS untuk RLS — setiap query dosen filter by dosen_id.
+CREATE INDEX idx_skor_kuesioner_dosen_kelas      ON skor_kuesioner_dosen (kelas_id);
+CREATE INDEX idx_skor_kuesioner_dosen_pertanyaan ON skor_kuesioner_dosen (pertanyaan_kuesioner_id);
 COMMENT ON TABLE  skor_kuesioner_dosen IS 'Skor Likert per pertanyaan per dosen per kelas. Hanya Q25,Q26,Q27 (TERVERIFIKASI berbeda per dosen dalam team-teaching). PRIVAT: dosen hanya akses skor miliknya (RLS).';
 
 
@@ -475,27 +485,27 @@ COMMENT ON TABLE  skor_kuesioner_dosen IS 'Skor Likert per pertanyaan per dosen 
 --   dimensi_key=2: avg(Q24,Q25,Q26,Q27,Q28)        -- Q25-27 dari nilai_dosen.kuesioner
 --   dimensi_key=3: avg(Q35,Q37)                    -- Q35,37 dari nilai_kelas.kuesioner
 
-CREATE TABLE skor_dimensi_dosen (
-    skor_dimensi_id UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE skor_agregat_kuesioner_dosen (
+    skor_agregat_id UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     kelas_id        UUID         NOT NULL REFERENCES kelas(kelas_id) ON DELETE CASCADE,
     dosen_id        UUID         NOT NULL REFERENCES dosen(dosen_id) ON DELETE RESTRICT,
-    dimensi_key     SMALLINT     NOT NULL CHECK (dimensi_key IN (1, 2, 3)),
+    agregat_kuesioner_key     SMALLINT     NOT NULL CHECK (agregat_kuesioner_key IN (1, 2, 3)),
     -- Integer key sesuai key di JSON skor_kues nilai_dosen.csv.
 
-    dimensi_nama    VARCHAR(60),
+    agregat_kuesioner_nama    VARCHAR(60),
     -- NULLABLE. Label diperkirakan berdasarkan verifikasi data:
     -- 1 → 'capaian_pembelajaran' | 2 → 'pelaksanaan_perkuliahan' | 3 → 'perilaku_mahasiswa'
 
-    skor            NUMERIC(5,4) NOT NULL CHECK (skor BETWEEN 1 AND 4),
+    rata_skor            NUMERIC(5,4) NOT NULL CHECK (rata_skor BETWEEN 1 AND 4),
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    UNIQUE (kelas_id, dosen_id, dimensi_key)
+    UNIQUE (kelas_id, dosen_id, agregat_key)
 );
-CREATE INDEX idx_sdd_dosen ON skor_dimensi_dosen (dosen_id);
-CREATE INDEX idx_sdd_kelas ON skor_dimensi_dosen (kelas_id);
-COMMENT ON TABLE  skor_dimensi_dosen IS 'Skor agregat 3 dimensi per dosen per kelas. Row-based. Source: nilai_dosen.csv skor_kues JSON. dimensi_key 1,2,3 TERVERIFIKASI 100% pada 1.960 baris. dimensi_nama NULLABLE karena label resmi SIX ITB belum dikonfirmasi.';
-COMMENT ON COLUMN skor_dimensi_dosen.dimensi_key IS '1=avg(Q21,22,23), 2=avg(Q24,25,26,27,28), 3=avg(Q35,37). TERVERIFIKASI dari seluruh data nilai_dosen.csv.';
-COMMENT ON COLUMN skor_dimensi_dosen.dimensi_nama IS 'Label tekstual diperkirakan: 1=capaian_pembelajaran, 2=pelaksanaan_perkuliahan, 3=perilaku_mahasiswa. NULLABLE — jangan hard-code sebelum dikonfirmasi dari SIX ITB.';
+CREATE INDEX idx_skor_agregat_kuesioner_dosen_dosen ON skor_agregat_kuesioner_dosen (dosen_id);
+CREATE INDEX idx_skor_agregat_kuesioner_dosen_kelas ON skor_agregat_kuesioner_dosen (kelas_id);
+COMMENT ON TABLE  skor_agregat_kuesioner_dosen IS 'Skor agregat 3 dimensi per dosen per kelas. Row-based. Source: nilai_dosen.csv skor_kues JSON. dimensi_key 1,2,3 TERVERIFIKASI 100% pada 1.960 baris. dimensi_nama NULLABLE karena label resmi SIX ITB belum dikonfirmasi.';
+COMMENT ON COLUMN skor_agregat_kuesioner_dosen.agregat_key IS '1=avg(Q21,22,23), 2=avg(Q24,25,26,27,28), 3=avg(Q35,37). TERVERIFIKASI dari seluruh data nilai_dosen.csv.';
+COMMENT ON COLUMN skor_agregat_kuesioner_dosen.agregat_nama IS 'Label tekstual: 1=capaian_pembelajaran, 2=pelaksanaan_perkuliahan, 3=perilaku_mahasiswa. NULLABLE — jangan hard-code sebelum dikonfirmasi dari SIX ITB.';
 
 
 -- ============================================================
@@ -532,13 +542,13 @@ CREATE TABLE teks_portofolio (
     updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, pertanyaan_portofolio_id)
 );
-CREATE INDEX idx_tp_kelas      ON teks_portofolio (kelas_id);
-CREATE INDEX idx_tp_pertanyaan ON teks_portofolio (pertanyaan_portofolio_id);
-CREATE INDEX idx_tp_embedded   ON teks_portofolio (is_embedded) WHERE is_embedded = FALSE;
--- idx_tp_embedded: partial index hanya baris belum di-embed. Pipeline scan lebih efisien.
-CREATE INDEX idx_tp_fts        ON teks_portofolio
+CREATE INDEX idx_teks_portofolio_kelas      ON teks_portofolio (kelas_id);
+CREATE INDEX idx_teks_portofolio_pertanyaan ON teks_portofolio (pertanyaan_portofolio_id);
+CREATE INDEX idx_teks_portofolio_embedded   ON teks_portofolio (is_embedded) WHERE is_embedded = FALSE;
+-- idx_teks_portofolio_embedded: partial index hanya baris belum di-embed. Pipeline scan lebih efisien.
+CREATE INDEX idx_teks_portofolio_fts        ON teks_portofolio
     USING GIN (to_tsvector('indonesian', COALESCE(teks_bersih, '')));
--- idx_tp_fts: GIN full-text search untuk pencarian konten portofolio di chatbot.
+-- idx_teks_portofolio_fts: GIN full-text search untuk pencarian konten portofolio di chatbot.
 COMMENT ON TABLE  teks_portofolio IS 'Teks isian portofolio per pertanyaan per kelas (renamed dari isian_portofolio). FK ke pertanyaan_portofolio (bukan enum) untuk scalability. teks_bersih = HTML-stripped via regex.';
 COMMENT ON COLUMN teks_portofolio.teks_bersih IS 'Generated: HTML tags di-strip via regex. Bukan fully clean — HTML entities masih ada. ETL layer Python (html.unescape) melakukan cleaning lebih dalam sebelum embedding.';
 
@@ -559,13 +569,19 @@ CREATE TABLE komentar_verifikator (
     komentar_bersih         TEXT GENERATED ALWAYS AS (
         regexp_replace(COALESCE(komentar_raw, ''), E'<[^>]*>', '', 'g')
     ) STORED,
+
+    is_embedded              BOOLEAN     NOT NULL DEFAULT FALSE,
+    embedded_at              TIMESTAMPTZ,
+    -- NULL = belum di-embed. Diisi pipeline setelah sukses embed ke vector store.
+
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, pertanyaan_grup_id)
 );
-CREATE INDEX idx_kv_kelas ON komentar_verifikator (kelas_id);
-CREATE INDEX idx_kv_grup  ON komentar_verifikator (pertanyaan_grup_id);
-CREATE INDEX idx_kv_fts   ON komentar_verifikator
+CREATE INDEX idx_komentar_verifikator_kelas ON komentar_verifikator (kelas_id);
+CREATE INDEX idx_komentar_verifikator_grup  ON komentar_verifikator (pertanyaan_grup_id);
+CREATE INDEX idx_komentar_verifikator_embedded   ON komentar_verifikator (is_embedded) WHERE is_embedded = FALSE;
+CREATE INDEX idx_komentar_verifikator_fts   ON komentar_verifikator
     USING GIN (to_tsvector('indonesian', COALESCE(komentar_bersih, '')));
 COMMENT ON TABLE  komentar_verifikator IS 'Komentar verifikator/reviewer per grup per kelas. BUKAN komentar mahasiswa. Source: portofolio.csv kolom komentar (JSON). Data aktual: kd_grup 6=Penyelenggaraan, 7=Ketercapaian, 8=Refleksi, 9=Rekomendasi.';
 
@@ -592,10 +608,10 @@ CREATE TABLE komentar_mahasiswa (
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, pertanyaan_kuesioner_id)
 );
-CREATE INDEX idx_km_kelas    ON komentar_mahasiswa (kelas_id);
-CREATE INDEX idx_km_embedded ON komentar_mahasiswa (is_embedded) WHERE is_embedded = FALSE;
+CREATE INDEX idx_komentar_mahasiswa_kelas    ON komentar_mahasiswa (kelas_id);
+CREATE INDEX idx_komentar_mahasiswa_embedded ON komentar_mahasiswa (is_embedded) WHERE is_embedded = FALSE;
 -- Partial index: pipeline embedding hanya scan baris belum di-embed.
-CREATE INDEX idx_km_fts      ON komentar_mahasiswa
+CREATE INDEX idx_komentar_mahasiswa_fts      ON komentar_mahasiswa
     USING GIN (to_tsvector('indonesian', COALESCE(komentar_bersih, '')));
 COMMENT ON TABLE  komentar_mahasiswa IS 'Teks saran mahasiswa (Q103) terpisah dari skor_kuesioner_kelas. FK ke pertanyaan_kuesioner untuk scalability. is_embedded+embedded_at untuk tracking pipeline RAG. Data belum ada di CSV SIX ITB saat ini.';
 
@@ -612,7 +628,7 @@ COMMENT ON TABLE  komentar_mahasiswa IS 'Teks saran mahasiswa (Q103) terpisah da
 -- Filter keys didenormalisasi untuk RAG query efficiency [V1].
 CREATE TABLE vector_chunks (
     chunk_id         UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
-    source_type      VARCHAR(30)     NOT NULL CHECK (source_type IN ('teks_portofolio','komentar_mahasiswa')),
+    source_type      VARCHAR(20)     NOT NULL CHECK (source_type IN ('teks_portofolio','komentar_mahasiswa')),
     source_id        UUID            NOT NULL,
     -- UUID PK dari tabel asal. Tidak ada FK constraint (polymorphic reference).
     kelas_id         UUID            NOT NULL REFERENCES kelas(kelas_id) ON DELETE CASCADE,
@@ -630,13 +646,13 @@ CREATE TABLE vector_chunks (
 
     -- === Filter Keys — denormalisasi untuk RAG query [V1] ===
     kode_mk          VARCHAR(20)     NOT NULL,
-    kode_prodi       VARCHAR(20)     NOT NULL,
+    kode_prodi       VARCHAR(10)     NOT NULL,
     kode_fakultas    VARCHAR(20)     NOT NULL,
     no_kelas         SMALLINT        NOT NULL,
     semester         SMALLINT        NOT NULL,
     tahun            SMALLINT        NOT NULL,
-    nama_mk          VARCHAR(300)    NOT NULL,
-    nama_prodi       VARCHAR(300)    NOT NULL,
+    nama_mk          VARCHAR(200)    NOT NULL,
+    nama_prodi       VARCHAR(200)    NOT NULL,
     nama_fakultas    VARCHAR(200)    NOT NULL,
     jenjang          jenjang_prodi   NOT NULL,
     semua_dosen_id   UUID[]          NOT NULL DEFAULT '{}',
@@ -647,14 +663,14 @@ CREATE TABLE vector_chunks (
     created_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_chunk_source_idx UNIQUE (source_id, chunk_index)
 );
-CREATE INDEX idx_vc_kelas_id   ON vector_chunks (kelas_id);
-CREATE INDEX idx_vc_source     ON vector_chunks (source_type, source_id);
-CREATE INDEX idx_vc_kode_mk    ON vector_chunks (kode_mk, semester, tahun)    WHERE embedding IS NOT NULL;
-CREATE INDEX idx_vc_kode_prodi ON vector_chunks (kode_prodi, semester, tahun) WHERE embedding IS NOT NULL;
-CREATE INDEX idx_vc_kode_fak   ON vector_chunks (kode_fakultas, semester, tahun) WHERE embedding IS NOT NULL;
-CREATE INDEX idx_vc_tipe       ON vector_chunks (tipe_konten)                  WHERE tipe_konten IS NOT NULL AND embedding IS NOT NULL;
-CREATE INDEX idx_vc_dosen      ON vector_chunks USING GIN (semua_dosen_id);
--- idx_vc_dosen: GIN array index untuk query "chunk dari kelas yang diajar dosen X"
+CREATE INDEX idx_vector_chunks_kelas_id   ON vector_chunks (kelas_id);
+CREATE INDEX idx_vector_chunks_source     ON vector_chunks (source_type, source_id);
+CREATE INDEX idx_vector_chunks_kode_mk    ON vector_chunks (kode_mk, semester, tahun)    WHERE embedding IS NOT NULL;
+CREATE INDEX idx_vector_chunks_kode_prodi ON vector_chunks (kode_prodi, semester, tahun) WHERE embedding IS NOT NULL;
+CREATE INDEX idx_vector_chunks_kode_fak   ON vector_chunks (kode_fakultas, semester, tahun) WHERE embedding IS NOT NULL;
+CREATE INDEX idx_vector_chunks_tipe       ON vector_chunks (tipe_konten)                  WHERE tipe_konten IS NOT NULL AND embedding IS NOT NULL;
+CREATE INDEX idx_vector_chunks_dosen      ON vector_chunks USING GIN (semua_dosen_id);
+-- idx_vector_chunks_dosen: GIN array index untuk query "chunk dari kelas yang diajar dosen X"
 COMMENT ON TABLE  vector_chunks IS 'Chunks teks portofolio/komentar mahasiswa + embedding vector untuk RAG. Filter keys didenormalisasi untuk efisiensi similarity search tanpa JOIN runtime.';
 COMMENT ON COLUMN vector_chunks.source_id IS 'UUID PK dari tabel asal. Tidak ada FK constraint karena polymorphic (source_type menentukan tabel). Resolve di application layer.';
 
@@ -666,16 +682,14 @@ CREATE TABLE llm_analysis_cache (
     analysis_type       VARCHAR(50)  NOT NULL,
     kelas_ids           UUID[]       NOT NULL,
     result_json         JSONB        NOT NULL,
-    -- JSONB agar bisa query field tertentu langsung di DB.
     model_used          VARCHAR(100),
     prompt_tokens       INTEGER,
     completion_tokens   INTEGER,
     generated_at        TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     expires_at          TIMESTAMPTZ
-    -- NULL = cache permanen. Set ke NOW() + INTERVAL '180 days' untuk TTL.
 );
-CREATE INDEX idx_cache_kelas_ids ON llm_analysis_cache USING GIN (kelas_ids);
-CREATE INDEX idx_cache_expires   ON llm_analysis_cache (expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX idx_llm_cache_kelas_ids ON llm_analysis_cache USING GIN (kelas_ids);
+CREATE INDEX idx_llm_cache_expires   ON llm_analysis_cache (expires_at) WHERE expires_at IS NOT NULL;
 -- idx_cache_expires: partial index untuk cleanup job cache expired.
 COMMENT ON TABLE  llm_analysis_cache IS 'Cache hasil LLM call. cache_id = SHA256(sorted kelas_ids + analysis_type) dari application layer. expires_at NULL = permanen.';
 
@@ -701,7 +715,7 @@ BEGIN
         'pertanyaan_grup_portofolio', 'pertanyaan_portofolio',
         'kelas', 'pengajar_kelas',
         'statistik_kelas', 'nilai_dosen',
-        'skor_kuesioner_kelas', 'skor_kuesioner_dosen', 'skor_dimensi_dosen',
+        'skor_kuesioner_kelas', 'skor_kuesioner_dosen', 'skor_agregat_kuesioner_dosen',
         'teks_portofolio', 'komentar_verifikator', 'komentar_mahasiswa'
     ] LOOP
         EXECUTE format(
@@ -790,10 +804,31 @@ EXCEPTION WHEN OTHERS THEN RETURN FALSE;
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION fn_dosen_is_pengajar(p_kelas_id UUID)
+RETURNS BOOLEAN LANGUAGE plpgsql STABLE SECURITY DEFINER AS $$
+DECLARE v_dosen UUID;
+BEGIN
+    IF current_setting('app.role', true) <> 'dosen' THEN RETURN FALSE; END IF;
+    v_dosen := NULLIF(current_setting('app.dosen_id', true), '')::UUID;
+    IF v_dosen IS NULL THEN RETURN FALSE; END IF;
+    RETURN EXISTS (
+        SELECT 1 FROM pengajar_kelas pk
+        WHERE pk.kelas_id = p_kelas_id
+          AND pk.dosen_id = v_dosen
+    );
+EXCEPTION WHEN OTHERS THEN RETURN FALSE;
+END;
+$$;
+COMMENT ON FUNCTION fn_dosen_is_pengajar(UUID) IS
+'ABAC: TRUE jika dosen (app.dosen_id) terdaftar di pengajar_kelas untuk kelas ini.
+Menangani dosen cross-prodi (MK WI, team-teaching lintas fakultas).
+Berbeda dari fn_kelas_in_prodi yang berbasis prodi scope registrasi.';
+
+
 -- ── statistik_kelas ──────────────────────────────────────────────────────────
 ALTER TABLE statistik_kelas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_statistik_kelas ON statistik_kelas FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- ── distribusi_nilai ─────────────────────────────────────────────────────────
@@ -814,7 +849,7 @@ CREATE POLICY pol_nilai_dosen ON nilai_dosen FOR SELECT USING (
 -- ── skor_kuesioner_kelas ─────────────────────────────────────────────────────
 ALTER TABLE skor_kuesioner_kelas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_skor_kues_kelas ON skor_kuesioner_kelas FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- ── skor_kuesioner_dosen: PRIVAT — dosen hanya lihat skor miliknya [F1] ──────
@@ -826,9 +861,9 @@ CREATE POLICY pol_skor_kues_dosen ON skor_kuesioner_dosen FOR SELECT USING (
     OR fn_is_own_dosen(dosen_id)
 );
 
--- ── skor_dimensi_dosen: PRIVAT — sama dengan skor_kuesioner_dosen ─────────
-ALTER TABLE skor_dimensi_dosen ENABLE ROW LEVEL SECURITY;
-CREATE POLICY pol_skor_dimensi_dosen ON skor_dimensi_dosen FOR SELECT USING (
+-- ── skor_agregat_kuesioner_dosen: PRIVAT — sama dengan skor_kuesioner_dosen ─────────
+ALTER TABLE skor_agregat_kuesioner_dosen ENABLE ROW LEVEL SECURITY;
+CREATE POLICY pol_skor_agregat_kuesioner_dosen ON skor_agregat_kuesioner_dosen FOR SELECT USING (
     fn_is_global_reader()
     OR fn_is_dekanat_scope(kelas_id)
     OR (current_setting('app.role', true) IN ('kaprodi', 'jajaran_prodi') AND fn_kelas_in_prodi(kelas_id))
@@ -838,25 +873,25 @@ CREATE POLICY pol_skor_dimensi_dosen ON skor_dimensi_dosen FOR SELECT USING (
 -- ── teks_portofolio ──────────────────────────────────────────────────────────
 ALTER TABLE teks_portofolio ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_teks_porto ON teks_portofolio FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- ── komentar_verifikator ─────────────────────────────────────────────────────
 ALTER TABLE komentar_verifikator ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_komentar_verif ON komentar_verifikator FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- ── komentar_mahasiswa ───────────────────────────────────────────────────────
 ALTER TABLE komentar_mahasiswa ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_komentar_mhs ON komentar_mahasiswa FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- ── vector_chunks ────────────────────────────────────────────────────────────
 ALTER TABLE vector_chunks ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_vector_chunks ON vector_chunks FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- Tabel yang TIDAK memerlukan RLS (data tidak sensitif, bisa dibaca semua):
@@ -873,7 +908,7 @@ CREATE POLICY pol_vector_chunks ON vector_chunks FOR SELECT USING (
 --         pertanyaan_kuesioner, pertanyaan_grup_portofolio, pertanyaan_portofolio
 -- [CORE]  kelas, pengajar_kelas
 -- [ASSM]  statistik_kelas, distribusi_nilai, nilai_dosen
--- [KUES]  skor_kuesioner_kelas, skor_kuesioner_dosen, skor_dimensi_dosen
+-- [KUES]  skor_kuesioner_kelas, skor_kuesioner_dosen, skor_agregat_kuesioner_dosen
 -- [PORTO] teks_portofolio, komentar_verifikator, komentar_mahasiswa
 -- [AI]    vector_chunks, llm_analysis_cache
 -- ============================================================

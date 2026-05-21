@@ -1,7 +1,7 @@
 -- ================================================================
 -- SCHEMA : Auth, Session & Ingestion Management
 -- Urutan : Jalankan SETELAH schema_portofolio_kuesioner.sql
---          (tabel pengguna_peran mereference fakultas, program_studi, dosen yang didefinisikan di file sebelumnya)
+--          (tabel user_scopes mereference fakultas, program_studi, dosen yang didefinisikan di file sebelumnya)
 -- ================================================================
 --
 -- CATATAN DESAIN:
@@ -44,7 +44,7 @@ CREATE TYPE user_role_enum AS ENUM (
 );
 
 -- Metode autentikasi pengguna.
-CREATE TYPE metode_auth AS ENUM (
+CREATE TYPE auth_method AS ENUM (
     'sso_microsoft',    -- Login via SSO Microsoft ITB (mayoritas pengguna)
     'password'          -- Login via email + password (hanya admin)
 );
@@ -84,14 +84,14 @@ CREATE TYPE status_ingestion AS ENUM (
 -- SSO Microsoft: kolom password_hash = NULL.
 -- Login admin via password: password_hash wajib diisi (CHECK constraint).
 
-CREATE TABLE pengguna (
-    pengguna_id     UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE users (
+    user_id     UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     email           VARCHAR(320)  UNIQUE NOT NULL,
     -- Untuk SSO: email ITB (format: nip@itb.ac.id atau nama@itb.ac.id).
     -- Untuk admin password: email yang digunakan sebagai username login.
     
-    nama_lengkap    VARCHAR(300),
-    metode_auth     metode_auth   NOT NULL DEFAULT 'sso_microsoft',
+    fullname    VARCHAR(300),
+    auth_method     auth_method   NOT NULL DEFAULT 'sso_microsoft',
 
     password_hash   VARCHAR(255),
     -- NULL untuk pengguna SSO. Wajib diisi untuk pengguna metode_auth='password'.
@@ -106,19 +106,19 @@ CREATE TABLE pengguna (
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
     CONSTRAINT chk_password_required CHECK (
-        metode_auth <> 'password' OR password_hash IS NOT NULL
+        auth_method <> 'password' OR password_hash IS NOT NULL
     )
 );
 
-CREATE INDEX idx_pengguna_email     ON pengguna (email);
--- idx_pengguna_email: lookup saat login — setiap request autentikasi.
-CREATE INDEX idx_pengguna_is_active ON pengguna (is_active) WHERE is_active = TRUE;
+CREATE INDEX idx_users_email     ON users(email);
+-- idx_users_email: lookup saat login — setiap request autentikasi.
+CREATE INDEX idx_users_is_active ON users(is_active) WHERE is_active = TRUE;
 -- Partial index: hanya akun aktif. Dipakai filter di halaman manajemen akun.
 
-COMMENT ON TABLE  pengguna IS 'Semua pengguna aplikasi. SSO Microsoft = password_hash NULL. Admin password = password_hash wajib ada. last_login diupdate tiap login berhasil.';
-COMMENT ON COLUMN pengguna.email IS 'Email ITB untuk SSO, atau email username untuk login password (admin). UNIQUE.';
-COMMENT ON COLUMN pengguna.password_hash IS 'NULL untuk pengguna SSO. Wajib ada untuk metode_auth=password. Gunakan bcrypt/argon2. Jangan simpan plaintext.';
-COMMENT ON COLUMN pengguna.last_login IS 'Timestamp login terakhir berhasil. NULL jika belum pernah login.';
+COMMENT ON TABLE  users IS 'Semua pengguna aplikasi. SSO Microsoft = password_hash NULL. Admin password = password_hash wajib ada. last_login diupdate tiap login berhasil.';
+COMMENT ON COLUMN users.email IS 'Email ITB untuk SSO, atau email username untuk login password (admin). UNIQUE.';
+COMMENT ON COLUMN users.password_hash IS 'NULL untuk pengguna SSO. Wajib ada untuk metode_auth=password. Gunakan bcrypt/argon2. Jangan simpan plaintext.';
+COMMENT ON COLUMN users.last_login IS 'Timestamp login terakhir berhasil. NULL jika belum pernah login.';
 
 
 -- ── 2.2 Peran Pengguna ───────────────────────────────────────────────────────
@@ -131,10 +131,10 @@ COMMENT ON COLUMN pengguna.last_login IS 'Timestamp login terakhir berhasil. NUL
 --   dosen → prodi_id wajib (scope prodi), dosen_ref_id wajib
 
 -- Mapping dilakukan manual oleh admin. 
-CREATE TABLE pengguna_peran (
+CREATE TABLE user_scopes (
     id              UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
-    pengguna_id     UUID           NOT NULL REFERENCES pengguna(pengguna_id) ON DELETE CASCADE,
-    kode_peran      user_role_enum NOT NULL,
+    user_id     UUID           NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_role      user_role_enum NOT NULL,
     fakultas_id     UUID           REFERENCES fakultas(fakultas_id) ON DELETE SET NULL,
     -- Wajib diisi untuk peran dekan/jajaran_dekanat.
     -- NULL untuk admin, direktorat (scope global).
@@ -151,7 +151,7 @@ CREATE TABLE pengguna_peran (
     is_active       BOOLEAN        NOT NULL DEFAULT TRUE,
     -- FALSE = peran ini dinonaktifkan sementara tanpa menghapus baris.
 
-    created_by      UUID           REFERENCES pengguna(pengguna_id) ON DELETE SET NULL,
+    created_by      UUID           REFERENCES users(user_id) ON DELETE SET NULL,
     -- UUID admin yang membuat/assign peran ini. NULL jika sistem yang membuat.
 
     created_at      TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
@@ -171,16 +171,16 @@ CREATE TABLE pengguna_peran (
     )
 );
 
-CREATE INDEX idx_pp_pengguna ON pengguna_peran (pengguna_id, is_active);
--- idx_pp_pengguna: resolve peran aktif pengguna di awal setiap request.
+CREATE INDEX idx_user_scopes_pengguna ON user_scopes (user_id, is_active);
+-- idx_user_scopes_pengguna: resolve peran aktif pengguna di awal setiap request.
 -- Dipakai backend untuk set session variables (app.role, app.prodi_id, dll.).
 
-CREATE INDEX idx_pp_dosen_ref ON pengguna_peran (dosen_ref_id);
--- idx_pp_dosen_ref: lookup "akun mana yang terhubung ke dosen X?" saat setup akun dosen.
+CREATE INDEX idx_user_scopes_dosen_ref ON user_scopes (dosen_ref_id);
+-- idx_user_scopes_dosen_ref: lookup "akun mana yang terhubung ke dosen X?" saat setup akun dosen.
 
-COMMENT ON TABLE  pengguna_peran IS 'Mapping pengguna → peran, multi-role (1 pengguna bisa punya beberapa baris). Dilakukan manual admin. Scope ditentukan oleh kombinasi kode_peran + fakultas_id/prodi_id/dosen_ref_id.';
-COMMENT ON COLUMN pengguna_peran.dosen_ref_id IS 'FK ke dosen. Wajib untuk kode_peran=dosen. Digunakan RLS: backend set app.dosen_id dari kolom ini untuk filter data privat dosen.';
-COMMENT ON COLUMN pengguna_peran.created_by IS 'Admin yang assign peran. NULL jika dibuat sistem (seed awal).';
+COMMENT ON TABLE  user_scopes IS 'Mapping pengguna → peran, multi-role (1 pengguna bisa punya beberapa baris). Dilakukan manual admin. Scope ditentukan oleh kombinasi kode_peran + fakultas_id/prodi_id/dosen_ref_id.';
+COMMENT ON COLUMN user_scopes.dosen_ref_id IS 'FK ke dosen. Wajib untuk kode_peran=dosen. Digunakan RLS: backend set app.dosen_id dari kolom ini untuk filter data privat dosen.';
+COMMENT ON COLUMN user_scopes.created_by IS 'Admin yang assign peran. NULL jika dibuat sistem (seed awal).';
 
 
 -- ============================================================
@@ -196,7 +196,7 @@ COMMENT ON COLUMN pengguna_peran.created_by IS 'Admin yang assign peran. NULL ji
 CREATE TABLE sessions (
     id                  BIGSERIAL   PRIMARY KEY,
     session_token_hash  BYTEA       NOT NULL UNIQUE,
-    user_id             UUID        NOT NULL REFERENCES pengguna(pengguna_id) ON DELETE CASCADE,
+    user_id             UUID        NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     -- ON DELETE CASCADE: jika pengguna dihapus, semua sesinya ikut terhapus.
 
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -226,7 +226,7 @@ COMMENT ON COLUMN sessions.expires_at IS 'Expiry session. Backend HARUS cek expi
 
 CREATE TABLE ingestion_batch (
     batch_id        UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID             NOT NULL REFERENCES pengguna(pengguna_id) ON DELETE RESTRICT,
+    user_id         UUID             NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
     -- Admin yang melakukan ingestion. RESTRICT: jangan hapus pengguna jika ada batch untuk audit log.
 
     notes           TEXT,
@@ -350,8 +350,8 @@ DO $$
 DECLARE t TEXT;
 BEGIN
     FOREACH t IN ARRAY ARRAY[
-        'pengguna',
-        'pengguna_peran',
+        'users',
+        'user_scopes',
         'ingestion_batch',
         'ingestion_file_log'
     ] LOOP
@@ -392,12 +392,12 @@ $$;
 -- ============================================================
 -- TOTAL: 5 TABEL
 --
--- [USER]  pengguna, pengguna_peran
+-- [USER]  pengguna, user_scopes
 -- [SESS]  sessions
 -- [ING]   ingestion_batch, ingestion_file_log
 --
 -- ENUM TYPES (4):
---   user_role_enum    → peran pengguna (admin, direktorat, dekan, dll.)
+--   user_role_enum    → peran users (admin, direktorat, dekan, dll.)
 --   metode_auth       → sso_microsoft | password
 --   jenis_file_porto  → 10 jenis file CSV domain portofolio
 --   status_ingestion  → pending | processing | success | partial | failed
