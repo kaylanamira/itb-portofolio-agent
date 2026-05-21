@@ -1,6 +1,6 @@
 -- ================================================================
 -- SCHEMA : Data Portofolio & Kuesioner Akademik ITB
--- Urutan : Jalankan file ini SEBELUM schema_auth_session.sql
+-- Urutan : Jalankan file ini SEBELUM schema_auth_and_ingestion.sql
 -- ================================================================
 --
 --  CATATAN :
@@ -33,16 +33,16 @@
 --
 -- UPSERT KEY MAP saat import CSV:
 --   dosen.csv        : dosen_id (int)       → six_dosen_id
---   mata_kuliah.csv  : mata_kuliah_id (int)  → six_matkul_id
+--   mata_kuliah.csv  : matkul_id (int)  → six_matkul_id
 --   kelas.csv        : kelas_id (int)        → six_kelas_id
 --                    : no_ps → kode_prodi → prodi_id
---                    : mata_kuliah_id → six_matkul_id → matkul_id
+--                    : matkul_id → six_matkul_id → matkul_id
 --   pengajar.csv     : kelas_id+dosen_id → six_* → UUID FK
 --   nilai_kelas.csv  : kelas_id → six_kelas_id
 --                    : JSON kuesioner keys → kd_pertanyaan → pertanyaan_kuesioner_id
 --   nilai_dosen.csv  : kelas_id+dosen_id → six_* → UUID FK
 --                    : JSON kuesioner keys → pertanyaan_kuesioner_id
---                    : JSON skor_kues keys (1,2,3) → dimensi_key
+--                    : JSON skor_kues keys (1,2,3) → agregat_kuesioner_key
 --   portofolio.csv   : kelas_id → six_kelas_id
 --                    : JSON isian keys → kd_pertanyaan → pertanyaan_portofolio_id
 --                    : JSON komentar keys → kd_grup → pertanyaan_grup_id
@@ -131,7 +131,7 @@ CREATE INDEX idx_prodi_kode     ON program_studi (kode_prodi);
 -- idx_prodi_kode: KRITIS untuk ETL — lookup no_ps→prodi_id saat import kelas.csv
 COMMENT ON TABLE  program_studi             IS '1 prodi hanya dimiliki 1 fakultas (no sharing). Relasi N:1 ke fakultas.';
 COMMENT ON COLUMN program_studi.kode_prodi IS
-    'Natural key SIX ITB: harus identik dengan nilai no_ps'
+    'Natural key SIX ITB: harus identik dengan nilai no_ps. '
     'Kode PDDikti, e.g. 102=Fisika, 230=Teknik Kimia. '
     'Dipakai sebagai lookup key di ETL saat import kelas.csv (no_ps -> prodi_id).';
 COMMENT ON COLUMN program_studi.singkatan_prodi   IS 'Singkatan lazim, e.g. IF, STI — dipakai di label UI.';
@@ -144,7 +144,7 @@ CREATE TABLE dosen (
     -- Natural key dari dosen.csv SIX ITB (kolom dosen_id).
 
     kk_id           UUID         NOT NULL REFERENCES kelompok_keahlian(kk_id) ON DELETE RESTRICT,
-    -- NULLABLE. Tidak ada di CSV SIX. Diisi manual admin setelah import.
+
     prodi_id UUID REFERENCES program_studi(prodi_id),
     nama_dosen      VARCHAR(300) NOT NULL,
     is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
@@ -159,11 +159,9 @@ CREATE INDEX idx_dosen_nama_trgm ON dosen USING GIN (nama_dosen gin_trgm_ops);
 CREATE TABLE mata_kuliah (
     matkul_id       UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
     six_matkul_id   INTEGER        UNIQUE,
-    -- Natural key dari mata_kuliah.csv SIX ITB (kolom mata_kuliah_id).
+    -- Natural key dari mata_kuliah.csv SIX ITB (kolom matkul_id).
 
-    prodi_id        UUID           REFERENCES program_studi(prodi_id) ON DELETE SET NULL,
-    -- NULLABLE. CSV tidak menyertakan prodi per MK.
-    -- MK lintas-prodi (prefix WI) dibiarkan NULL.
+    prodi_id        UUID           NOT NULL REFERENCES program_studi(prodi_id) ON DELETE RESTRICT,
 
     kode_mk       VARCHAR(20)    NOT NULL,
     -- e.g. 'FI1101', 'TK3101', 'WI1111'.
@@ -202,7 +200,7 @@ COMMENT ON COLUMN mata_kuliah.tahun_kurikulum IS
 COMMENT ON COLUMN mata_kuliah.sks IS
     'Jumlah SKS mata kuliah. Atribut MK, bukan kelas. ';
 COMMENT ON COLUMN mata_kuliah.jenis_nilai IS
-    'Sistem penilaian: ABCDE (mayoritas Mata Kuliah) atau PassFail '
+    'Sistem penilaian: ABCDE (mayoritas Mata Kuliah) atau PassFail ';
 
 -- ============================================================
 -- SECTION 3 — QUESTIONNAIRE & PORTFOLIO REFERENCE TABLES
@@ -422,11 +420,11 @@ CREATE TABLE pengajar_kelas (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (kelas_id, dosen_id)
 );
-CREATE INDEX idx_pk_dosen       ON pengajar_kelas (dosen_id);
--- idx_pk_dosen: lookup "dosen X mengajar kelas apa?" — dipakai profil dosen & RLS
-CREATE INDEX idx_pk_kelas       ON pengajar_kelas (kelas_id);
-CREATE INDEX idx_pk_kelas_utama ON pengajar_kelas (kelas_id, is_utama);
--- idx_pk_kelas_utama: filter dosen utama saja untuk aggregasi di dashboard
+CREATE INDEX idx_pengajar_kelas_dosen       ON pengajar_kelas (dosen_id);
+-- idx_pengajar_kelas_dosen: lookup "dosen X mengajar kelas apa?" — dipakai profil dosen & RLS
+CREATE INDEX idx_pengajar_kelas_kelas       ON pengajar_kelas (kelas_id);
+CREATE INDEX idx_pengajar_kelas_kelas_utama ON pengajar_kelas (kelas_id, is_utama);
+-- idx_pengajar_kelas_kelas_utama: filter dosen utama saja untuk aggregasi di dashboard
 COMMENT ON TABLE  pengajar_kelas IS
     'Relasi many-to-many antara kelas dan dosen (team-teaching). '
     '1 dosen bisa mengajar banyak kelas; 1 kelas bisa diampu banyak dosen. '
@@ -576,8 +574,6 @@ CREATE TABLE skor_kuesioner_kelas (
 );
 CREATE INDEX idx_skor_kuesioner_kelas_kelas      ON skor_kuesioner_kelas (kelas_id);
 CREATE INDEX idx_skor_kuesioner_kelas_pertanyaan ON skor_kuesioner_kelas (pertanyaan_kuesioner_id);
-COMMENT ON TABLE  skor_kuesioner_kelas IS 'Skor Likert rata-rata per pertanyaan per kelas (level kelas). Source: nilai_kelas.csv JSON. Pertanyaan: Q21,22,23,24,28,29,30,35,37 (TERVERIFIKASI). Tidak ada RLS ketat — data kelas tidak privat per dosen.';
-
 COMMENT ON TABLE  skor_kuesioner_kelas IS
     'Skor Likert rata-rata per pertanyaan kuesioner pada level kelas. '
     'Nilai di tabel ini identik untuk semua dosen dalam satu kelas. '
@@ -641,7 +637,7 @@ CREATE TABLE skor_agregat_kuesioner_dosen (
     rata_skor            NUMERIC(5,4) NOT NULL CHECK (rata_skor BETWEEN 1 AND 4),
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    UNIQUE (kelas_id, dosen_id, agregat_key)
+    UNIQUE (kelas_id, dosen_id, agregat_kuesioner_key)
 );
 CREATE INDEX idx_skor_agregat_kuesioner_dosen_dosen ON skor_agregat_kuesioner_dosen (dosen_id);
 CREATE INDEX idx_skor_agregat_kuesioner_dosen_kelas ON skor_agregat_kuesioner_dosen (kelas_id);
@@ -899,7 +895,7 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-COMMENT ON FUNCTION fn_auto_updated_at() IS 'Auto-set updated_at=NOW() pada setiap UPDATE. Digunakan oleh semua tabel dengan kolom updated_at. Juga dipanggil dari schema_auth_session.sql.';
+COMMENT ON FUNCTION fn_auto_updated_at() IS 'Auto-set updated_at=NOW() pada setiap UPDATE. Digunakan oleh semua tabel dengan kolom updated_at. Juga dipanggil dari schema_auth_and_ingestion.sql.';
 
 DO $$
 DECLARE t TEXT;

@@ -6,7 +6,7 @@
 --
 -- CATATAN DESAIN:
 --
--- Login: SSO Microsoft ITB (mayoritas pengguna) + email/password (hanya admin). metode_auth membedakan keduanya.
+-- Login: SSO Microsoft ITB (mayoritas pengguna) + email/password (hanya admin). auth_method membedakan keduanya.
 --
 -- Session-based auth: session_token_hash di tabel sessions.
 --         Token hash (bukan token asli) disimpan di DB untuk keamanan.
@@ -90,11 +90,11 @@ CREATE TABLE users (
     -- Untuk SSO: email ITB (format: nip@itb.ac.id atau nama@itb.ac.id).
     -- Untuk admin password: email yang digunakan sebagai username login.
     
-    fullname    VARCHAR(300),
+    name    VARCHAR(300),
     auth_method     auth_method   NOT NULL DEFAULT 'sso_microsoft',
 
     password_hash   VARCHAR(255),
-    -- NULL untuk pengguna SSO. Wajib diisi untuk pengguna metode_auth='password'.
+    -- NULL untuk pengguna SSO. Wajib diisi untuk pengguna auth_method='password'.
 
     is_active       BOOLEAN       NOT NULL DEFAULT TRUE,
     -- FALSE = akun dinonaktifkan (tidak bisa login). Tidak dihapus permanen.
@@ -117,22 +117,22 @@ CREATE INDEX idx_users_is_active ON users(is_active) WHERE is_active = TRUE;
 
 COMMENT ON TABLE  users IS 'Semua pengguna aplikasi. SSO Microsoft = password_hash NULL. Admin password = password_hash wajib ada. last_login diupdate tiap login berhasil.';
 COMMENT ON COLUMN users.email IS 'Email ITB untuk SSO, atau email username untuk login password (admin). UNIQUE.';
-COMMENT ON COLUMN users.password_hash IS 'NULL untuk pengguna SSO. Wajib ada untuk metode_auth=password. Gunakan bcrypt/argon2. Jangan simpan plaintext.';
+COMMENT ON COLUMN users.password_hash IS 'NULL untuk pengguna SSO. Wajib ada untuk auth_method=password. Gunakan bcrypt/argon2. Jangan simpan plaintext.';
 COMMENT ON COLUMN users.last_login IS 'Timestamp login terakhir berhasil. NULL jika belum pernah login.';
 
 
 -- ── 2.2 Peran Pengguna ───────────────────────────────────────────────────────
 -- Multi-role: satu pengguna bisa punya lebih dari satu baris (satu per peran). 
 
--- Scope peran ditentukan oleh kombinasi kode_peran + fakultas_id/prodi_id:
+-- Scope peran ditentukan oleh kombinasi user_role + fakultas_id/prodi_id:
 --   admin, direktorat → fakultas_id NULL, prodi_id NULL (scope global)
 --   dekan, jajaran_dekanat → fakultas_id wajib, prodi_id NULL
 --   kaprodi, jajaran_prodi → prodi_id wajib, fakultas_id NULL (atau diisi untuk reference)
---   dosen → prodi_id wajib (scope prodi), dosen_ref_id wajib
+--   dosen → prodi_id wajib (scope prodi), dosen_id wajib
 
 -- Mapping dilakukan manual oleh admin. 
 CREATE TABLE user_scopes (
-    id              UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_scope_id              UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID           NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     user_role      user_role_enum NOT NULL,
     fakultas_id     UUID           REFERENCES fakultas(fakultas_id) ON DELETE SET NULL,
@@ -143,7 +143,7 @@ CREATE TABLE user_scopes (
     -- Wajib diisi untuk peran kaprodi/jajaran_prodi/dosen.
     -- NULL untuk admin, direktorat, dekan (scope lebih luas).
 
-    dosen_ref_id    UUID           REFERENCES dosen(dosen_id) ON DELETE SET NULL,
+    dosen_id    UUID           REFERENCES dosen(dosen_id) ON DELETE SET NULL,
     -- Referensi ke entitas dosen (tabel dosen). Wajib diisi untuk peran 'dosen'.
     -- NULL untuk semua peran non-dosen.
     -- Digunakan RLS: fn_is_own_dosen() membandingkan app.dosen_id dengan dosen_id di nilai_dosen.
@@ -159,27 +159,27 @@ CREATE TABLE user_scopes (
 
     CONSTRAINT chk_peran_scope CHECK (
         -- Admin & direktorat: tidak perlu scope spesifik
-        (kode_peran IN ('admin', 'direktorat'))
+        (user_role IN ('admin', 'direktorat'))
         -- Dekanat: wajib ada fakultas_id
-        OR (kode_peran IN ('dekan', 'jajaran_dekanat') AND fakultas_id IS NOT NULL)
+        OR (user_role IN ('dekan', 'jajaran_dekanat') AND fakultas_id IS NOT NULL)
         -- Prodi & dosen: wajib ada prodi_id
-        OR (kode_peran IN ('kaprodi', 'jajaran_prodi', 'dosen') AND prodi_id IS NOT NULL)
+        OR (user_role IN ('kaprodi', 'jajaran_prodi', 'dosen') AND prodi_id IS NOT NULL)
     ),
-    CONSTRAINT chk_dosen_ref CHECK (
-        -- Peran dosen wajib punya dosen_ref_id
-        kode_peran <> 'dosen' OR dosen_ref_id IS NOT NULL
+    CONSTRAINT chk_dosen_scope CHECK (
+        -- Peran dosen wajib punya dosen_id
+        user_role <> 'dosen' OR dosen_id IS NOT NULL
     )
 );
 
-CREATE INDEX idx_user_scopes_pengguna ON user_scopes (user_id, is_active);
--- idx_user_scopes_pengguna: resolve peran aktif pengguna di awal setiap request.
+CREATE INDEX idx_user_scopes_user ON user_scopes (user_id, is_active);
+-- idx_user_scopes_user: resolve peran aktif pengguna di awal setiap request.
 -- Dipakai backend untuk set session variables (app.role, app.prodi_id, dll.).
 
-CREATE INDEX idx_user_scopes_dosen_ref ON user_scopes (dosen_ref_id);
+CREATE INDEX idx_user_scopes_dosen_ref ON user_scopes (dosen_id);
 -- idx_user_scopes_dosen_ref: lookup "akun mana yang terhubung ke dosen X?" saat setup akun dosen.
 
-COMMENT ON TABLE  user_scopes IS 'Mapping pengguna → peran, multi-role (1 pengguna bisa punya beberapa baris). Scope ditentukan oleh kombinasi kode_peran + fakultas_id/prodi_id/dosen_ref_id.';
-COMMENT ON COLUMN user_scopes.dosen_ref_id IS 'FK ke dosen. Wajib untuk kode_peran=dosen. Digunakan RLS: backend set app.dosen_id dari kolom ini untuk filter data privat dosen.';
+COMMENT ON TABLE  user_scopes IS 'Mapping pengguna → peran, multi-role (1 pengguna bisa punya beberapa baris). Scope ditentukan oleh kombinasi user_role + fakultas_id/prodi_id/dosen_id.';
+COMMENT ON COLUMN user_scopes.dosen_id IS 'FK ke dosen. Wajib untuk user_role=dosen. Digunakan RLS: backend set app.dosen_id dari kolom ini untuk filter data privat dosen.';
 COMMENT ON COLUMN user_scopes.created_by IS 'Admin yang assign peran. NULL jika dibuat sistem (seed awal).';
 
 
@@ -252,10 +252,10 @@ CREATE TABLE ingestion_batch (
     updated_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_ib_user_id    ON ingestion_batch (user_id);
-CREATE INDEX idx_ib_status     ON ingestion_batch (status);
-CREATE INDEX idx_ib_started_at ON ingestion_batch (started_at DESC);
--- idx_ib_started_at: tampilkan riwayat batch terbaru di halaman manajemen ingestion.
+CREATE INDEX idx_ingestion_batch_user_id    ON ingestion_batch (user_id);
+CREATE INDEX idx_ingestion_batch_status     ON ingestion_batch (status);
+CREATE INDEX idx_ingestion_batch_started_at ON ingestion_batch (started_at DESC);
+-- idx_ingestion_batch_started_at: tampilkan riwayat batch terbaru di halaman manajemen ingestion.
 
 COMMENT ON TABLE  ingestion_batch IS 'Satu sesi ingestion (bisa multi-file). Dibuat admin. ingestion_file_log berisi detail per file dalam batch ini. Hanya admin yang bisa insert.';
 COMMENT ON COLUMN ingestion_batch.notes IS 'Catatan admin, e.g. periode data yang diimport. Opsional.';
@@ -279,7 +279,7 @@ CREATE TABLE ingestion_file_log (
     -- === Konteks Periode ===
     tahun_ajaran      VARCHAR(9),
     -- Periode data yang diimport, format 'YYYY/YYYY'. e.g. '2024/2025'.
-    -- NULLABLE: tidak semua file perlu periode (e.g. dosen.csv, mata_kuliah.csv).
+    -- NULLABLE: tidak semua file perlu periode (e.g. dosen.csv, m.csv).
 
     semester          SMALLINT         CHECK (semester IS NULL OR semester IN (1, 2, 3)),
     -- 1=Ganjil, 2=Genap, 3=Semester Pendek. NULLABLE.
@@ -328,10 +328,10 @@ CREATE TABLE ingestion_file_log (
     )
 );
 
-CREATE INDEX idx_ifl_batch_id  ON ingestion_file_log (batch_id);
+CREATE INDEX idx_ingestion_file_log_batch_id  ON ingestion_file_log (batch_id);
 -- Lookup semua file dalam satu batch.
-CREATE INDEX idx_ifl_jenis     ON ingestion_file_log (jenis_file);
-CREATE INDEX idx_ifl_status    ON ingestion_file_log (status) WHERE status IN ('pending', 'processing');
+CREATE INDEX idx_ingestion_file_log_jenis     ON ingestion_file_log (jenis_file);
+CREATE INDEX idx_ingestion_file_log_status    ON ingestion_file_log (status) WHERE status IN ('pending', 'processing');
 -- Partial index: hanya file yang belum selesai (untuk monitoring aktif).
 
 COMMENT ON TABLE  ingestion_file_log IS 'Log detail per file CSV per batch ingestion. Statistik baris (new_row, updated_row, dll.) diupdate incremental selama proses. error_detail JSONB berisi detail error per baris yang gagal.';
@@ -392,13 +392,13 @@ $$;
 -- ============================================================
 -- TOTAL: 5 TABEL
 --
--- [USER]  pengguna, user_scopes
+-- [USER]  users, user_scopes
 -- [SESS]  sessions
 -- [ING]   ingestion_batch, ingestion_file_log
 --
 -- ENUM TYPES (4):
 --   user_role_enum    → peran users (admin, direktorat, dekan, dll.)
---   metode_auth       → sso_microsoft | password
+--   auth_method       → sso_microsoft | password
 --   jenis_file_porto  → 10 jenis file CSV domain portofolio
 --   status_ingestion  → pending | processing | success | partial | failed
 --
