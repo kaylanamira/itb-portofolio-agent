@@ -1028,7 +1028,7 @@ CREATE POLICY pol_statistik_kelas ON statistik_kelas FOR SELECT USING (
 -- ── distribusi_nilai ─────────────────────────────────────────────────────────
 ALTER TABLE distribusi_nilai ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pol_distribusi_nilai ON distribusi_nilai FOR SELECT USING (
-    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id)
+    fn_is_global_reader() OR fn_is_dekanat_scope(kelas_id) OR fn_kelas_in_prodi(kelas_id) OR fn_dosen_is_pengajar(kelas_id)
 );
 
 -- ── nilai_dosen: PRIVAT — dosen hanya lihat nilai_akhir miliknya [F1] ────────
