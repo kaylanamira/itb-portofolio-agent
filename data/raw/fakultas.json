@@ -50,5 +50,9 @@
   {
     "kode_fakultas": "SPITM",
     "nama_fakultas": "Sekolah Pascasarjana Ilmu dan Teknologi Multidisiplin"
+  },
+  {
+    "kode_fakultas": "NONFS",
+    "nama_fakultas": "Non Fakultas Sekolah"
   }
 ]

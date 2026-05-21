@@ -357,6 +357,13 @@
     "kode_fakultas": "FSRD"
   },
   {
+    "kode_prodi": "179",
+    "nama_prodi": "Mata Kuliah Umum",
+    "singkatan_prodi": "MKU",
+    "jenjang": "S1",
+    "kode_fakultas": "NONFS"
+  },
+  {
     "kode_prodi": "190",
     "nama_prodi": "Manajemen",
     "singkatan_prodi": "MB",
@@ -513,7 +520,7 @@
   {
     "kode_prodi": "226",
     "nama_prodi": "Teknik Geotermal",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "PB",
     "jenjang": "S2",
     "kode_fakultas": "FTTM"
   },
@@ -527,14 +534,14 @@
   {
     "kode_prodi": "224",
     "nama_prodi": "Sains Kebumian",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "SB",
     "jenjang": "S2",
     "kode_fakultas": "FITB"
   },
   {
     "kode_prodi": "227",
     "nama_prodi": "Teknik Air Tanah",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "AT",
     "jenjang": "S2",
     "kode_fakultas": "FITB"
   },
@@ -562,21 +569,21 @@
   {
     "kode_prodi": "234",
     "nama_prodi": "Teknik dan Manajemen Industri",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "TI",
     "jenjang": "S2",
     "kode_fakultas": "FTI"
   },
   {
     "kode_prodi": "238",
     "nama_prodi": "Instrumentasi dan Kontrol",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "IK",
     "jenjang": "S2",
     "kode_fakultas": "FTI"
   },
   {
     "kode_prodi": "294",
     "nama_prodi": "Logistik",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "LO",
     "jenjang": "S2",
     "kode_fakultas": "FTI"
   },
@@ -625,7 +632,7 @@
   {
     "kode_prodi": "237",
     "nama_prodi": "Ilmu dan Teknik Material",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "MT",
     "jenjang": "S2",
     "kode_fakultas": "FTMD"
   },
@@ -653,35 +660,35 @@
   {
     "kode_prodi": "257",
     "nama_prodi": "Pengelolaan Infrastruktur Air Bersih dan Sanitasi",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "IS",
     "jenjang": "S2",
     "kode_fakultas": "FTSL"
   },
   {
     "kode_prodi": "258",
     "nama_prodi": "Pengelolaan Sumberdaya Air (PSDA)",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "SA",
     "jenjang": "S2",
     "kode_fakultas": "FTSL"
   },
   {
     "kode_prodi": "269",
     "nama_prodi": "Sistem dan Teknik Jalan Raya",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "SJ",
     "jenjang": "S2",
     "kode_fakultas": "FTSL"
   },
   {
     "kode_prodi": "240",
     "nama_prodi": "Studi Pembangunan",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "SP",
     "jenjang": "S2",
     "kode_fakultas": "SAPPK"
   },
   {
     "kode_prodi": "242",
     "nama_prodi": "Transportasi",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "TR",
     "jenjang": "S2",
     "kode_fakultas": "SAPPK"
   },
@@ -702,21 +709,21 @@
   {
     "kode_prodi": "256",
     "nama_prodi": "Rancang Kota",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "RK",
     "jenjang": "S2",
     "kode_fakultas": "SAPPK"
   },
   {
     "kode_prodi": "288",
     "nama_prodi": "Perencanaan Kepariwisataan",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "PK",
     "jenjang": "S2",
     "kode_fakultas": "SAPPK"
   },
   {
     "kode_prodi": "289",
     "nama_prodi": "Arsitektur Lanskap",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "AL",
     "jenjang": "S2",
     "kode_fakultas": "SAPPK"
   },
@@ -730,35 +737,35 @@
   {
     "kode_prodi": "271",
     "nama_prodi": "Desain",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "DS",
     "jenjang": "S2",
     "kode_fakultas": "FSRD"
   },
   {
     "kode_prodi": "290",
     "nama_prodi": "Sains Manajemen",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "MB",
     "jenjang": "S2",
     "kode_fakultas": "SBM"
   },
   {
     "kode_prodi": "291",
     "nama_prodi": "Administrasi Bisnis",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "MM",
     "jenjang": "S2",
     "kode_fakultas": "SBM"
   },
   {
     "kode_prodi": "293",
     "nama_prodi": "Administrasi Bisnis (Kampus Jakarta)",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "MM",
     "jenjang": "S2",
     "kode_fakultas": "SBM"
   },
   {
     "kode_prodi": "279",
     "nama_prodi": "Teknokultur",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "TC",
     "jenjang": "S2",
     "kode_fakultas": "SPITM"
   },
@@ -772,7 +779,7 @@
   {
     "kode_prodi": "287",
     "nama_prodi": "Teknologi Nano",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "NT",
     "jenjang": "S2",
     "kode_fakultas": "SPITM"
   },
@@ -807,7 +814,7 @@
   {
     "kode_prodi": "349",
     "nama_prodi": "Rekayasa Nuklir",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "RN",
     "jenjang": "S3",
     "kode_fakultas": "FMIPA"
   },
@@ -821,14 +828,14 @@
   {
     "kode_prodi": "307",
     "nama_prodi": "Farmasi",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "FA",
     "jenjang": "S3",
     "kode_fakultas": "SF"
   },
   {
     "kode_prodi": "321",
     "nama_prodi": "Rekayasa Pertambangan",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "TA",
     "jenjang": "S3",
     "kode_fakultas": "FTTM"
   },
@@ -863,7 +870,7 @@
   {
     "kode_prodi": "324",
     "nama_prodi": "Sains Kebumian",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "SB",
     "jenjang": "S3",
     "kode_fakultas": "FITB"
   },
@@ -891,14 +898,14 @@
   {
     "kode_prodi": "334",
     "nama_prodi": "Teknik dan Manajemen Industri",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "TI",
     "jenjang": "S3",
     "kode_fakultas": "FTI"
   },
   {
     "kode_prodi": "332",
     "nama_prodi": "Teknik Elektro dan Informatika",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "EI",
     "jenjang": "S3",
     "kode_fakultas": "STEI"
   },
@@ -919,7 +926,7 @@
   {
     "kode_prodi": "337",
     "nama_prodi": "Ilmu dan Teknik Material",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "MT",
     "jenjang": "S3",
     "kode_fakultas": "FTMD"
   },
@@ -940,7 +947,7 @@
   {
     "kode_prodi": "342",
     "nama_prodi": "Transportasi",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "TR",
     "jenjang": "S3",
     "kode_fakultas": "SAPPK"
   },
@@ -961,42 +968,42 @@
   {
     "kode_prodi": "370",
     "nama_prodi": "Ilmu Seni Rupa dan Desain",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "SD",
     "jenjang": "S3",
     "kode_fakultas": "FSRD"
   },
   {
     "kode_prodi": "390",
     "nama_prodi": "Sains Manajemen",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "MB",
     "jenjang": "S3",
     "kode_fakultas": "SBM"
   },
   {
     "kode_prodi": "387",
     "nama_prodi": "Sains dan Teknologi Nano",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "NT",
     "jenjang": "S3",
     "kode_fakultas": "SPITM"
   },
   {
     "kode_prodi": "907",
     "nama_prodi": "Profesi Apoteker",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "FP",
     "jenjang": "Profesi",
     "kode_fakultas": "SF"
   },
   {
     "kode_prodi": "952",
     "nama_prodi": "Profesi Arsitek",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "PA",
     "jenjang": "Profesi",
     "kode_fakultas": "SAPPK"
   },
   {
     "kode_prodi": "900",
     "nama_prodi": "Profesi Insinyur",
-    "singkatan_prodi": null,
+    "singkatan_prodi": "PI",
     "jenjang": "Profesi",
     "kode_fakultas": "SPITM"
   }

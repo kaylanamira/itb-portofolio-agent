@@ -9,7 +9,8 @@ Menjalankan 6 phase secara berurutan:
   Phase 3 — JSON  : enrich dosen (update kk_id + insert baru dari JSON)
   Phase 4 — CSV   : kelas → pengajar_kelas
   Phase 5 — CSV   : nilai_kelas (→ statistik_kelas + skor_kuesioner_kelas)
-                    nilai_dosen (→ nilai_dosen + skor_kuesioner_dosen + skor_dimensi_dosen)
+                    nilai_dosen (→ nilai_dosen + skor_kuesioner_dosen
+                               + skor_agregat_kuesioner_dosen)
   Phase 6 — CSV   : portofolio (→ teks_portofolio + komentar_verifikator)
 
 Setiap file dicatat ke ingestion_batch + ingestion_file_log.
@@ -21,8 +22,8 @@ Prasyarat:
   - Dependensi: psycopg[binary], rapidfuzz, python-dotenv, rich
 
 Jalankan:
-  python ingest.py
-  python ingest.py --data-dir /path/ke/folder/csv-dan-json
+  python ingest_academic.py
+  python ingest_academic.py --data-dir /path/ke/folder/csv-dan-json
 """
 
 import asyncio
@@ -30,7 +31,9 @@ import csv
 import html
 import json
 import os
+import random
 import sys
+from collections import Counter
 from pathlib import Path
 
 import psycopg
@@ -60,14 +63,14 @@ def _build_dsn() -> str:
     return f"postgresql://{user}:{pwd}@{host}:{port}/{name}"
 
 DSN = _build_dsn()
-FUZZY_THRESHOLD = 88   # RapidFuzz token_sort_ratio minimum score untuk match nama dosen
+FUZZY_THRESHOLD = 88   # RapidFuzz token_sort_ratio minimum score
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MAPPING STATIS (dikonfirmasi dari schema + instruksi)
+# MAPPING STATIS
 # ══════════════════════════════════════════════════════════════════════════════
 
-# kd_pertanyaan → dimensi (kolom di pertanyaan_kuesioner)
+# kd_pertanyaan → dimensi
 DIMENSI_MAP: dict[int, str | None] = {
     21: "capaian_pembelajaran",
     22: "capaian_pembelajaran",
@@ -82,18 +85,31 @@ DIMENSI_MAP: dict[int, str | None] = {
     35: "performa_mahasiswa",
     37: "performa_mahasiswa",
     103: "komentar_mahasiswa",
-    # Q128–Q152 tidak ada di dict → default None
 }
 
 ACTIVE_KD         = {21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 37, 103}
 SPESIFIK_DOSEN_KD = {25, 26, 27}
 TEKS_BEBAS_KD     = {103}
 
-# Prefix kode MK yang selalu NULL prodi_id (wajib institut, lintas prodi)
+# Label dimensi agregat per key di nilai_dosen.skor_kues
+AGREGAT_KK_NAMA: dict[int, str] = {
+    1: "capaian_pembelajaran",
+    2: "pelaksanaan_perkuliahan",
+    3: "perilaku_mahasiswa",
+}
+
+# Prefix kode MK yang lintas-prodi (wajib institut)
 LINTAS_PRODI_PREFIX = {"WI"}
 
 # Prefix kode MK untuk jenjang Profesi
 PROFESI_PREFIX = {"FP", "PA", "PI"}
+
+# Prodi fallback untuk WI matkul berdasarkan digit pertama kode MK
+# Digit 1-4 → kode_prodi 179 (MKU S1), digit 5-9 → kode_prodi 387 (SPITM S3)
+WI_FALLBACK_PRODI: dict[int, str] = {
+    **{d: "179" for d in range(1, 5)},
+    **{d: "387" for d in range(5, 10)},
+}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -120,9 +136,6 @@ def load_csv(path: Path) -> list[dict]:
 
 
 def decode_entities(teks: str | None) -> str | None:
-    """Decode HTML entities (&amp; &nbsp; &#39; dll) sebelum disimpan ke teks_raw.
-    HTML tags sengaja dibiarkan — dihapus otomatis oleh generated column
-    teks_bersih / komentar_bersih di PostgreSQL."""
     if not teks:
         return teks
     return html.unescape(teks)
@@ -133,7 +146,6 @@ def prefix_from_kd(kd_kuliah: str) -> str:
 
 
 def jenjang_from_kd(kd_kuliah: str) -> str | None:
-    """Tentukan jenjang dari kode MK berdasarkan prefix + digit pertama."""
     prefix = prefix_from_kd(kd_kuliah)
     digits = "".join(c for c in kd_kuliah if c.isdigit())
     if not digits:
@@ -151,8 +163,6 @@ def jenjang_from_kd(kd_kuliah: str) -> str | None:
 
 
 def fuzzy_match_nama(target: str, choices: list[str]) -> str | None:
-    """Kembalikan string terbaik dari choices menggunakan token_sort_ratio,
-    atau None jika tidak ada yang melewati FUZZY_THRESHOLD."""
     if not choices:
         return None
     result = process.extractOne(
@@ -164,7 +174,6 @@ def fuzzy_match_nama(target: str, choices: list[str]) -> str | None:
 
 
 def parse_ts_dna(raw: str | None):
-    """Parse ts_dna CSV ('2022-01-03 10:37:54.419101 +07:00') ke datetime tz-aware."""
     if not raw:
         return None
     try:
@@ -174,18 +183,135 @@ def parse_ts_dna(raw: str | None):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PRE-COMPUTE: dosen kk_id dari pengajar + kelas + prodi + kk (semua in-memory)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def build_dosen_kk_map(
+    pengajar_rows: list[dict],
+    kelas_rows: list[dict],
+    prodi_json_rows: list[dict],
+    kk_json_rows: list[dict],
+    kk_map: dict[str, str],   # {nama_kk: kk_id}
+    fak_map: dict[str, str],  # {kode_fakultas: fak_id} — dipakai untuk validasi saja
+) -> dict[int, str]:
+    """
+    Hasilkan {six_dosen_id(int): kk_id(str)} dengan cara:
+      pengajar.dosen_id → kelas.no_ps → prodi.kode_fakultas → kk.nama_kk → kk_id
+    Dosen yang tidak bisa diresolvce mendapat kk_id fallback (KK pertama di kk_map).
+    """
+    # kelas_id → no_ps
+    kelas_ps: dict[str, str] = {
+        k["kelas_id"]: k["no_ps"].strip()
+        for k in kelas_rows
+        if k.get("no_ps") and k["no_ps"].strip() not in ("", "NULL", "None")
+    }
+
+    # kode_prodi → kode_fakultas  (dari prodi.json in-memory)
+    prodi_fak: dict[str, str] = {
+        r["kode_prodi"]: r["kode_fakultas"]
+        for r in prodi_json_rows
+        if r.get("kode_prodi") and r.get("kode_fakultas")
+    }
+
+    # kode_fakultas → [nama_kk]  (dari kk.json in-memory)
+    fak_kk_names: dict[str, list[str]] = {}
+    for r in kk_json_rows:
+        kf = r.get("kode_fakultas", "")
+        kn = r.get("nama_kk", "")
+        if kf and kn and kn in kk_map:
+            fak_kk_names.setdefault(kf, []).append(kn)
+
+    # Fallback: kk_id pertama yang ada di kk_map
+    fallback_kk_id: str | None = next(iter(kk_map.values()), None)
+
+    # Untuk setiap dosen, kumpulkan no_ps yang diajar
+    dosen_ps_counter: dict[int, Counter] = {}
+    for p in pengajar_rows:
+        did = int(p["dosen_id"])
+        no_ps = kelas_ps.get(p["kelas_id"])
+        if no_ps:
+            dosen_ps_counter.setdefault(did, Counter())[no_ps] += 1
+
+    result: dict[int, str] = {}
+    for did, ps_counter in dosen_ps_counter.items():
+        # Gunakan no_ps yang paling banyak diajar
+        primary_ps = ps_counter.most_common(1)[0][0]
+        kode_fak   = prodi_fak.get(primary_ps)
+        kk_names   = fak_kk_names.get(kode_fak, []) if kode_fak else []
+
+        if kk_names:
+            chosen_name = random.choice(kk_names)
+            result[did] = kk_map[chosen_name]
+        elif fallback_kk_id:
+            result[did] = fallback_kk_id
+
+    return result
+
+
+def build_matkul_prodi_map(
+    matkul_rows: list[dict],
+    kelas_rows: list[dict],
+    prodi_map: dict[str, str],   # {kode_prodi: prodi_id}
+) -> dict[int, str | None]:
+    """
+    Hasilkan {six_matkul_id(int): prodi_id(str|None)} untuk matkul prefix WI.
+
+    Logika per WI matkul:
+      1. Cari no_ps yang dipakai di kelas.csv untuk matkul ini (non-NULL).
+         Jika ada → gunakan prodi tersebut (prodi_map[no_ps]).
+      2. Jika tidak ada (NULL semua) → digit pertama kode MK:
+           digit 1-4 → kode_prodi '179' (MKU S1)
+           digit 5-9 → kode_prodi '387' (S2/S3 SPITM)
+    """
+    # Kumpulkan no_ps per matkul dari kelas.csv
+    matkul_ps: dict[int, Counter] = {}
+    for k in kelas_rows:
+        mid = int(k["mata_kuliah_id"])
+        ps  = (k.get("no_ps") or "").strip()
+        if ps and ps not in ("NULL", "None"):
+            matkul_ps.setdefault(mid, Counter())[ps] += 1
+
+    result: dict[int, str | None] = {}
+    for r in matkul_rows:
+        kd    = r["kd_kuliah"]
+        if prefix_from_kd(kd) != "WI":
+            continue
+        six_id = int(r["mata_kuliah_id"])
+
+        # Cari no_ps dari kelas.csv
+        ps_counter = matkul_ps.get(six_id)
+        if ps_counter:
+            primary_ps = ps_counter.most_common(1)[0][0]
+            prodi_id   = prodi_map.get(primary_ps)
+            if prodi_id:
+                result[six_id] = prodi_id
+                continue
+
+        # Fallback: gunakan digit pertama kode MK
+        digits = "".join(c for c in kd if c.isdigit())
+        if digits:
+            fallback_kode = WI_FALLBACK_PRODI.get(int(digits[0]))
+            if fallback_kode:
+                result[six_id] = prodi_map.get(fallback_kode)
+                continue
+
+        result[six_id] = None  # tidak bisa diresolvce
+
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # INGESTION BATCH & FILE LOG
 # ══════════════════════════════════════════════════════════════════════════════
 
-# GANTI fungsi buat_batch yang lama (sekitar baris 170–182) dengan ini:
-
 ADMIN_EMAIL = "itb.ta.analytics@gmail.com"
 
+
 async def buat_batch(conn) -> str:
-    # Lookup user_id admin dari DB — harus sudah ada (jalankan seed_admin.py dulu)
+    """Buat ingestion_batch baru. Return batch_id."""
     async with conn.cursor() as cur:
         await cur.execute(
-            "SELECT pengguna_id FROM pengguna WHERE email = %(email)s AND is_active = TRUE",
+            "SELECT user_id FROM users WHERE email = %(email)s AND is_active = TRUE",
             {"email": ADMIN_EMAIL},
         )
         row = await cur.fetchone()
@@ -197,7 +323,7 @@ async def buat_batch(conn) -> str:
         )
         raise SystemExit(1)
 
-    user_id = str(row["pengguna_id"])
+    user_id = str(row["user_id"])
 
     async with conn.cursor() as cur:
         await cur.execute("""
@@ -226,12 +352,12 @@ async def log_file_start(conn, batch_id: str, jenis_file: str,
                  %(tahun_ajaran)s, %(semester)s, 'processing', %(total_row)s, NOW())
             RETURNING log_id
         """, {
-            "batch_id":    batch_id,
-            "jenis_file":  jenis_file,
-            "filename":    filename,
+            "batch_id":     batch_id,
+            "jenis_file":   jenis_file,
+            "filename":     filename,
             "tahun_ajaran": tahun_ajaran,
-            "semester":    semester,
-            "total_row":   total_row,
+            "semester":     semester,
+            "total_row":    total_row,
         })
         row = await cur.fetchone()
     return str(row["log_id"])
@@ -262,7 +388,6 @@ async def log_file_done(conn, log_id: str, new: int, upd: int,
             "skip":      skip,
             "fail":      fail,
             "errors":    json.dumps(errors[:500]) if errors else None,
-            # Batasi 500 error pertama agar JSONB tidak terlalu besar
         })
 
 
@@ -273,18 +398,6 @@ async def selesaikan_batch(conn, batch_id: str):
             SET status = 'success', finished_at = NOW()
             WHERE batch_id = %(batch_id)s
         """, {"batch_id": batch_id})
-
-
-# Helper: jalankan satu file dengan otomatis catat ke file log
-async def run_file(conn, batch_id: str, jenis_file: str, filename: str,
-                   total_row: int, coro):
-    """Buat log entry, jalankan coroutine, update log saat selesai."""
-    log_id = await log_file_start(conn, batch_id, jenis_file, filename, total_row)
-    stats = await coro
-    await log_file_done(conn, log_id,
-                        stats["new"], stats["upd"], stats["skip"], stats["fail"],
-                        stats.get("errors", []))
-    return stats
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -350,11 +463,11 @@ async def ingest_prodi(conn, rows: list[dict],
                             updated_at      = NOW()
                     RETURNING (xmax = 0) AS is_new
                 """, {
-                    "fak_id":        fak_id,
-                    "kode_prodi":    r["kode_prodi"],
+                    "fak_id":         fak_id,
+                    "kode_prodi":     r["kode_prodi"],
                     "singkatan_prodi": r.get("singkatan_prodi"),
-                    "nama_prodi":    r["nama_prodi"],
-                    "jenjang":       r["jenjang"],
+                    "nama_prodi":     r["nama_prodi"],
+                    "jenjang":        r["jenjang"],
                 })
                 if (await cur.fetchone())["is_new"]:
                     new += 1
@@ -396,7 +509,7 @@ async def ingest_kk(conn, rows: list[dict],
                 if row:
                     new += 1
                 else:
-                    skip += 1  # sudah ada
+                    skip += 1
             except Exception as e:
                 fail += 1
                 errors.append({"nama_kk": r.get("nama_kk"), "pesan": str(e)})
@@ -466,7 +579,6 @@ async def ingest_pertanyaan_grup(conn, rows: list[dict]) -> tuple[dict, dict]:
     async with conn.cursor() as cur:
         for r in rows:
             kd = int(r["kd_grup"])
-            # kd_grup 1–5 = format lama (is_active=FALSE), 6–9 = baru (is_active=TRUE)
             is_active = kd >= 6
             try:
                 await cur.execute("""
@@ -500,13 +612,12 @@ async def ingest_pertanyaan_portofolio(conn, rows: list[dict],
 
     async with conn.cursor() as cur:
         for r in rows:
-            kd     = int(r["kd_pertanyaan"])
+            kd      = int(r["kd_pertanyaan"])
             grup_id = grup_map.get(int(r["kd_grup"]))
             if not grup_id:
                 skip += 1
                 errors.append({"kd": kd, "pesan": f"kd_grup {r['kd_grup']} tidak ditemukan"})
                 continue
-            # kd 1–11 = lama (is_active=FALSE), kd 12–19 = baru (is_active=TRUE)
             is_active = kd >= 12
             try:
                 await cur.execute("""
@@ -542,23 +653,40 @@ async def ingest_pertanyaan_portofolio(conn, rows: list[dict],
     return mapping, {"new": new, "upd": upd, "skip": skip, "fail": fail, "errors": errors}
 
 
-async def ingest_dosen_csv(conn, rows: list[dict]) -> tuple[dict, dict]:
-    """INSERT dosen dari dosen.csv. Return ({six_dosen_id(int): dosen_id(str)}, stats)"""
+async def ingest_dosen_csv(
+    conn,
+    rows: list[dict],
+    dosen_kk_map: dict[int, str],   # {six_dosen_id: kk_id} — pre-computed
+    fallback_kk_id: str | None,
+) -> tuple[dict, dict]:
+    """
+    INSERT dosen dari dosen.csv dengan kk_id yang di-resolve dari
+    pengajar → kelas → prodi → kelompok_keahlian.
+
+    Return ({six_dosen_id(int): dosen_id(str)}, stats)
+    """
     new = upd = skip = fail = 0
     errors: list[dict] = []
 
     async with conn.cursor() as cur:
         for r in rows:
             six_id = int(r["dosen_id"])
+            kk_id  = dosen_kk_map.get(six_id) or fallback_kk_id
+            if not kk_id:
+                fail += 1
+                errors.append({"six_dosen_id": six_id, "nama": r["nama"],
+                                "pesan": "kk_id tidak dapat diresolvce dan tidak ada fallback"})
+                continue
             try:
                 await cur.execute("""
-                    INSERT INTO dosen (six_dosen_id, nama_dosen)
-                    VALUES (%(six_id)s, %(nama)s)
+                    INSERT INTO dosen (six_dosen_id, nama_dosen, kk_id)
+                    VALUES (%(six_id)s, %(nama)s, %(kk_id)s)
                     ON CONFLICT (six_dosen_id) DO UPDATE
                         SET nama_dosen = EXCLUDED.nama_dosen,
+                            kk_id      = COALESCE(dosen.kk_id, EXCLUDED.kk_id),
                             updated_at = NOW()
                     RETURNING (xmax = 0) AS is_new
-                """, {"six_id": six_id, "nama": r["nama"]})
+                """, {"six_id": six_id, "nama": r["nama"], "kk_id": kk_id})
                 if (await cur.fetchone())["is_new"]:
                     new += 1
                 else:
@@ -577,21 +705,28 @@ async def ingest_dosen_csv(conn, rows: list[dict]) -> tuple[dict, dict]:
     return mapping, {"new": new, "upd": upd, "skip": skip, "fail": fail, "errors": errors}
 
 
-async def ingest_matkul_csv(conn, rows: list[dict],
-                            nama_mk_en_map: dict[str, str] | None = None) -> tuple[dict, dict]:
-    """INSERT mata_kuliah dari CSV dengan Opsi B prefix matching.
-    nama_mk_en_map: {kd_kuliah: nama_mk_en} dari matkul.json (opsional).
-    Return ({six_matkul_id(int): matkul_id(str)}, stats)"""
+async def ingest_matkul_csv(
+    conn,
+    rows: list[dict],
+    wi_prodi_map: dict[int, str | None],   # {six_matkul_id: prodi_id} untuk WI prefix
+    nama_mk_en_map: dict[str, str] | None = None,
+) -> tuple[dict, dict]:
+    """
+    INSERT mata_kuliah dari CSV.
+    - Kolom DB: kode_mk (bukan kd_kuliah), tahun_kurikulum (bukan th_kur).
+    - prodi_id NOT NULL: WI prefix pakai wi_prodi_map, non-WI pakai singkatan_prodi.
+    Return ({six_matkul_id(int): matkul_id(str)}, stats)
+    """
     if nama_mk_en_map is None:
         nama_mk_en_map = {}
 
-    # Build singkatan_prodi lookup dari DB (sudah diisi Phase 1)
+    # Singkatan prodi lookup dari DB (sudah terisi Phase 1)
     async with conn.cursor() as cur:
         await cur.execute("SELECT singkatan_prodi, jenjang, prodi_id FROM program_studi")
         singkatan_map: dict[str, list[dict]] = {}
         async for r in cur:
             sing = r["singkatan_prodi"]
-            if sing and sing != "None":
+            if sing and sing not in ("None", ""):
                 singkatan_map.setdefault(sing, []).append(dict(r))
 
     new = upd = skip = fail = 0
@@ -603,9 +738,20 @@ async def ingest_matkul_csv(conn, rows: list[dict],
             kd     = r["kd_kuliah"]
             prefix = prefix_from_kd(kd)
 
-            # Opsi B: resolve prodi_id dari prefix + jenjang
-            prodi_id = None
-            if prefix not in LINTAS_PRODI_PREFIX:
+            # Resolusi prodi_id
+            if prefix in LINTAS_PRODI_PREFIX:
+                # WI: gunakan map yang sudah dihitung dari kelas.csv
+                prodi_id = wi_prodi_map.get(six_id)
+                if not prodi_id:
+                    fail += 1
+                    errors.append({
+                        "six_matkul_id": six_id,
+                        "kd_kuliah":     kd,
+                        "pesan":         "WI matkul: prodi_id tidak dapat diresolvce",
+                    })
+                    continue
+            else:
+                # Non-WI: cocokkan singkatan_prodi dengan prefix kode MK
                 jenjang    = jenjang_from_kd(kd)
                 candidates = singkatan_map.get(prefix, [])
                 if jenjang:
@@ -613,37 +759,49 @@ async def ingest_matkul_csv(conn, rows: list[dict],
                 if len(candidates) == 1:
                     prodi_id = str(candidates[0]["prodi_id"])
                 elif len(candidates) > 1:
+                    fail += 1
                     errors.append({
                         "kd_kuliah": kd,
                         "pesan": f"Prefix {prefix!r} ambigu → {[p['jenjang'] for p in candidates]}",
                     })
+                    continue
+                else:
+                    # Tidak ada match prodi → skip (prodi belum ada di DB)
+                    skip += 1
+                    errors.append({
+                        "kd_kuliah": kd,
+                        "pesan": f"Prefix {prefix!r} tidak ditemukan di program_studi",
+                    })
+                    continue
 
             nama_mk_en = nama_mk_en_map.get(kd) or None
+            th_kur     = int(r["th_kur"]) if r.get("th_kur") else None
 
             try:
                 await cur.execute("""
                     INSERT INTO mata_kuliah
-                        (six_matkul_id, prodi_id, kd_kuliah, nama_mk, nama_mk_en, th_kur, sks)
+                        (six_matkul_id, prodi_id, kode_mk, nama_mk, nama_mk_en,
+                         tahun_kurikulum, sks)
                     VALUES
-                        (%(six_id)s, %(prodi_id)s, %(kd_kuliah)s, %(nama_mk)s,
-                         %(nama_mk_en)s, %(th_kur)s, %(sks)s)
+                        (%(six_id)s, %(prodi_id)s, %(kode_mk)s, %(nama_mk)s,
+                         %(nama_mk_en)s, %(tahun_kurikulum)s, %(sks)s)
                     ON CONFLICT (six_matkul_id) DO UPDATE
-                        SET kd_kuliah  = EXCLUDED.kd_kuliah,
-                            nama_mk    = EXCLUDED.nama_mk,
-                            nama_mk_en = COALESCE(EXCLUDED.nama_mk_en, mata_kuliah.nama_mk_en),
-                            th_kur     = EXCLUDED.th_kur,
-                            sks        = EXCLUDED.sks,
-                            prodi_id   = COALESCE(mata_kuliah.prodi_id, EXCLUDED.prodi_id),
-                            updated_at = NOW()
+                        SET kode_mk         = EXCLUDED.kode_mk,
+                            nama_mk         = EXCLUDED.nama_mk,
+                            nama_mk_en      = COALESCE(EXCLUDED.nama_mk_en, mata_kuliah.nama_mk_en),
+                            tahun_kurikulum = EXCLUDED.tahun_kurikulum,
+                            sks             = EXCLUDED.sks,
+                            prodi_id        = COALESCE(mata_kuliah.prodi_id, EXCLUDED.prodi_id),
+                            updated_at      = NOW()
                     RETURNING (xmax = 0) AS is_new
                 """, {
-                    "six_id":     six_id,
-                    "prodi_id":   prodi_id,
-                    "kd_kuliah":  kd,
-                    "nama_mk":    r["nama"],
-                    "nama_mk_en": nama_mk_en,
-                    "th_kur":     int(r["th_kur"]) if r.get("th_kur") else None,
-                    "sks":        int(r["sks"]),
+                    "six_id":         six_id,
+                    "prodi_id":       prodi_id,
+                    "kode_mk":        kd,
+                    "nama_mk":        r["nama"],
+                    "nama_mk_en":     nama_mk_en,
+                    "tahun_kurikulum": th_kur,
+                    "sks":            int(r["sks"]),
                 })
                 if (await cur.fetchone())["is_new"]:
                     new += 1
@@ -667,44 +825,45 @@ async def ingest_matkul_csv(conn, rows: list[dict],
 # PHASE 3 — JSON: Enrich dosen (kk_id update + insert baru)
 # ══════════════════════════════════════════════════════════════════════════════
 
-async def ingest_dosen_json(conn, rows: list[dict],
-                             kk_map: dict) -> tuple[list[dict], dict]:
-    """UPDATE kk_id dosen CSV yang sudah ada + INSERT dosen baru dari JSON.
-    Return (all_db_dosen_list, stats)"""
-
-    # Load semua dosen dari CSV yang sudah masuk DB
+async def ingest_dosen_json(
+    conn,
+    rows: list[dict],
+    kk_map: dict[str, str],
+    fallback_kk_id: str | None,
+) -> tuple[list[dict], dict]:
+    """
+    UPDATE kk_id dosen CSV yang sudah ada + INSERT dosen baru dari JSON.
+    Dosen baru yang tidak ada kk_id di JSON mendapat fallback_kk_id.
+    Return (all_db_dosen_list, stats)
+    """
     async with conn.cursor() as cur:
         await cur.execute("""
             SELECT dosen_id, nama_dosen FROM dosen
             WHERE six_dosen_id IS NOT NULL
         """)
-        csv_dosen = [{"dosen_id": str(r["dosen_id"]), "nama_dosen": r["nama_dosen"]}
-                     async for r in cur]
+        csv_dosen  = [{"dosen_id": str(r["dosen_id"]), "nama_dosen": r["nama_dosen"]}
+                      async for r in cur]
 
     nama_csv_list = [d["nama_dosen"] for d in csv_dosen]
     nama_to_id    = {d["nama_dosen"]: d["dosen_id"] for d in csv_dosen}
 
-    new = 0     # dosen baru dari JSON
-    upd = 0     # kk_id berhasil diupdate
-    skip = 0    # match ditemukan tapi kk_id sudah ada atau tidak ada kk_id di JSON
-    fail = 0
+    new = upd = skip = fail = 0
     errors: list[dict] = []
 
     async with conn.cursor() as cur:
         for r in rows:
-            nama_json = r.get("nama_dosen", "").strip()
+            nama_json = (r.get("nama_dosen") or "").strip()
             if not nama_json:
                 skip += 1
                 continue
 
-            kk_id = kk_map.get(r.get("nama_kk", ""))
+            kk_id = kk_map.get(r.get("nama_kk", "")) or None
 
             # Cari match: exact dulu, lalu rapidfuzz
             matched_nama = (nama_json if nama_json in nama_to_id
                             else fuzzy_match_nama(nama_json, nama_csv_list))
 
             if matched_nama:
-                # Dosen sudah ada di CSV → update kk_id hanya jika belum ada
                 dosen_uuid = nama_to_id[matched_nama]
                 if kk_id:
                     try:
@@ -716,31 +875,36 @@ async def ingest_dosen_json(conn, rows: list[dict],
                         if cur.rowcount > 0:
                             upd += 1
                         else:
-                            skip += 1  # kk_id sudah ada, tidak perlu update
+                            skip += 1
                     except Exception as e:
                         fail += 1
                         errors.append({"nama": nama_json, "pesan": str(e)})
                 else:
-                    skip += 1  # tidak ada kk_id di JSON untuk dosen ini
+                    skip += 1
             else:
-                # Tidak match → INSERT sebagai dosen baru (six_dosen_id = NULL)
+                # Tidak match → INSERT sebagai dosen baru
+                effective_kk = kk_id or fallback_kk_id
+                if not effective_kk:
+                    fail += 1
+                    errors.append({"nama": nama_json,
+                                   "pesan": "kk_id NULL dan tidak ada fallback"})
+                    continue
                 try:
                     await cur.execute("""
                         INSERT INTO dosen (six_dosen_id, nama_dosen, kk_id)
                         VALUES (NULL, %(nama)s, %(kk_id)s)
                         ON CONFLICT DO NOTHING
                         RETURNING dosen_id
-                    """, {"nama": nama_json, "kk_id": kk_id})
+                    """, {"nama": nama_json, "kk_id": effective_kk})
                     row = await cur.fetchone()
                     if row:
                         new += 1
                     else:
-                        skip += 1  # nama sudah ada (duplikat dari JSON)
+                        skip += 1
                 except Exception as e:
                     fail += 1
                     errors.append({"nama": nama_json, "pesan": str(e)})
 
-    # Rebuild daftar semua dosen (CSV + JSON) untuk Phase 4 pengajar
     async with conn.cursor() as cur:
         await cur.execute("SELECT dosen_id, nama_dosen FROM dosen")
         all_db_dosen = [{"dosen_id": str(r["dosen_id"]), "nama_dosen": r["nama_dosen"]}
@@ -768,7 +932,7 @@ async def ingest_kelas(conn, rows: list[dict],
         for i, r in enumerate(rows):
             six_kelas_id  = int(r["kelas_id"])
             six_matkul_id = int(r["mata_kuliah_id"])
-            no_ps_str     = str(r["no_ps"])
+            no_ps_str     = str(r["no_ps"]).strip()
 
             matkul_id = matkul_map.get(six_matkul_id)
             prodi_id  = prodi_map.get(no_ps_str)
@@ -776,12 +940,12 @@ async def ingest_kelas(conn, rows: list[dict],
             if not matkul_id:
                 skip += 1
                 errors.append({"baris": i + 2, "six_kelas_id": six_kelas_id,
-                                "pesan": f"mata_kuliah_id {six_matkul_id} tidak ditemukan"})
+                                "pesan": f"mata_kuliah_id {six_matkul_id} tidak ada di matkul_map"})
                 continue
             if not prodi_id:
                 skip += 1
                 errors.append({"baris": i + 2, "six_kelas_id": six_kelas_id,
-                                "pesan": f"no_ps {no_ps_str} tidak ditemukan di program_studi"})
+                                "pesan": f"no_ps {no_ps_str!r} tidak ada di program_studi"})
                 continue
 
             try:
@@ -839,11 +1003,13 @@ async def ingest_pengajar(conn, rows: list[dict],
 
             if not kelas_id:
                 skip += 1
-                errors.append({"baris": i + 2, "pesan": f"kelas_id {r['kelas_id']} tidak ditemukan"})
+                errors.append({"baris": i + 2,
+                                "pesan": f"kelas_id {r['kelas_id']} tidak ditemukan"})
                 continue
             if not dosen_id:
                 skip += 1
-                errors.append({"baris": i + 2, "pesan": f"dosen_id {r['dosen_id']} tidak ditemukan"})
+                errors.append({"baris": i + 2,
+                                "pesan": f"dosen_id {r['dosen_id']} tidak ditemukan"})
                 continue
 
             weight   = int(r["weight"]) if r.get("weight") else 100
@@ -880,7 +1046,16 @@ async def ingest_pengajar(conn, rows: list[dict],
 
 async def ingest_nilai_kelas(conn, rows: list[dict],
                               kelas_map: dict, kues_map: dict) -> dict:
-    """Isi statistik_kelas + skor_kuesioner_kelas dari nilai_kelas.csv."""
+    """
+    Isi statistik_kelas + skor_kuesioner_kelas dari nilai_kelas.csv.
+
+    Mapping kolom CSV → DB:
+      hadir_mhs  → pct_kehadiran_mahasiswa
+      ip_mhs     → ip_mhs
+      skor_dna   → skor_dna   (NOT NULL — fallback 0 jika kosong)
+      ts_dna     → ts_dna_raw (NOT NULL) + ts_dna (nullable TIMESTAMPTZ)
+      ip_mhs_dna → ip_mhs_dna
+    """
     sk_new = sk_upd = sk_fail = 0
     skor_new = skor_upd = skor_skip = skor_fail = 0
     errors: list[dict] = []
@@ -894,34 +1069,36 @@ async def ingest_nilai_kelas(conn, rows: list[dict],
                                 "pesan": f"kelas_id {r['kelas_id']} tidak ditemukan"})
                 continue
 
-            # ── statistik_kelas ───────────────────────────────────────────────
-            ts_raw    = r.get("ts_dna") or None
-            ts_parsed = parse_ts_dna(ts_raw)
+            # ts_dna_raw NOT NULL → simpan string asli CSV (bisa kosong)
+            ts_raw    = (r.get("ts_dna") or "").strip()
+            ts_parsed = parse_ts_dna(ts_raw) if ts_raw else None
+            skor_dna  = int(r["skor_dna"]) if r.get("skor_dna") else 0
+
             try:
                 await cur.execute("""
                     INSERT INTO statistik_kelas
-                        (kelas_id, hadir_mhs, ip_mhs, skor_dna,
+                        (kelas_id, pct_kehadiran_mahasiswa, ip_mhs, skor_dna,
                          ts_dna_raw, ts_dna, ip_mhs_dna)
                     VALUES
-                        (%(kelas_id)s, %(hadir_mhs)s, %(ip_mhs)s, %(skor_dna)s,
+                        (%(kelas_id)s, %(pct_kehadiran_mahasiswa)s, %(ip_mhs)s, %(skor_dna)s,
                          %(ts_dna_raw)s, %(ts_dna)s, %(ip_mhs_dna)s)
                     ON CONFLICT (kelas_id) DO UPDATE
-                        SET hadir_mhs   = EXCLUDED.hadir_mhs,
-                            ip_mhs      = EXCLUDED.ip_mhs,
-                            skor_dna    = EXCLUDED.skor_dna,
-                            ts_dna_raw  = EXCLUDED.ts_dna_raw,
-                            ts_dna      = EXCLUDED.ts_dna,
-                            ip_mhs_dna  = EXCLUDED.ip_mhs_dna,
-                            updated_at  = NOW()
+                        SET pct_kehadiran_mahasiswa = EXCLUDED.pct_kehadiran_mahasiswa,
+                            ip_mhs                  = EXCLUDED.ip_mhs,
+                            skor_dna                = EXCLUDED.skor_dna,
+                            ts_dna_raw              = EXCLUDED.ts_dna_raw,
+                            ts_dna                  = EXCLUDED.ts_dna,
+                            ip_mhs_dna              = EXCLUDED.ip_mhs_dna,
+                            updated_at              = NOW()
                     RETURNING (xmax = 0) AS is_new
                 """, {
-                    "kelas_id":   kelas_id,
-                    "hadir_mhs":  float(r["hadir_mhs"]) if r.get("hadir_mhs") else None,
-                    "ip_mhs":     float(r["ip_mhs"])    if r.get("ip_mhs")    else None,
-                    "skor_dna":   int(r["skor_dna"])    if r.get("skor_dna")  else None,
-                    "ts_dna_raw": ts_raw,
-                    "ts_dna":     ts_parsed,
-                    "ip_mhs_dna": float(r["ip_mhs_dna"]) if r.get("ip_mhs_dna") else None,
+                    "kelas_id":                kelas_id,
+                    "pct_kehadiran_mahasiswa": float(r["hadir_mhs"]) if r.get("hadir_mhs") else None,
+                    "ip_mhs":                  float(r["ip_mhs"])    if r.get("ip_mhs")    else None,
+                    "skor_dna":                skor_dna,
+                    "ts_dna_raw":              ts_raw,
+                    "ts_dna":                  ts_parsed,
+                    "ip_mhs_dna":              float(r["ip_mhs_dna"]) if r.get("ip_mhs_dna") else None,
                 })
                 if (await cur.fetchone())["is_new"]:
                     sk_new += 1
@@ -930,9 +1107,9 @@ async def ingest_nilai_kelas(conn, rows: list[dict],
             except Exception as e:
                 sk_fail += 1
                 errors.append({"baris": i + 2, "tabel": "statistik_kelas", "pesan": str(e)})
-                continue  # skip skor jika statistik_kelas gagal
+                continue
 
-            # ── skor_kuesioner_kelas ──────────────────────────────────────────
+            # skor_kuesioner_kelas — kolom rata_skor (bukan skor)
             try:
                 kuesioner_data = json.loads(r.get("kuesioner") or "{}")
             except json.JSONDecodeError:
@@ -949,12 +1126,13 @@ async def ingest_nilai_kelas(conn, rows: list[dict],
                 try:
                     await cur.execute("""
                         INSERT INTO skor_kuesioner_kelas
-                            (kelas_id, pertanyaan_kuesioner_id, skor)
-                        VALUES (%(kelas_id)s, %(pk_id)s, %(skor)s)
+                            (kelas_id, pertanyaan_kuesioner_id, rata_skor)
+                        VALUES (%(kelas_id)s, %(pk_id)s, %(rata_skor)s)
                         ON CONFLICT (kelas_id, pertanyaan_kuesioner_id) DO UPDATE
-                            SET skor = EXCLUDED.skor, updated_at = NOW()
+                            SET rata_skor = EXCLUDED.rata_skor, updated_at = NOW()
                         RETURNING (xmax = 0) AS is_new
-                    """, {"kelas_id": kelas_id, "pk_id": pk_id, "skor": float(skor_val)})
+                    """, {"kelas_id": kelas_id, "pk_id": pk_id,
+                          "rata_skor": float(skor_val)})
                     if (await cur.fetchone())["is_new"]:
                         skor_new += 1
                     else:
@@ -969,21 +1147,26 @@ async def ingest_nilai_kelas(conn, rows: list[dict],
         f"  skor_kues_kelas    → new={skor_new} upd={skor_upd} "
         f"skip={skor_skip} fail={skor_fail}"
     )
-    total_new  = sk_new  + skor_new
-    total_upd  = sk_upd  + skor_upd
-    total_fail = sk_fail + skor_fail
-    return {"new": total_new, "upd": total_upd, "skip": skor_skip,
-            "fail": total_fail, "errors": errors}
+    return {
+        "new":  sk_new  + skor_new,
+        "upd":  sk_upd  + skor_upd,
+        "skip": skor_skip,
+        "fail": sk_fail + skor_fail,
+        "errors": errors,
+    }
 
 
 async def ingest_nilai_dosen(conn, rows: list[dict],
                               kelas_map: dict,
                               dosen_six_map: dict,
                               kues_map: dict) -> dict:
-    """Isi nilai_dosen + skor_kuesioner_dosen + skor_dimensi_dosen."""
+    """
+    Isi nilai_dosen + skor_kuesioner_dosen + skor_agregat_kuesioner_dosen
+    dari nilai_dosen.csv.
+    """
     nd_new = nd_upd = nd_fail = 0
     skd_new = skd_upd = skd_fail = 0
-    sdd_new = sdd_upd = sdd_fail = 0
+    sda_new = sda_upd = sda_fail = 0
     errors: list[dict] = []
 
     async with conn.cursor() as cur:
@@ -1000,7 +1183,7 @@ async def ingest_nilai_dosen(conn, rows: list[dict],
                 })
                 continue
 
-            # ── nilai_dosen ───────────────────────────────────────────────────
+            # nilai_dosen
             nilai_akhir = float(r["nilai_akhir"]) if r.get("nilai_akhir") else None
             try:
                 await cur.execute("""
@@ -1019,7 +1202,7 @@ async def ingest_nilai_dosen(conn, rows: list[dict],
                 errors.append({"baris": i + 2, "tabel": "nilai_dosen", "pesan": str(e)})
                 continue
 
-            # ── skor_kuesioner_dosen (Q25, Q26, Q27) ─────────────────────────
+            # skor_kuesioner_dosen (Q25, Q26, Q27) — kolom rata_skor
             try:
                 kuesioner_data = json.loads(r.get("kuesioner") or "{}")
             except json.JSONDecodeError:
@@ -1033,13 +1216,13 @@ async def ingest_nilai_dosen(conn, rows: list[dict],
                 try:
                     await cur.execute("""
                         INSERT INTO skor_kuesioner_dosen
-                            (kelas_id, dosen_id, pertanyaan_kuesioner_id, skor)
-                        VALUES (%(kelas_id)s, %(dosen_id)s, %(pk_id)s, %(skor)s)
+                            (kelas_id, dosen_id, pertanyaan_kuesioner_id, rata_skor)
+                        VALUES (%(kelas_id)s, %(dosen_id)s, %(pk_id)s, %(rata_skor)s)
                         ON CONFLICT (kelas_id, dosen_id, pertanyaan_kuesioner_id) DO UPDATE
-                            SET skor = EXCLUDED.skor, updated_at = NOW()
+                            SET rata_skor = EXCLUDED.rata_skor, updated_at = NOW()
                         RETURNING (xmax = 0) AS is_new
                     """, {"kelas_id": kelas_id, "dosen_id": dosen_id,
-                          "pk_id": pk_id, "skor": float(skor_val)})
+                          "pk_id": pk_id, "rata_skor": float(skor_val)})
                     if (await cur.fetchone())["is_new"]:
                         skd_new += 1
                     else:
@@ -1049,43 +1232,54 @@ async def ingest_nilai_dosen(conn, rows: list[dict],
                     errors.append({"baris": i + 2, "kd": kd,
                                    "tabel": "skor_kuesioner_dosen", "pesan": str(e)})
 
-            # ── skor_dimensi_dosen (key 1, 2, 3) ─────────────────────────────
+            # skor_agregat_kuesioner_dosen (key 1, 2, 3) — kolom agregat_kuesioner_key + rata_skor
             try:
                 skor_kues_data = json.loads(r.get("skor_kues") or "{}")
             except json.JSONDecodeError:
                 skor_kues_data = {}
 
             for dim_str, skor_val in skor_kues_data.items():
-                dim_key = int(dim_str)
+                agregat_key = int(dim_str)
+                agregat_nama = AGREGAT_KK_NAMA.get(agregat_key)
                 try:
                     await cur.execute("""
-                        INSERT INTO skor_dimensi_dosen
-                            (kelas_id, dosen_id, dimensi_key, skor)
-                        VALUES (%(kelas_id)s, %(dosen_id)s, %(dim_key)s, %(skor)s)
-                        ON CONFLICT (kelas_id, dosen_id, dimensi_key) DO UPDATE
-                            SET skor = EXCLUDED.skor, updated_at = NOW()
+                        INSERT INTO skor_agregat_kuesioner_dosen
+                            (kelas_id, dosen_id, agregat_kuesioner_key,
+                             agregat_kuesioner_nama, rata_skor)
+                        VALUES
+                            (%(kelas_id)s, %(dosen_id)s, %(agregat_key)s,
+                             %(agregat_nama)s, %(rata_skor)s)
+                        ON CONFLICT (kelas_id, dosen_id, agregat_kuesioner_key) DO UPDATE
+                            SET rata_skor            = EXCLUDED.rata_skor,
+                                agregat_kuesioner_nama = EXCLUDED.agregat_kuesioner_nama,
+                                updated_at           = NOW()
                         RETURNING (xmax = 0) AS is_new
-                    """, {"kelas_id": kelas_id, "dosen_id": dosen_id,
-                          "dim_key": dim_key, "skor": float(skor_val)})
+                    """, {
+                        "kelas_id":    kelas_id,
+                        "dosen_id":    dosen_id,
+                        "agregat_key": agregat_key,
+                        "agregat_nama": agregat_nama,
+                        "rata_skor":   float(skor_val),
+                    })
                     if (await cur.fetchone())["is_new"]:
-                        sdd_new += 1
+                        sda_new += 1
                     else:
-                        sdd_upd += 1
+                        sda_upd += 1
                 except Exception as e:
-                    sdd_fail += 1
-                    errors.append({"baris": i + 2, "dim": dim_key,
-                                   "tabel": "skor_dimensi_dosen", "pesan": str(e)})
+                    sda_fail += 1
+                    errors.append({"baris": i + 2, "agregat_key": agregat_key,
+                                   "tabel": "skor_agregat_kuesioner_dosen", "pesan": str(e)})
 
     console.print(
-        f"  nilai_dosen        → new={nd_new} upd={nd_upd} fail={nd_fail}\n"
-        f"  skor_kues_dosen    → new={skd_new} upd={skd_upd} fail={skd_fail}\n"
-        f"  skor_dimensi_dosen → new={sdd_new} upd={sdd_upd} fail={sdd_fail}"
+        f"  nilai_dosen                  → new={nd_new} upd={nd_upd} fail={nd_fail}\n"
+        f"  skor_kues_dosen              → new={skd_new} upd={skd_upd} fail={skd_fail}\n"
+        f"  skor_agregat_kuesioner_dosen → new={sda_new} upd={sda_upd} fail={sda_fail}"
     )
     return {
-        "new":  nd_new  + skd_new  + sdd_new,
-        "upd":  nd_upd  + skd_upd  + sdd_upd,
+        "new":  nd_new  + skd_new  + sda_new,
+        "upd":  nd_upd  + skd_upd  + sda_upd,
         "skip": 0,
-        "fail": nd_fail + skd_fail + sdd_fail,
+        "fail": nd_fail + skd_fail + sda_fail,
         "errors": errors,
     }
 
@@ -1112,7 +1306,7 @@ async def ingest_portofolio(conn, rows: list[dict],
                                 "pesan": f"kelas_id {r['kelas_id']} tidak ditemukan"})
                 continue
 
-            # ── teks_portofolio ───────────────────────────────────────────────
+            # teks_portofolio
             try:
                 isian_data = json.loads(r.get("isian") or "{}")
                 if not isinstance(isian_data, dict):
@@ -1129,10 +1323,7 @@ async def ingest_portofolio(conn, rows: list[dict],
                 if not pp_id:
                     tp_skip += 1
                     continue
-
-                # Decode HTML entities; tags dibiarkan untuk generated column DB
                 teks_cleaned = decode_entities(str(teks_val) if teks_val else None)
-
                 try:
                     await cur.execute("""
                         INSERT INTO teks_portofolio
@@ -1152,7 +1343,7 @@ async def ingest_portofolio(conn, rows: list[dict],
                     errors.append({"baris": i + 2, "kd": kd,
                                    "tabel": "teks_portofolio", "pesan": str(e)})
 
-            # ── komentar_verifikator ──────────────────────────────────────────
+            # komentar_verifikator
             try:
                 komentar_data = json.loads(r.get("komentar") or "{}")
             except json.JSONDecodeError:
@@ -1167,11 +1358,9 @@ async def ingest_portofolio(conn, rows: list[dict],
                 if not pg_id:
                     kv_skip += 1
                     continue
-
                 komentar_cleaned = decode_entities(
                     str(komentar_val) if komentar_val else None
                 )
-
                 try:
                     await cur.execute("""
                         INSERT INTO komentar_verifikator
@@ -1213,26 +1402,27 @@ async def ingest_portofolio(conn, rows: list[dict],
 
 async def cetak_ringkasan(conn):
     queries = [
-        ("fakultas",                   "SELECT COUNT(*) FROM fakultas"),
-        ("kelompok_keahlian",          "SELECT COUNT(*) FROM kelompok_keahlian"),
-        ("program_studi",              "SELECT COUNT(*) FROM program_studi"),
-        ("dosen (total)",              "SELECT COUNT(*) FROM dosen"),
-        ("  ↳ dari CSV (six_id ada)",  "SELECT COUNT(*) FROM dosen WHERE six_dosen_id IS NOT NULL"),
-        ("  ↳ dari JSON (six_id NULL)","SELECT COUNT(*) FROM dosen WHERE six_dosen_id IS NULL"),
-        ("mata_kuliah",                "SELECT COUNT(*) FROM mata_kuliah"),
-        ("  ↳ dengan prodi_id",        "SELECT COUNT(*) FROM mata_kuliah WHERE prodi_id IS NOT NULL"),
-        ("pertanyaan_kuesioner",       "SELECT COUNT(*) FROM pertanyaan_kuesioner"),
-        ("pertanyaan_grup_portofolio", "SELECT COUNT(*) FROM pertanyaan_grup_portofolio"),
-        ("pertanyaan_portofolio",      "SELECT COUNT(*) FROM pertanyaan_portofolio"),
-        ("kelas",                      "SELECT COUNT(*) FROM kelas"),
-        ("pengajar_kelas",             "SELECT COUNT(*) FROM pengajar_kelas"),
-        ("statistik_kelas",            "SELECT COUNT(*) FROM statistik_kelas"),
-        ("nilai_dosen",                "SELECT COUNT(*) FROM nilai_dosen"),
-        ("skor_kuesioner_kelas",       "SELECT COUNT(*) FROM skor_kuesioner_kelas"),
-        ("skor_kuesioner_dosen",       "SELECT COUNT(*) FROM skor_kuesioner_dosen"),
-        ("skor_dimensi_dosen",         "SELECT COUNT(*) FROM skor_dimensi_dosen"),
-        ("teks_portofolio",            "SELECT COUNT(*) FROM teks_portofolio"),
-        ("komentar_verifikator",       "SELECT COUNT(*) FROM komentar_verifikator"),
+        ("fakultas",                        "SELECT COUNT(*) FROM fakultas"),
+        ("kelompok_keahlian",               "SELECT COUNT(*) FROM kelompok_keahlian"),
+        ("program_studi",                   "SELECT COUNT(*) FROM program_studi"),
+        ("dosen (total)",                   "SELECT COUNT(*) FROM dosen"),
+        ("  ↳ dari CSV (six_id ada)",       "SELECT COUNT(*) FROM dosen WHERE six_dosen_id IS NOT NULL"),
+        ("  ↳ dari JSON (six_id NULL)",     "SELECT COUNT(*) FROM dosen WHERE six_dosen_id IS NULL"),
+        ("  ↳ kk_id terisi",               "SELECT COUNT(*) FROM dosen WHERE kk_id IS NOT NULL"),
+        ("mata_kuliah",                     "SELECT COUNT(*) FROM mata_kuliah"),
+        ("  ↳ dengan prodi_id",             "SELECT COUNT(*) FROM mata_kuliah WHERE prodi_id IS NOT NULL"),
+        ("pertanyaan_kuesioner",            "SELECT COUNT(*) FROM pertanyaan_kuesioner"),
+        ("pertanyaan_grup_portofolio",      "SELECT COUNT(*) FROM pertanyaan_grup_portofolio"),
+        ("pertanyaan_portofolio",           "SELECT COUNT(*) FROM pertanyaan_portofolio"),
+        ("kelas",                           "SELECT COUNT(*) FROM kelas"),
+        ("pengajar_kelas",                  "SELECT COUNT(*) FROM pengajar_kelas"),
+        ("statistik_kelas",                 "SELECT COUNT(*) FROM statistik_kelas"),
+        ("nilai_dosen",                     "SELECT COUNT(*) FROM nilai_dosen"),
+        ("skor_kuesioner_kelas",            "SELECT COUNT(*) FROM skor_kuesioner_kelas"),
+        ("skor_kuesioner_dosen",            "SELECT COUNT(*) FROM skor_kuesioner_dosen"),
+        ("skor_agregat_kuesioner_dosen",    "SELECT COUNT(*) FROM skor_agregat_kuesioner_dosen"),
+        ("teks_portofolio",                 "SELECT COUNT(*) FROM teks_portofolio"),
+        ("komentar_verifikator",            "SELECT COUNT(*) FROM komentar_verifikator"),
     ]
     tbl = Table(title="Ringkasan Row Count Setelah Ingestion", border_style="cyan")
     tbl.add_column("Tabel", style="cyan",  no_wrap=True)
@@ -1241,7 +1431,7 @@ async def cetak_ringkasan(conn):
         for label, q in queries:
             await cur.execute(q)
             row = await cur.fetchone()
-            count = row["count"] if row else 0   # "count" = nama kolom COUNT(*)
+            count = row["count"] if row else 0
             tbl.add_row(label, f"{count:,}")
     console.print(tbl)
 
@@ -1259,14 +1449,22 @@ async def main():
         "--data-dir", default=".",
         help="Direktori berisi file CSV + JSON (default: direktori saat ini)"
     )
-    args   = parser.parse_args()
-    d      = Path(args.data_dir)
+    args = parser.parse_args()
+    d    = Path(args.data_dir)
 
     console.print("\n[bold cyan]══════════════════════════════════════════[/bold cyan]")
     console.print("[bold cyan]  ITB — Ingestion Portofolio & Kuesioner  [/bold cyan]")
     console.print("[bold cyan]══════════════════════════════════════════[/bold cyan]\n")
     console.print(f"[dim]Data dir : {d.resolve()}[/dim]")
     console.print(f"[dim]DB       : {DSN.split('@')[-1]}[/dim]\n")
+
+    # ── Pre-load raw CSV yang dibutuhkan lintas-phase ─────────────────────────
+    # Dimuat sebelum DB connection agar bisa dipakai untuk pre-compute in-memory.
+    console.print("[bold]Pre-loading CSV untuk resolusi kk_id dan prodi_id...[/bold]")
+    pengajar_rows_raw = load_csv(d / "pengajar.csv")
+    kelas_rows_raw    = load_csv(d / "kelas.csv")
+    matkul_rows_raw   = load_csv(d / "mata_kuliah.csv")
+    console.print()
 
     async with await psycopg.AsyncConnection.connect(DSN, row_factory=dict_row) as conn:
 
@@ -1281,27 +1479,46 @@ async def main():
         # ════════════════════════════════════════════════════════════════════
         console.print("[bold yellow]── PHASE 1: JSON Reference Data ──[/bold yellow]")
 
-        rows_fak   = load_json(d / "fakultas.json")
-        log_id = await log_file_start(conn, batch_id, "dosen", "fakultas.json", len(rows_fak))
+        rows_fak = load_json(d / "fakultas.json")
+        log_id   = await log_file_start(conn, batch_id, "dosen", "fakultas.json", len(rows_fak))
         fak_map, stats = await ingest_fakultas(conn, rows_fak)
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
 
         rows_prodi = load_json(d / "prodi.json")
-        log_id = await log_file_start(conn, batch_id, "dosen", "prodi.json", len(rows_prodi))
+        log_id     = await log_file_start(conn, batch_id, "dosen", "prodi.json", len(rows_prodi))
         prodi_map, stats = await ingest_prodi(conn, rows_prodi, fak_map)
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
 
-        rows_kk    = load_json(d / "kk.json")
-        log_id = await log_file_start(conn, batch_id, "dosen", "kk.json", len(rows_kk))
+        rows_kk  = load_json(d / "kk.json")
+        log_id   = await log_file_start(conn, batch_id, "dosen", "kk.json", len(rows_kk))
         kk_map, stats = await ingest_kk(conn, rows_kk, fak_map)
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
         console.print()
+
+        # ── Pre-compute kk_id per dosen dan prodi_id per WI matkul ───────────
+        # Dilakukan SETELAH Phase 1 karena kk_map sudah terisi.
+        fallback_kk_id  = next(iter(kk_map.values()), None)
+        dosen_kk_map    = build_dosen_kk_map(
+            pengajar_rows_raw, kelas_rows_raw,
+            rows_prodi, rows_kk, kk_map, fak_map,
+        )
+        wi_prodi_map    = build_matkul_prodi_map(
+            matkul_rows_raw, kelas_rows_raw, prodi_map,
+        )
+        console.print(
+            f"[dim]  kk_id resolved untuk {len(dosen_kk_map)} dosen, "
+            f"fallback={'ada' if fallback_kk_id else 'TIDAK ADA'}[/dim]"
+        )
+        console.print(
+            f"[dim]  prodi_id WI resolved untuk {sum(1 for v in wi_prodi_map.values() if v)} "
+            f"dari {len(wi_prodi_map)} WI matkul[/dim]\n"
+        )
 
         # ════════════════════════════════════════════════════════════════════
         # PHASE 2 — CSV: Reference tables
@@ -1334,22 +1551,28 @@ async def main():
 
         rows_dos = load_csv(d / "dosen.csv")
         log_id   = await log_file_start(conn, batch_id, "dosen", "dosen.csv", len(rows_dos))
-        dosen_six_map, stats = await ingest_dosen_csv(conn, rows_dos)
+        dosen_six_map, stats = await ingest_dosen_csv(
+            conn, rows_dos, dosen_kk_map, fallback_kk_id
+        )
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
 
-        rows_mk = load_csv(d / "mata_kuliah.csv")
+        # matkul.json (opsional) untuk nama_mk_en
+        nama_mk_en_map: dict[str, str] = {}
         matkul_json_path = d / "matkul.json"
         if matkul_json_path.exists():
             rows_mkj = load_json(matkul_json_path)
-            nama_mk_en_map = {r["kode_mk"]: r.get("nama_mk_en") or None for r in rows_mkj}
+            nama_mk_en_map = {r["kode_mk"]: r.get("nama_mk_en") or None
+                              for r in rows_mkj}
         else:
-            nama_mk_en_map = {}
             console.print("[yellow]  ⚠ matkul.json tidak ditemukan, nama_mk_en akan NULL[/yellow]")
-        log_id  = await log_file_start(conn, batch_id, "mata_kuliah",
-                                       "mata_kuliah.csv", len(rows_mk))
-        matkul_map, stats = await ingest_matkul_csv(conn, rows_mk, nama_mk_en_map)
+
+        log_id = await log_file_start(conn, batch_id, "mata_kuliah",
+                                      "mata_kuliah.csv", len(matkul_rows_raw))
+        matkul_map, stats = await ingest_matkul_csv(
+            conn, matkul_rows_raw, wi_prodi_map, nama_mk_en_map
+        )
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
@@ -1362,7 +1585,9 @@ async def main():
 
         rows_dj = load_json(d / "dosen.json")
         log_id  = await log_file_start(conn, batch_id, "dosen", "dosen.json", len(rows_dj))
-        all_db_dosen, stats = await ingest_dosen_json(conn, rows_dj, kk_map)
+        all_db_dosen, stats = await ingest_dosen_json(
+            conn, rows_dj, kk_map, fallback_kk_id
+        )
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
@@ -1373,16 +1598,18 @@ async def main():
         # ════════════════════════════════════════════════════════════════════
         console.print("[bold yellow]── PHASE 4: CSV Kelas & Pengajar ──[/bold yellow]")
 
-        rows_kl = load_csv(d / "kelas.csv")
-        log_id  = await log_file_start(conn, batch_id, "kelas", "kelas.csv", len(rows_kl))
-        kelas_map, stats = await ingest_kelas(conn, rows_kl, matkul_map, prodi_map)
+        # kelas.csv sudah di-pre-load; gunakan kembali
+        log_id = await log_file_start(conn, batch_id, "kelas",
+                                      "kelas.csv", len(kelas_rows_raw))
+        kelas_map, stats = await ingest_kelas(conn, kelas_rows_raw, matkul_map, prodi_map)
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
 
-        rows_pg2 = load_csv(d / "pengajar.csv")
-        log_id   = await log_file_start(conn, batch_id, "pengajar", "pengajar.csv", len(rows_pg2))
-        stats    = await ingest_pengajar(conn, rows_pg2, kelas_map, dosen_six_map)
+        # pengajar.csv sudah di-pre-load
+        log_id = await log_file_start(conn, batch_id, "pengajar",
+                                      "pengajar.csv", len(pengajar_rows_raw))
+        stats  = await ingest_pengajar(conn, pengajar_rows_raw, kelas_map, dosen_six_map)
         await log_file_done(conn, log_id, stats["new"], stats["upd"],
                             stats["skip"], stats["fail"], stats["errors"])
         await conn.commit()
