@@ -178,7 +178,7 @@ CREATE INDEX idx_user_scopes_pengguna ON user_scopes (user_id, is_active);
 CREATE INDEX idx_user_scopes_dosen_ref ON user_scopes (dosen_ref_id);
 -- idx_user_scopes_dosen_ref: lookup "akun mana yang terhubung ke dosen X?" saat setup akun dosen.
 
-COMMENT ON TABLE  user_scopes IS 'Mapping pengguna → peran, multi-role (1 pengguna bisa punya beberapa baris). Dilakukan manual admin. Scope ditentukan oleh kombinasi kode_peran + fakultas_id/prodi_id/dosen_ref_id.';
+COMMENT ON TABLE  user_scopes IS 'Mapping pengguna → peran, multi-role (1 pengguna bisa punya beberapa baris). Scope ditentukan oleh kombinasi kode_peran + fakultas_id/prodi_id/dosen_ref_id.';
 COMMENT ON COLUMN user_scopes.dosen_ref_id IS 'FK ke dosen. Wajib untuk kode_peran=dosen. Digunakan RLS: backend set app.dosen_id dari kolom ini untuk filter data privat dosen.';
 COMMENT ON COLUMN user_scopes.created_by IS 'Admin yang assign peran. NULL jika dibuat sistem (seed awal).';
 
