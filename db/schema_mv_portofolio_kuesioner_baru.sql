@@ -138,6 +138,37 @@ skor_dimensi_avg AS (
     GROUP BY nd.kelas_id
 )
 
+-- Hasil: {"123": 3.6667, "456": 4.0000}
+-- Key  = dosen_id (string), Value = skor (numeric 4 desimal)
+-- Hanya untuk kelas yang punya data kuesioner per dosen (format baru).
+-- NULL jika tidak ada dosen dengan data Q25/26/27 di kelas tersebut.
+skor_kues_per_dosen AS (
+    SELECT
+        nd.kelas_id,
+        -- Q25: penguasaan materi dosen
+        jsonb_object_agg(
+            nd.dosen_id::TEXT,
+            ROUND((nd.kuesioner->>'25')::NUMERIC, 4)
+        ) FILTER (WHERE nd.kuesioner ? '25')    AS skor_kues_dosen_q25,
+ 
+        -- Q26: kemampuan menjelaskan dosen
+        jsonb_object_agg(
+            nd.dosen_id::TEXT,
+            ROUND((nd.kuesioner->>'26')::NUMERIC, 4)
+        ) FILTER (WHERE nd.kuesioner ? '26')    AS skor_kues_dosen_q26,
+ 
+        -- Q27: interaksi dosen dengan mahasiswa
+        jsonb_object_agg(
+            nd.dosen_id::TEXT,
+            ROUND((nd.kuesioner->>'27')::NUMERIC, 4)
+        ) FILTER (WHERE nd.kuesioner ? '27')    AS skor_kues_dosen_q27
+    FROM evaluasi.nilai_dosen nd
+    WHERE nd.kuesioner IS NOT NULL
+      AND nd.kuesioner <> '{}'::jsonb
+      AND (nd.kuesioner ? '25' OR nd.kuesioner ? '26' OR nd.kuesioner ? '27')
+    GROUP BY nd.kelas_id
+)
+
 SELECT
     -- ── Identitas kelas ──────────────────────────────────────────────────────
     k.kelas_id,
@@ -162,13 +193,12 @@ SELECT
         WHEN 'A' THEN 'ABCDE'
         WHEN 'P' THEN 'PassFail'
         ELSE NULL
-    END                                                          AS jenis_nilai,
+    END                                                           AS jenis_nilai,
 
     -- ── Prodi & Fakultas ──────────────────────────────────────────────────────
-    -- JOIN dari k.no_ps agar kelas MK lintas-prodi (WI) tetap punya prodi.
     ps.no_ps                                                     AS kode_prodi,
     ps.kd_ps                                                     AS singkatan_prodi,
-    ps.nama->>'id'                                               AS nama_kode_prodi,
+    ps.nama->>'id'                                               AS nama_prodi_id,
     ps.nama->>'en'                                               AS nama_prodi_en,
     ps.kd_strata                                                 AS jenjang,
     f.kd_fak                                                     AS kode_fakultas,
@@ -242,16 +272,18 @@ SELECT
     skp.skor_q22,
     skp.skor_q23,
     skp.skor_q24,
+    ROUND(sda.skor_q25_avg::NUMERIC, 4)                          AS skor_q25_avg,
+    ROUND(sda.skor_q26_avg::NUMERIC, 4)                          AS skor_q26_avg,
+    ROUND(sda.skor_q27_avg::NUMERIC, 4)                          AS skor_q27_avg,
     skp.skor_q28,
     skp.skor_q29,
     skp.skor_q30,
     skp.skor_q35,
     skp.skor_q37,
 
-    -- ── Skor Q25/Q26/Q27 (rata-rata antar dosen) ──────────────────────────────
-    ROUND(sda.skor_q25_avg::NUMERIC, 4)                          AS skor_q25_avg,
-    ROUND(sda.skor_q26_avg::NUMERIC, 4)                          AS skor_q26_avg,
-    ROUND(sda.skor_q27_avg::NUMERIC, 4)                          AS skor_q27_avg,
+    skdp.skor_kues_dosen_q25,
+    skdp.skor_kues_dosen_q26,
+    skdp.skor_kues_dosen_q27,,
 
     -- ── Skor rata-rata per dimensi ────────────────────────────────────────────
     ROUND(sda2.skor_avg_capaian::NUMERIC,    2)                  AS skor_avg_capaian,
@@ -330,11 +362,11 @@ CREATE MATERIALIZED VIEW mv_statistik_prodi AS
 SELECT
     mv.kode_prodi,
     mv.singkatan_prodi,
-    mv.nama_kode_prodi,
+    mv.nama_prodi_id,
     mv.nama_prodi_en,
     mv.jenjang,
     mv.kode_fakultas,
-    mv.nama_kode_fakultas,
+    mv.nama_fakultas_id,
     mv.nama_fakultas_en,
     mv.semester,
     mv.tahun,
@@ -353,13 +385,13 @@ SELECT
     ROUND(AVG(mv.skor_avg_perilaku)::NUMERIC,       2)           AS avg_skor_perilaku,
     ROUND(AVG(mv.skor_avg_overall)::NUMERIC,        2)           AS avg_skor_overall,
     ROUND(AVG(mv.ip_mhs)::NUMERIC,                  3)           AS avg_ip_mhs,
-    ROUND(AVG(mv.dist_pct_lulus)::NUMERIC,          2)           AS avg_pct_lulus
+    ROUND(AVG(mv.dist_pct_lulus_A_C)::NUMERIC,      2)           AS avg_pct_lulus_A_C
 
 FROM mv_kelas mv
 JOIN LATERAL unnest(mv.semua_dosen_id) AS u(dosen_id) ON TRUE
 GROUP BY
-    mv.kode_prodi, mv.singkatan_prodi, mv.nama_kode_prodi, mv.nama_prodi_en,
-    mv.jenjang,  mv.kode_fakultas,  mv.nama_kode_fakultas, mv.nama_fakultas_en,
+    mv.kode_prodi, mv.singkatan_prodi, mv.nama_prodi_id, mv.nama_prodi_en,
+    mv.jenjang,  mv.kode_fakultas,  mv.nama_fakultas_id, mv.nama_fakultas_en,
     mv.semester, mv.tahun,       mv.tahun_ajaran;
 
 CREATE UNIQUE INDEX idx_mv_prodi_pk      ON mv_statistik_prodi (kode_prodi, semester, tahun);
