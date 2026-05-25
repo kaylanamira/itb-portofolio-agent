@@ -12,11 +12,11 @@ ENTITY TYPES TO EXTRACT:
 - no_kelas: number (1, 2, 3) or label (K1, K2, K3, kelas 1)
 
 AVAILABLE TABLES — select from these exact names only:
-- fakultas            → global list of all faculties, no scope restriction
-- program_studi       → global list of all prodi, no scope restriction
-- dosen               → global list of all lecturers, no scope restriction
-- kelompok_keahlian   → research groups per faculty (used to join dosen → fakultas)
-- mata_kuliah         → course catalog (use for bilingual name lookup)
+- utama.fakultas      → global list of all faculties, no scope restriction
+- utama.program_studi → global list of all prodi, no scope restriction
+- utama.dosen         → global list of all lecturers, no scope restriction
+- utama.kk            → research groups per faculty (used to join dosen → fakultas)
+- utama.mata_kuliah   → course catalog (use for bilingual name lookup)
 - mv_kelas            → per-class analytics (scores, grades, attendance) — DEFAULT
 - mv_statistik_prodi  → per-prodi aggregation per semester
 - mv_statistik_dosen  → per-dosen aggregation per semester
@@ -24,8 +24,8 @@ AVAILABLE TABLES — select from these exact names only:
 - komentar_mahasiswa  → student free-text comments
 
 TABLE SELECTION RULES:
-1. "berapa banyak fakultas/prodi/dosen/kk di ITB?" → lookup tables (fakultas / program_studi / dosen / kelompok_keahlian)
-2. "siapa saja dosen di STEI/IF/prodi X?" → [dosen, kelompok_keahlian, fakultas] or [dosen, program_studi]
+1. "berapa banyak fakultas/prodi/dosen/kk di ITB?" → lookup tables (utama.fakultas / utama.program_studi / utama.dosen / utama.kk)
+2. "siapa saja dosen di STEI/IF/prodi X?" → [utama.dosen, utama.kk, utama.fakultas] or [utama.dosen, utama.program_studi]
 3. Any question from a dosen about general prodi/fakultas info (NOT their own kelas) → lookup tables
 4. Individual class scores, grades, attendance, evaluasi kuesioner → [mv_kelas]
 5. Prodi-level performance, cross-prodi comparison → [mv_statistik_prodi]
@@ -33,8 +33,8 @@ TABLE SELECTION RULES:
 7. Student comments, keluhan, feedback text → [komentar_mahasiswa]
 8. Refleksi dosen, metode perkuliahan, usulan perbaikan → [teks_portofolio]
 9. Queries needing both score and text → [mv_kelas, komentar_mahasiswa] or [mv_kelas, teks_portofolio]
-10. Dosen per KK per fakultas (e.g. "komposisi dosen STEI per KK") → [dosen, kelompok_keahlian, fakultas]
-11. Dosen per prodi (e.g. "siapa dosen di prodi IF?") → [dosen, kelompok_keahlian, program_studi] or [dosen, program_studi]
+10. Dosen per KK per fakultas (e.g. "komposisi dosen STEI per KK") → [utama.dosen, utama.kk, utama.fakultas]
+11. Dosen per prodi (e.g. "siapa dosen di prodi IF?") → [utama.dosen, utama.kk, utama.program_studi] or [utama.dosen, utama.program_studi]
 
 RELATIVE TIME RESOLUTION (use the context provided in the human message):
 - ONLY populate "semester" and "tahun_ajaran" if the user explicitly mentions a time period (e.g., "semester 1", "2024/2025") or uses a relative term (e.g., "semester ini", "semester lalu", "tahun ini").
@@ -104,15 +104,13 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
 - Table routing:
   * Portfolio analytics (scores, grades, attendance): mv_kelas / mv_statistik_prodi / mv_statistik_dosen
   * Institutional facts (list/count faculties, prodi, dosen, kk, mata kuliah): lookup tables
-    (fakultas, program_studi, dosen, kelompok_keahlian, mata_kuliah)
-  * Free-text content: teks_portofolio, komentar_mahasiswa
-  * dosen does NOT have fakultas_id — JOIN through kelompok_keahlian to reach fakultas
+    (utama.fakultas, utama.program_studi, utama.dosen, utama.kk, utama.mata_kuliah)
 
 - Name/text entity matching — ALWAYS use ILIKE, never exact =:
-  * dosen:    WHERE nama_dosen ILIKE '%%yani%%'
+  * dosen:    WHERE nama ILIKE '%%yani%%'
   * prodi:    WHERE singkatan_prodi ILIKE '%%IF%%' OR nama_prodi ILIKE '%%informatika%%'
-  * fakultas: WHERE kode_fakultas ILIKE '%%STEI%%' OR nama_fakultas ILIKE '%%elektro%%'
-  * kelompok keahlian: WHERE nama_kk ILIKE '%%rekayasa perangkat lunak%%'
+  * fakultas: WHERE kd_fak ILIKE '%%STEI%%' OR nama->>'id' ILIKE '%%elektro%%'
+  * kelompok keahlian: WHERE nama->>'id' ILIKE '%%rekayasa perangkat lunak%%'
     KK = "Kelompok Keahlian" (Research Group), NOT "Kurikulum Kompetensi"
   * mata kuliah: WHERE nama_mk ILIKE '%%basis data%%' OR nama_mk_en ILIKE '%%basis data%%'
   * Strip honorifics mentally: "bu yani" → search for 'yani', "pak budi" → 'budi'
@@ -151,11 +149,11 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
 
 - Common SQL Patterns:
   * Institutional fact queries (use lookup tables, scope filter = TRUE):
-    SELECT COUNT(*) AS total_fakultas FROM fakultas WHERE is_active = TRUE AND {SCOPE_FILTER};
-  * Dosen in a specific faculty (join through kelompok_keahlian):
-    SELECT d.nama_dosen FROM dosen d JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id JOIN fakultas f ON f.fakultas_id = kk.fakultas_id WHERE f.kode_fakultas = 'STEI' AND d.is_active = TRUE AND {SCOPE_FILTER};
+    SELECT COUNT(*) AS total_fakultas FROM utama.fakultas WHERE active = TRUE AND {SCOPE_FILTER};
+  * Dosen in a specific faculty (can use kd_fak directly):
+    SELECT d.nama FROM utama.dosen d WHERE d.kd_fak = 'STEI' AND d.active = TRUE AND {SCOPE_FILTER};
   * Compare total dosen between faculties:
-    SELECT f.kode_fakultas, COUNT(d.dosen_id) AS total_dosen FROM dosen d JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id JOIN fakultas f ON f.fakultas_id = kk.fakultas_id WHERE f.kode_fakultas IN ('FTTM', 'STEI') AND d.is_active = TRUE AND {SCOPE_FILTER} GROUP BY f.kode_fakultas;
+    SELECT d.kd_fak, COUNT(d.dosen_id) AS total_dosen FROM utama.dosen d WHERE d.kd_fak IN ('FTTM', 'STEI') AND d.active = TRUE AND {SCOPE_FILTER} GROUP BY d.kd_fak;
   * All classes for a specific matkul in a semester:
     SELECT * FROM mv_kelas WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun_ajaran = '2024/2025' AND {SCOPE_FILTER} ORDER BY no_kelas;
   * Dosen's own classes:

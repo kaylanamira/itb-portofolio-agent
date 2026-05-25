@@ -45,7 +45,7 @@ CREATE TYPE user_role_enum AS ENUM (
 
 `wram` diganti `direktorat` untuk menyesuaikan istilah resmi yang lebih generik
 dan tidak terikat singkatan internal satu unit. Enum ini dipindah ke
-`schema_auth_session.sql` karena hanya digunakan di tabel `pengguna_peran`.
+`schema_auth_session.sql` karena hanya digunakan di tabel `user_scope`.
 
 ---
 
@@ -562,20 +562,20 @@ CREATE TABLE pengguna (
 Perubahan kunci:
 - Dihapus `username` — login ITB berbasis email
 - Dihapus `role` langsung dari tabel `pengguna` — dipindah ke tabel terpisah
-  `pengguna_peran` untuk mendukung multi-role
+  `user_scope` untuk mendukung multi-role
 - Ditambah `metode_auth` (sso_microsoft / password) dan `password_hash`
 - `pengguna_id` menggantikan `user_id` (konsistensi penamaan Bahasa Indonesia)
 
 ---
 
-### 5.2 Tabel `user_scope` → Diganti `pengguna_peran`
+### 5.2 Tabel `user_scope` 
 
 **Schema lama:** Satu tabel `user_scope` per user (UNIQUE user_id → hanya satu scope).
 
-**Schema baru:** Tabel `pengguna_peran` — satu user bisa punya **banyak baris** (multi-role).
+**Schema baru:** Tabel `user_scope` — satu user bisa punya **banyak baris** (multi-role).
 
 ```sql
-CREATE TABLE pengguna_peran (
+CREATE TABLE user_scope (
     id            UUID PRIMARY KEY
     pengguna_id   UUID NOT NULL REFERENCES pengguna
     kode_peran    user_role_enum NOT NULL
@@ -739,7 +739,7 @@ tetap bisa mendapat jawaban dari chatbot.
 
 | Tabel | Alasan Dihapus |
 |---|---|
-| `user_scope` | Digantikan `pengguna_peran` yang lebih fleksibel (multi-role) |
+| `user_scope` | Digantikan `user_scope` yang lebih fleksibel (multi-role) |
 | `ingestion_log` | Digantikan `ingestion_batch` + `ingestion_file_log` |
 | `skor_kuesioner` (lama) | Digantikan tiga tabel baru yang mencerminkan struktur data aktual |
 
@@ -778,7 +778,7 @@ tetap bisa mendapat jawaban dari chatbot.
 | Tabel | Status vs Schema Lama |
 |---|---|
 | `pengguna` | Refactor, hapus `username` + `role`, tambah `metode_auth` |
-| `pengguna_peran` | **BARU** (menggantikan `user_scope`, mendukung multi-role) |
+| `user_scope` | **BARU** (menggantikan `user_scope`, mendukung multi-role) |
 | `sessions` | **BARU** |
 | `ingestion_batch` | **BARU** (menggantikan `ingestion_log`) |
 | `ingestion_file_log` | **BARU** |
