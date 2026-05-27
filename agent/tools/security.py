@@ -1,14 +1,31 @@
-"""
-SQL Security validator
+"""SQL security validator.
 
-Covers: write ops, injection patterns, dangerous functions, forbidden tables.
-
+Validates generated SQL against:
+- Write operation blocklist
+- Injection patterns
+- Dangerous functions
+- Schema and table access control (allowed/forbidden)
+- PII column detection in SELECT clauses
 """
 
 import re
+from typing import Optional
 import sqlglot
 import sqlglot.expressions as exp
 
+ALLOWED_SCHEMAS: frozenset[str] = frozenset({
+    "utama", "kelas", "evaluasi", "mahasiswa", "users",
+    "kur24", "analitik", "referensi", "kurikulum",
+})
+
+FORBIDDEN_SCHEMA_PREFIXES: tuple[str, ...] = ("v_", "x_", "__")
+
+FORBIDDEN_TABLES: frozenset[str] = frozenset({
+    "checkpoints", "checkpoint_blobs", "checkpoint_writes",
+    "chat_session", "chat_message", "ingestion_log",
+    "information_schema",
+    "vector_chunks",
+})
 
 FORBIDDEN_KEYWORDS: frozenset[str] = frozenset({
     "INSERT", "UPDATE", "DELETE", "DROP", "TRUNCATE", "ALTER",
@@ -34,62 +51,89 @@ DANGEROUS_FUNCTIONS: frozenset[str] = frozenset({
 
 PG_SYSTEM_PATTERN = re.compile(r"\bpg_[a-z_]+\b", re.IGNORECASE)
 
-FORBIDDEN_TABLES: frozenset[str] = frozenset({
-    "pengguna",           # user accounts / credentials
-    "user_scope",         # user permissions table
-    "ingestion_log",      # system internals
-    "chat_session",       # session data
-    "chat_message",       # message history
-    "checkpoints",        # LangGraph internals
-    "checkpoint_blobs",
-    "checkpoint_writes",
-    "information_schema", # DB introspection
+SENSITIVE_COLUMN_PATTERNS: frozenset[str] = frozenset({
+    "nim", "nip", "tgl_lahir", "tanggal_lahir", "tempat_lahir",
+    "email", "no_hp", "no_telp", "alamat", "id_dikti", "no_ktp",
+    "nik", "ip_address", "password", "token", "secret",
+    "ms365_upn", "ina_id",
 })
 
-# Tables that belong to the RAG pipeline; the SQL agent should not touch them
-RAG_ONLY_TABLES: frozenset[str] = frozenset({
-    "vector_chunks",
-})
+SENSITIVE_VALUE_PATTERNS: list[re.Pattern] = [
+    re.compile(r"\b\d{8,}\b"),                    # NIM-like (8+ digits)
+    re.compile(r"\b[\w.-]+@[\w.-]+\.\w+\b"),      # Email
+    re.compile(r"\b\d{1,3}(\.\d{1,3}){3}\b"),     # IP address
+]
+
+def _is_schema_forbidden(schema_name: str, allowed_schemas: frozenset[str] = ALLOWED_SCHEMAS) -> bool:
+    """Check if a schema is forbidden based on name or prefix patterns."""
+    if not schema_name:
+        return False
+    lower = schema_name.lower()
+    if lower not in allowed_schemas:
+        return True
+    for prefix in FORBIDDEN_SCHEMA_PREFIXES:
+        if lower.startswith(prefix):
+            return True
+    return False
 
 
-def check_sql_security(sql: str) -> tuple[bool, str | None]:
-    """
-    Multi-layer pre-parse security check on a raw SQL string.
+def _check_pii_columns(stmt: exp.Expression) -> Optional[str]:
+    """Walk SELECT columns and flag any that match PII patterns."""
+    for col in stmt.find_all(exp.Column):
+        col_name = col.name.lower() if col.name else ""
+        if col_name in SENSITIVE_COLUMN_PATTERNS:
+            return f"PII Violation: SELECT includes sensitive column '{col.name}'"
+    return None
+
+
+def check_sql_security(
+    sql: str,
+    allowed_schemas: frozenset[str] | None = None,
+) -> tuple[bool, str | None]:
+    """Multi-layer security check on generated SQL.
+
+    Args:
+        sql: Raw SQL string to validate.
+        allowed_schemas: Schema allowlist override. None uses the module default
+            (ALLOWED_SCHEMAS). Pass an empty frozenset to skip schema enforcement
+            entirely (e.g., for domain-agnostic benchmark evaluation).
 
     Returns:
-        (True, None)         — SQL passed all checks
-        (False, error_msg)   — SQL failed; error_msg describes the violation
+        (True, None) if SQL passes all checks.
+        (False, error_msg) if SQL fails validation.
     """
+    _allowed = ALLOWED_SCHEMAS if allowed_schemas is None else allowed_schemas
+
     if not sql or not sql.strip():
         return False, "Security Violation: Empty SQL"
 
     sql_upper = sql.upper()
 
-    # ── 1. Write-operation keyword blocklist ──────────────────────────────────
+    # 1. Write-operation keyword
     for keyword in FORBIDDEN_KEYWORDS:
         if re.search(r"\b" + keyword + r"\b", sql_upper):
             return False, f"Security Violation: Forbidden keyword '{keyword}'"
 
-    # ── 2. Injection patterns (raw string) ────────────────────────────────────
+    # 2. Injection patterns
     for pattern, label in INJECTION_PATTERNS:
         if re.search(pattern, sql, re.IGNORECASE):
             return False, f"Security Violation: {label} detected"
 
-    # ── 3. Dangerous function names ───────────────────────────────────────────
+    # 3. Dangerous function names
     for func in DANGEROUS_FUNCTIONS:
         if re.search(r"\b" + re.escape(func) + r"\b", sql, re.IGNORECASE):
-            return False, f"Security Violation: Dangerous function '{func}' not allowed"
+            return False, f"Security Violation: Dangerous function '{func}'"
 
-    # ── 4. Broad pg_* system function / catalog access ───────────────────────
+    # 4. pg_* system access
     pg_matches = PG_SYSTEM_PATTERN.findall(sql)
     if pg_matches:
-        return False, f"Security Violation: pg_* system access not allowed ({pg_matches[0]})"
+        return False, f"Security Violation: pg_* system access ({pg_matches[0]})"
 
-    # ── 5. Vector operations (SQL agent doesn't do RAG) ──────────────────────
+    # 5. Vector operators
     if "<->" in sql or "<=>" in sql:
         return False, "Security Violation: Vector operators not allowed in SQL agent"
 
-    # ── 6. sqlglot AST — table-level and write-op checks ─────────────────────
+    # 6. AST-level checks via sqlglot
     try:
         statements = sqlglot.parse(sql, dialect="postgres")
     except sqlglot.errors.ParseError as e:
@@ -103,24 +147,30 @@ def check_sql_security(sql: str) -> tuple[bool, str | None]:
 
     stmt = statements[0]
 
-    # Root must be a SELECT (covers WITH...SELECT too via sqlglot)
     if not isinstance(stmt, exp.Select):
         return False, f"Security Violation: Only SELECT allowed, got {type(stmt).__name__}"
 
-    # Check for write ops hidden in CTEs / subqueries
+    # Check for write ops in subqueries/CTEs
     for node in stmt.walk():
         if isinstance(node, (exp.Insert, exp.Update, exp.Delete, exp.Drop, exp.Create)):
             return False, "Security Violation: Write operation in subquery/CTE"
 
-    # Extract all referenced table names and check against blocklists
-    referenced_tables = {t.name.lower() for t in stmt.find_all(exp.Table) if t.name}
+    # 7. Schema and table access control
+    if _allowed: 
+        for table in stmt.find_all(exp.Table):
+            table_name = table.name.lower() if table.name else ""
+            schema_name = table.db.lower() if table.db else ""
 
-    forbidden_hit = referenced_tables & {t.lower() for t in FORBIDDEN_TABLES}
-    if forbidden_hit:
-        return False, f"Security Violation: Access to restricted table(s): {forbidden_hit}"
+            if table_name in FORBIDDEN_TABLES:
+                return False, f"Security Violation: Access to restricted table '{table_name}'"
 
-    rag_hit = referenced_tables & {t.lower() for t in RAG_ONLY_TABLES}
-    if rag_hit:
-        return False, f"Security Violation: RAG-only table accessed by SQL agent: {rag_hit}"
+            if schema_name and _is_schema_forbidden(schema_name, _allowed):
+                return False, f"Security Violation: Access to forbidden schema '{schema_name}'"
+
+    # 8. PII column check
+    pii_error = _check_pii_columns(stmt)
+    if pii_error:
+        return False, pii_error
 
     return True, None
+

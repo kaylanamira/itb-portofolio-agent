@@ -1,9 +1,7 @@
-"""
-Fuzzy entity resolution via pg_trgm similarity.
+"""Fuzzy entity resolution via pg_trgm similarity.
 
-Resolves entity mentions from a query to canonical DB values.
-Unambiguous matches set resolved_* UUID and canonical name.
-Ambiguous matches populate entity_candidates for ILIKE fallback in SQL generation.
+Resolves entity mentions from a query to canonical DB values using
+the dev_six schema (utama.dosen, utama.mata_kuliah, etc.).
 
 Configuration:
     All similarity thresholds are defined in FuzzyConfig and can be overridden
@@ -23,32 +21,21 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class FuzzyConfig:
-    """
-    Configurable similarity thresholds for entity resolution.
+    """Configurable similarity thresholds for entity resolution.
 
-    Attributes:
-        name_threshold:  Minimum pg_trgm similarity to consider a name-field match.
-                         Kept low (0.22) to handle partial/abbreviated mentions.
-        uuid_threshold:  Minimum similarity to commit a UUID hard-resolve.
-                         Higher than name_threshold to prevent false ID assignments.
-        code_threshold:  Stricter threshold for short code fields (kode_mk, kode_fakultas)
-                         because short strings have naturally higher false-positive rates.
-        ambiguity_gap:   Top match must exceed runner-up by this margin to hard-resolve.
-                         Prevents committing to a UUID when two candidates are close.
+    Args:
+        name_threshold: Minimum pg_trgm similarity for name-field matches.
+        id_threshold: Minimum similarity to commit to a hard-resolved ID.
+        code_threshold: Stricter threshold for short code fields (kd_fak, kd_ps).
+        ambiguity_gap: Top match must exceed runner-up by this margin to hard-resolve.
     """
     name_threshold: float = float(os.getenv("FUZZY_NAME_THRESHOLD", "0.22"))
-    uuid_threshold: float = float(os.getenv("FUZZY_UUID_THRESHOLD", "0.55"))
+    id_threshold: float = float(os.getenv("FUZZY_ID_THRESHOLD", "0.55"))
     code_threshold: float = float(os.getenv("FUZZY_CODE_THRESHOLD", "0.60"))
-    ambiguity_gap:  float = float(os.getenv("FUZZY_AMBIGUITY_GAP", "0.15"))
+    ambiguity_gap: float = float(os.getenv("FUZZY_AMBIGUITY_GAP", "0.15"))
 
 
-# Module-level default config (can be overridden in tests)
 DEFAULT_CONFIG = FuzzyConfig()
-
-SIMILARITY_THRESHOLD_NAME = DEFAULT_CONFIG.name_threshold
-SIMILARITY_THRESHOLD_UUID = DEFAULT_CONFIG.uuid_threshold
-SIMILARITY_THRESHOLD_CODE = DEFAULT_CONFIG.code_threshold
-AMBIGUITY_GAP = DEFAULT_CONFIG.ambiguity_gap
 
 CLEAN_HONORIFICS_PATTERN = re.compile(
     r"^(pak|bu|prof|dr|ir|drs|dra)\.?\s+", re.IGNORECASE
@@ -59,27 +46,18 @@ class FuzzyResolutionError(Exception):
     """Raised when entity resolution fails due to a DB or infrastructure error."""
 
 
-def _is_unambiguous(
-    rows: list[dict],
-    config: FuzzyConfig | bool = DEFAULT_CONFIG,
-    uuid_resolve: bool = False,
-) -> bool:
-    """
-    Returns True if the top match is clearly better than the runner-up.
+def _is_unambiguous(rows: list[dict], config: FuzzyConfig = DEFAULT_CONFIG, require_id: bool = False) -> bool:
+    """Returns True if the top match is clearly better than the runner-up.
 
     Args:
         rows: Similarity-ranked result rows, each with a 'sim' key.
         config: FuzzyConfig with thresholds.
-        uuid_resolve: If True, also requires top score >= config.uuid_threshold.
+        require_id: If True, also requires top score >= config.id_threshold.
     """
-    if isinstance(config, bool):
-        uuid_resolve = config
-        config = DEFAULT_CONFIG
-
     if not rows:
         return False
     top_sim = rows[0]["sim"]
-    if uuid_resolve and top_sim < config.uuid_threshold:
+    if require_id and top_sim < config.id_threshold:
         return False
     if len(rows) == 1:
         return True
@@ -90,20 +68,17 @@ async def fuzzy_resolve_entities(
     entities: DetectedEntities,
     config: FuzzyConfig = DEFAULT_CONFIG,
 ) -> DetectedEntities:
-    """
-    Resolves entity mentions to canonical DB values via pg_trgm.
+    """Resolves entity mentions to canonical DB values via pg_trgm.
 
     Args:
         entities: DetectedEntities with raw LLM-extracted values.
         config: FuzzyConfig controlling similarity thresholds.
 
     Returns:
-        Updated DetectedEntities where unambiguous matches have resolved_* UUID
-        and canonical name set; ambiguous matches have entity_candidates populated.
+        Updated DetectedEntities with resolved IDs and canonical names.
 
     Raises:
-        FuzzyResolutionError: If a database connectivity error occurs. Callers
-            should treat this as "no resolution" but log it appropriately.
+        FuzzyResolutionError: If a database connectivity error occurs.
     """
     updates: dict = {}
     candidates: dict[str, list[dict]] = {}
@@ -111,146 +86,175 @@ async def fuzzy_resolve_entities(
     try:
         async with get_db_connection() as conn:
 
+            # ── mata_kuliah by name ──
             if entities.nama_mk and not entities.resolved_matkul_id:
                 rows = await _query_many(conn, """
-                    SELECT matkul_id, kode_mk, nama_mk,
+                    SELECT mata_kuliah_id, kd_kuliah, nama->>'id' AS nama_id,
                         GREATEST(
-                            similarity(nama_mk, %s),
-                            similarity(COALESCE(nama_mk_en, ''), %s)
+                            similarity(nama->>'id', %s::text),
+                            similarity(COALESCE(nama->>'en', ''), %s::text)
                         ) AS sim
-                    FROM mata_kuliah
-                    WHERE is_active = TRUE
+                    FROM utama.mata_kuliah
+                    WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
                 """, (entities.nama_mk, entities.nama_mk), threshold=config.name_threshold)
 
                 if rows:
-                    updates["nama_mk"] = rows[0]["nama_mk"]
-                    if _is_unambiguous(rows, config, uuid_resolve=True):
-                        updates["kode_mk"] = updates.get("kode_mk") or rows[0]["kode_mk"]
-                        updates["resolved_matkul_id"] = rows[0]["matkul_id"]
+                    updates["nama_mk"] = rows[0]["nama_id"]
+                    if _is_unambiguous(rows, config, require_id=True):
+                        updates["kode_mk"] = updates.get("kode_mk") or rows[0]["kd_kuliah"]
+                        updates["resolved_matkul_id"] = rows[0]["mata_kuliah_id"]
                     else:
                         candidates["nama_mk"] = [
-                            {"nama_mk": r["nama_mk"], "kode_mk": r["kode_mk"], "sim": r["sim"]}
+                            {"nama_mk": r["nama_id"], "kode_mk": r["kd_kuliah"], "sim": r["sim"]}
                             for r in rows
                         ]
 
+            # ── mata_kuliah by code ──
             if entities.kode_mk and not updates.get("kode_mk") and not entities.resolved_matkul_id:
                 rows = await _query_many(conn, """
-                    SELECT matkul_id, kode_mk, nama_mk,
-                           similarity(kode_mk, %s) AS sim
-                    FROM mata_kuliah
-                    WHERE is_active = TRUE
+                    SELECT mata_kuliah_id, kd_kuliah, nama->>'id' AS nama_id,
+                           similarity(kd_kuliah::text, %s::text) AS sim
+                    FROM utama.mata_kuliah
+                    WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
                 """, (entities.kode_mk.upper(),), threshold=config.code_threshold)
 
                 if rows:
-                    if _is_unambiguous(rows, config, uuid_resolve=True):
-                        updates["kode_mk"] = rows[0]["kode_mk"]
-                        updates["nama_mk"] = updates.get("nama_mk") or rows[0]["nama_mk"]
-                        updates["resolved_matkul_id"] = rows[0]["matkul_id"]
+                    if _is_unambiguous(rows, config, require_id=True):
+                        updates["kode_mk"] = rows[0]["kd_kuliah"]
+                        updates["nama_mk"] = updates.get("nama_mk") or rows[0]["nama_id"]
+                        updates["resolved_matkul_id"] = rows[0]["mata_kuliah_id"]
                     else:
                         candidates["kode_mk"] = [
-                            {"kode_mk": r["kode_mk"], "nama_mk": r["nama_mk"], "sim": r["sim"]}
+                            {"kode_mk": r["kd_kuliah"], "nama_mk": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
+            # ── dosen by name ──
             if entities.nama_dosen and not entities.resolved_dosen_id:
                 mention = entities.nama_dosen.strip()
                 clean_mention = CLEAN_HONORIFICS_PATTERN.sub("", mention).strip()
 
                 rows = await _query_many(conn, """
-                    SELECT dosen_id, nama_dosen,
+                    SELECT dosen_id, nama_gelar,
                            GREATEST(
-                               similarity(nama_dosen, %s),
-                               similarity(nama_dosen, %s)
+                               similarity(nama_gelar::text, %s::text),
+                               similarity(nama_gelar::text, %s::text)
                            ) AS sim
-                    FROM dosen
-                    WHERE is_active = TRUE
+                    FROM utama.dosen
+                    WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
                 """, (mention, clean_mention), threshold=config.name_threshold)
 
                 if rows:
-                    updates["nama_dosen"] = rows[0]["nama_dosen"]
-                    if _is_unambiguous(rows, config, uuid_resolve=True):
+                    updates["nama_dosen"] = rows[0]["nama_gelar"]
+                    if _is_unambiguous(rows, config, require_id=True):
                         updates["resolved_dosen_id"] = rows[0]["dosen_id"]
                     else:
                         candidates["nama_dosen"] = [
-                            {"nama_dosen": r["nama_dosen"], "dosen_id": str(r["dosen_id"]), "sim": r["sim"]}
+                            {"nama_dosen": r["nama_gelar"], "dosen_id": r["dosen_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
+            # ── program_studi by abbreviation ──
             if entities.singkatan_prodi and not entities.resolved_prodi_id:
                 rows = await _query_many(conn, """
-                    SELECT prodi_id, kode_prodi, singkatan_prodi, nama_prodi,
+                    SELECT no_ps, kd_ps, nama->>'id' AS nama_id,
                            GREATEST(
-                               similarity(singkatan_prodi, %s),
-                               similarity(nama_prodi, %s)
+                               similarity(kd_ps::text, %s::text),
+                               similarity(nama->>'id', %s::text)
                            ) AS sim
-                    FROM program_studi
-                    WHERE is_active = TRUE
+                    FROM utama.program_studi
+                    WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
                 """, (entities.singkatan_prodi, entities.singkatan_prodi),
                     threshold=config.name_threshold)
 
                 if rows:
-                    if _is_unambiguous(rows, config, uuid_resolve=True):
-                        updates["singkatan_prodi"] = rows[0]["singkatan_prodi"]
-                        updates["kode_prodi"] = rows[0]["kode_prodi"]
-                        updates["resolved_prodi_id"] = rows[0]["prodi_id"]
+                    if _is_unambiguous(rows, config, require_id=True):
+                        updates["singkatan_prodi"] = rows[0]["kd_ps"]
+                        updates["kode_prodi"] = str(rows[0]["no_ps"])
+                        updates["resolved_prodi_id"] = rows[0]["no_ps"]
                     else:
                         candidates["singkatan_prodi"] = [
-                            {
-                                "singkatan_prodi": r["singkatan_prodi"],
-                                "nama_prodi": r["nama_prodi"],
-                                "sim": r["sim"],
-                            }
+                            {"singkatan_prodi": r["kd_ps"], "nama_prodi": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
-            # ── program_studi by kode_prodi (SECONDARY — numeric PDDikti codes) ─
+            # ── program_studi by numeric code ──
             if (
                 entities.kode_prodi
                 and not updates.get("resolved_prodi_id")
                 and not entities.resolved_prodi_id
             ):
                 rows = await _query_many(conn, """
-                    SELECT prodi_id, kode_prodi, singkatan_prodi, nama_prodi,
+                    SELECT no_ps, kd_ps, nama->>'id' AS nama_id,
                            GREATEST(
-                               similarity(kode_prodi, %s),
-                               similarity(COALESCE(singkatan_prodi,''), %s),
-                               similarity(nama_prodi, %s)
+                               similarity(no_ps::text, %s::text),
+                               similarity(COALESCE(kd_ps,'')::text, %s::text),
+                               similarity(nama->>'id', %s::text)
                            ) AS sim
-                    FROM program_studi
-                    WHERE is_active = TRUE
+                    FROM utama.program_studi
+                    WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
                 """, (entities.kode_prodi, entities.kode_prodi, entities.kode_prodi),
                     threshold=config.name_threshold)
 
                 if rows:
-                    if _is_unambiguous(rows, config, uuid_resolve=True):
-                        updates["kode_prodi"] = rows[0]["kode_prodi"]
-                        updates["singkatan_prodi"] = updates.get("singkatan_prodi") or rows[0]["singkatan_prodi"]
-                        updates["resolved_prodi_id"] = rows[0]["prodi_id"]
+                    if _is_unambiguous(rows, config, require_id=True):
+                        updates["kode_prodi"] = str(rows[0]["no_ps"])
+                        updates["singkatan_prodi"] = updates.get("singkatan_prodi") or rows[0]["kd_ps"]
+                        updates["resolved_prodi_id"] = rows[0]["no_ps"]
                     else:
                         candidates["kode_prodi"] = [
-                            {"kode_prodi": r["kode_prodi"], "nama_prodi": r["nama_prodi"], "sim": r["sim"]}
+                            {"kode_prodi": str(r["no_ps"]), "nama_prodi": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
-            if entities.kode_fakultas:
+            # ── program_studi by name ──
+            if (
+                entities.nama_prodi
+                and not updates.get("resolved_prodi_id")
+                and not entities.resolved_prodi_id
+            ):
                 rows = await _query_many(conn, """
-                    SELECT fakultas_id, kode_fakultas, nama_fakultas,
+                    SELECT no_ps, kd_ps, nama->>'id' AS nama_id,
+                           similarity(nama->>'id', %s::text) AS sim
+                    FROM utama.program_studi
+                    WHERE active = TRUE
+                    ORDER BY sim DESC
+                    LIMIT 3
+                """, (entities.nama_prodi,),
+                    threshold=config.name_threshold)
+
+                if rows:
+                    if _is_unambiguous(rows, config, require_id=True):
+                        updates["kode_prodi"] = str(rows[0]["no_ps"])
+                        updates["singkatan_prodi"] = updates.get("singkatan_prodi") or rows[0]["kd_ps"]
+                        updates["resolved_prodi_id"] = rows[0]["no_ps"]
+                        updates["nama_prodi"] = rows[0]["nama_id"]
+                    else:
+                        candidates["nama_prodi"] = [
+                            {"kode_prodi": str(r["no_ps"]), "nama_prodi": r["nama_id"], "sim": r["sim"]}
+                            for r in rows
+                        ]
+
+            # ── fakultas by code ──
+            if entities.kode_fakultas and not updates.get("kode_fakultas"):
+                rows = await _query_many(conn, """
+                    SELECT kd_fak, nama->>'id' AS nama_id,
                            GREATEST(
-                               similarity(kode_fakultas, %s),
-                               similarity(nama_fakultas, %s)
+                               similarity(kd_fak::text, %s::text),
+                               similarity(nama->>'id', %s::text)
                            ) AS sim
-                    FROM fakultas
-                    WHERE is_active = TRUE
+                    FROM utama.fakultas
+                    WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
                 """, (entities.kode_fakultas, entities.kode_fakultas),
@@ -258,10 +262,33 @@ async def fuzzy_resolve_entities(
 
                 if rows:
                     if _is_unambiguous(rows, config):
-                        updates["kode_fakultas"] = rows[0]["kode_fakultas"]
+                        updates["kode_fakultas"] = rows[0]["kd_fak"]
+                        updates["nama_fakultas"] = updates.get("nama_fakultas") or rows[0]["nama_id"]
                     else:
                         candidates["kode_fakultas"] = [
-                            {"kode_fakultas": r["kode_fakultas"], "nama_fakultas": r["nama_fakultas"], "sim": r["sim"]}
+                            {"kode_fakultas": r["kd_fak"], "nama_fakultas": r["nama_id"], "sim": r["sim"]}
+                            for r in rows
+                        ]
+
+            # ── fakultas by name ──
+            if entities.nama_fakultas and not updates.get("kode_fakultas"):
+                rows = await _query_many(conn, """
+                    SELECT kd_fak, nama->>'id' AS nama_id,
+                           similarity(nama->>'id', %s::text) AS sim
+                    FROM utama.fakultas
+                    WHERE active = TRUE
+                    ORDER BY sim DESC
+                    LIMIT 3
+                """, (entities.nama_fakultas,),
+                    threshold=config.name_threshold)
+
+                if rows:
+                    if _is_unambiguous(rows, config):
+                        updates["kode_fakultas"] = rows[0]["kd_fak"]
+                        updates["nama_fakultas"] = rows[0]["nama_id"]
+                    else:
+                        candidates["nama_fakultas"] = [
+                            {"kode_fakultas": r["kd_fak"], "nama_fakultas": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
@@ -279,8 +306,7 @@ async def fuzzy_resolve_entities(
 
 
 async def _query_many(conn, sql: str, params: tuple, threshold: float) -> list[dict]:
-    """
-    Executes a similarity query and returns rows above threshold.
+    """Executes a similarity query and returns rows above threshold.
 
     Args:
         conn: Async DB connection.

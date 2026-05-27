@@ -11,7 +11,7 @@ Before writing any SQL, briefly reason through these points in a short comment b
 /*
 TABLES: Which tables are needed and why?
 JOINS:  What JOINs are needed? On which keys?
-FILTER: What WHERE conditions apply? (scope + entity + time period)
+FILTER: What WHERE conditions apply? (entity + time period)
 AGGREGATE: Is GROUP BY / HAVING / WINDOW needed? What aggregation?
 OUTPUT: What columns should the result contain? What is the expected shape?
 */
@@ -24,11 +24,7 @@ STEP 2 — MANDATORY SQL RULES
 
 SECURITY:
 1. Generate ONLY SELECT statements. No INSERT, UPDATE, DELETE, DROP, TRUNCATE.
-2. Every query MUST contain exactly ONE WHERE clause starting with {{SCOPE_FILTER}}.
-   CORRECT: WHERE {{SCOPE_FILTER}}
-   CORRECT: WHERE {{SCOPE_FILTER}} AND column = 'value'
-   WRONG:   WHERE column = 'value' WHERE {{SCOPE_FILTER}}  ← two WHERE keywords
-   {{SCOPE_FILTER}} MUST always be the FIRST condition; other conditions follow with AND.
+2. Row-level access control is enforced by the database automatically. Write queries naturally without any scope filter placeholders.
 3. Only reference tables that appear in DATABASE SCHEMA above.
 
 CORRECTNESS:
@@ -37,41 +33,26 @@ CORRECTNESS:
 6. ORDER BY for all list queries.
 7. COALESCE for nullable score/metric columns: e.g. COALESCE(nullable_col, 0).
 8. Table aliases on all columns when joining multiple tables — no bare column names.
-9. Explicit type casts: UUID comparisons need ::uuid. E.g. 'uuid-string'::uuid = ANY(uuid_array_column).
-10. COMPARATIVE queries: use GROUP BY + aggregate functions (not multiple hardcoded COUNT aliases).
+9. COMPARATIVE queries: use GROUP BY + aggregate functions.
 
 RATIO / PROPORTION QUERIES:
-11. For percentage, ratio, proportion, or share questions: return numerator, denominator, labels,
+10. For percentage, ratio, proportion, or share questions: return numerator, denominator, labels,
     AND computed metric in ONE SELECT. Use CTEs + conditional aggregation:
     COUNT(*) FILTER (WHERE condition) AS numerator
-    Avoid emitting separate queries for numerator and denominator.
 
 CLAUSE-SPECIFIC RULES:
-12. HAVING — filter on aggregated values AFTER GROUP BY:
-    SELECT category_id, AVG(score) AS avg_score
-    FROM my_table WHERE {{SCOPE_FILTER}}
-    GROUP BY category_id
-    HAVING AVG(score) > 3.0
-
-13. WINDOW FUNCTIONS — use for ranking within partitions:
-    RANK() OVER (PARTITION BY category_id ORDER BY score DESC)
-    ROW_NUMBER() OVER (ORDER BY score DESC)
-    Use DISTINCT ON (column) for "latest per entity" queries.
-
-14. UNION ALL — when combining rows:
-    Every UNION branch MUST have its own {{SCOPE_FILTER}} in its WHERE clause.
-    SELECT 'TypeA' AS type, count_a FROM my_table WHERE {{SCOPE_FILTER}} AND ...
-    UNION ALL
-    SELECT 'TypeB' AS type, count_b FROM my_table WHERE {{SCOPE_FILTER}} AND ...
-
-15. GROUP BY completeness — ALL non-aggregate columns in SELECT must appear in GROUP BY.
-    Aggregated: COUNT(), AVG(), SUM(), MAX(), MIN(), array_agg(), string_agg().
-    Everything else goes in GROUP BY.
-
-16. DISTINCT ON (PostgreSQL-specific) — for "latest/first per entity":
-    SELECT DISTINCT ON (entity_id) entity_id, entity_name, date_field
-    FROM my_table WHERE {{SCOPE_FILTER}}
+11. HAVING — filter on aggregated values AFTER GROUP BY.
+12. WINDOW FUNCTIONS — use for ranking within partitions:
+    RANK() OVER (PARTITION BY category ORDER BY score DESC)
+13. UNION ALL — when combining rows from the same table.
+14. GROUP BY completeness — ALL non-aggregate columns in SELECT must appear in GROUP BY.
+15. DISTINCT ON (PostgreSQL-specific) — for "latest/first per entity":
+    SELECT DISTINCT ON (entity_id) entity_id, name, date_field
     ORDER BY entity_id, date_field DESC
+
+PRIVACY:
+16. NEVER select personally identifiable columns: nim, nip, tgl_lahir, tempat_lahir, email, no_hp, alamat, id_dikti, no_ktp, ip_address, password, token.
+17. When querying tables that may contain sensitive columns, only SELECT the specific columns needed for the analysis.
 
 ═══════════════════════════════════════════════
 DOMAIN-SPECIFIC RULES
@@ -84,8 +65,7 @@ CONTEXT
 ENTITIES DETECTED FROM USER QUERY:
 {detected_entities}
 
-USER SCOPE (access level): {scope_description}
-The {{SCOPE_FILTER}} placeholder resolves to: {scope_hint}
+USER ROLE: {user_role}
 
 FEW-SHOT EXAMPLES (use these patterns as reference):
 {few_shot_examples}

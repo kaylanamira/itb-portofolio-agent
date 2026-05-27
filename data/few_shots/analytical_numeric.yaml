@@ -1,0 +1,57 @@
+examples:
+  - nl: "Bagaimana tren nilai mahasiswa IF3140 dua tahun terakhir?"
+    sql: |
+      SELECT tahun_ajaran, semester, ROUND(AVG(rata_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
+      FROM analitik.mv_kelas
+      WHERE kode_mk = 'IF3140'
+      GROUP BY tahun_ajaran, semester
+      ORDER BY tahun_ajaran, semester
+      LIMIT 100;
+
+  - nl: "Bagaimana perbandingan kehadiran dosen dan mahasiswa di prodi IF semester ini?"
+    sql: |
+      SELECT
+        ROUND(AVG(pct_kehadiran_dosen), 2) AS avg_kehadiran_dosen,
+        ROUND(AVG(pct_kehadiran_mahasiswa), 2) AS avg_kehadiran_mahasiswa
+      FROM analitik.mv_kelas
+      WHERE singkatan_prodi = 'IF' AND semester = 1 AND tahun = 2024;
+
+  - nl: "Prodi mana yang rata-rata nilai mahasiswanya di bawah 3.0 semester ini?"
+    sql: |
+      SELECT singkatan_prodi, nama_prodi_id, ROUND(AVG(rata_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
+      FROM analitik.mv_kelas
+      WHERE semester = 1 AND tahun = 2024
+      GROUP BY kode_prodi, singkatan_prodi, nama_prodi_id
+      HAVING AVG(rata_ip_akhir_mahasiswa) < 3.0
+      ORDER BY avg_nilai DESC
+      LIMIT 100;
+
+  - nl: "Ranking dosen berdasarkan skor evaluasi di prodi IF semester ini?"
+    sql: |
+      SELECT
+        nama_dosen,
+        avg_skor_overall,
+        RANK() OVER (ORDER BY avg_skor_overall DESC) AS ranking
+      FROM (
+        SELECT
+          unnest(semua_dosen_nama_gelar) AS nama_dosen,
+          avg_skor_overall
+        FROM analitik.mv_kelas
+        WHERE singkatan_prodi = 'IF' AND semester = 1 AND tahun = 2024
+      ) sub
+      WHERE avg_skor_overall IS NOT NULL
+      ORDER BY ranking
+      LIMIT 100;
+
+  - nl: "Bagaimana distribusi skor evaluasi pelaksanaan perkuliahan di STEI semester ini?"
+    sql: |
+      SELECT
+        singkatan_prodi,
+        ROUND(AVG(avg_skor_pelaksanaan)::numeric, 2) AS avg_pelaksanaan,
+        ROUND(AVG(avg_skor_capaian)::numeric, 2) AS avg_capaian,
+        ROUND(AVG(avg_skor_overall)::numeric, 2) AS avg_overall
+      FROM analitik.mv_kelas
+      WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024
+      GROUP BY kode_prodi, singkatan_prodi
+      ORDER BY avg_overall DESC
+      LIMIT 100;

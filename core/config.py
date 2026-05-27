@@ -11,12 +11,13 @@ class Settings(BaseSettings):
     # DB
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     
-    # LLM Routing
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "google")
-    FAST_LLM_MODEL: str = os.getenv("FAST_LLM_MODEL", "gemini-2.5-flash")
+    # LLM — Groq by default; set LLM_PROVIDER=google to use Gemini.
+    # LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "google")
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "groq")
+    FAST_LLM_MODEL: str = os.getenv("FAST_LLM_MODEL", os.getenv("GOOGLE_MODEL", "gemini-2.5-flash"))
     
-    HEAVY_LLM_PROVIDER: str = os.getenv("HEAVY_LLM_PROVIDER", "groq")
-    HEAVY_LLM_MODEL: str = os.getenv("HEAVY_LLM_MODEL", "llama-3.3-70b-versatile")
+    HEAVY_LLM_PROVIDER: str = os.getenv("HEAVY_LLM_PROVIDER", os.getenv("LLM_PROVIDER", "groq"))
+    HEAVY_LLM_MODEL: str = os.getenv("HEAVY_LLM_MODEL", os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"))
     
     # API Keys
     GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY")
@@ -26,6 +27,9 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str | None = os.getenv("OPENROUTER_API_KEY")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
     
+    # RLS
+    RLS_ENABLED: bool = True
+
     # Agent
     MAX_SQL_ATTEMPTS: int = 3
     
