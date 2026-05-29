@@ -48,6 +48,11 @@ CREATE TABLE evaluasi_wisudawan.ref_opsi (
                         REFERENCES evaluasi_wisudawan.ref_set_opsi(kd_set)
                         ON UPDATE CASCADE ON DELETE RESTRICT
                         DEFERRABLE INITIALLY DEFERRED,
+    nama            JSONB       NOT NULL,
+    tipe            CHAR(1)     NOT NULL CHECK (tipe IN ('O','N')),
+    -- O = Ordinal  : nilai bermakna aritmetika, boleh AVG/STDDEV
+    -- N = Nominal  : nilai hanya kode urut, TIDAK boleh AVG
+    jumlah_poin ,
     nilai           SMALLINT    NOT NULL,
     -- Ordinal : 1=paling negatif … n=paling positif
     -- Nominal : 1,2,3,… urut sesuai urutan pilihan (tidak ada makna aritmetika)
@@ -689,10 +694,7 @@ CREATE TABLE evaluasi_wisudawan.respons (
     -- last_page = 11 untuk responden yang complete (>99.9% data)
 
     -- ── Filter axes ────────────────────────────────────────────
-    kd_strata       CHAR(2)     NOT NULL
-                        REFERENCES referensi.strata(kd_strata)
-                        ON UPDATE CASCADE ON DELETE RESTRICT
-                        DEFERRABLE INITIALLY DEFERRED,
+    kd_strata       CHAR(2)     NOT NULL,
     -- Nilai: 'S1' (3930), 'S2' (3185), 'S3' (349), 'PR' (71)
     -- PR hanya mengisi Section A–D, tidak ada section khusus
 
