@@ -33,3 +33,5 @@ AGENTS.md
 .kiro/
 .antigravitycli/
 .pytest_cache/
+
+db/dev_six_schema.sql

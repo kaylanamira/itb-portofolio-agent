@@ -30,11 +30,11 @@ _EXAMPLES: dict[QueryType, list[tuple[str, str]]] = {
         ),
         (
             "Siapa saja dosen yang mengajar matkul basis data semester ini?",
-            "SELECT DISTINCT unnest(semua_dosen_nama) AS nama_dosen FROM mv_kelas WHERE {SCOPE_FILTER} AND nama_mk ILIKE '%basis data%' AND semester = 1 AND tahun_ajaran = '2024/2025' ORDER BY nama_dosen LIMIT 100;",
+            "SELECT DISTINCT unnest(semua_dosen_nama) AS nama_dosen FROM analitik.mv_kelas WHERE {SCOPE_FILTER} AND nama_mk ILIKE '%basis data%' AND semester = 1 AND tahun_ajaran = '2024/2025' ORDER BY nama_dosen LIMIT 100;",
         ),
         (
             "Berapa jumlah kelas di prodi IF semester ini?",
-            "SELECT COUNT(*) AS jumlah_kelas FROM mv_kelas WHERE {SCOPE_FILTER} AND singkatan_prodi = 'IF' AND semester = 1 AND tahun_ajaran = '2024/2025';",
+            "SELECT COUNT(*) AS jumlah_kelas FROM analitik.mv_kelas WHERE {SCOPE_FILTER} AND singkatan_prodi = 'IF' AND semester = 1 AND tahun_ajaran = '2024/2025';",
         ),
         (
             "Ada berapa fakultas di ITB?",

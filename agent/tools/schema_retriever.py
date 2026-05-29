@@ -6,8 +6,8 @@ from core.database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_PATH = os.getenv("AGENT_SCHEMA_PATH", "db/schema_for_agent.md")
-SCHEMA_RETRIEVAL_MODE = os.getenv("SCHEMA_RETRIEVAL_MODE", "file").lower()  # 'live' or 'file'
+SCHEMA_PATH = os.getenv("AGENT_SCHEMA_PATH", "db/legacy/schema_for_agent.md")
+SCHEMA_RETRIEVAL_MODE = os.getenv("SCHEMA_RETRIEVAL_MODE", "live").lower()  # 'live' or 'file'
 
 class FileSchemaRetriever:
     """Retrieves table schemas statically from a markdown definition file."""
@@ -32,7 +32,7 @@ class FileSchemaRetriever:
         current_content = []
         
         for line in content.split("\n"):
-            match = re.match(r"^###\s+([a-zA-Z0-9_]+)", line)
+            match = re.match(r"^###\s+([a-zA-Z0-9_\.]+)", line)
             if match:
                 if current_table:
                     tables[current_table] = "\n".join(current_content).strip()
@@ -62,9 +62,9 @@ class DBSchemaRetriever:
     async def list_tables(self) -> list[str]:
         """Returns a list of all public table and view names."""
         query = """
-            SELECT table_name 
+            SELECT table_schema || '.' || table_name 
             FROM information_schema.tables 
-            WHERE table_schema = 'public'
+            WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
         """
         try:
             async with get_db_connection() as conn:
@@ -80,12 +80,18 @@ class DBSchemaRetriever:
         if table_name in self._cache:
             return self._cache[table_name]
             
+        # Parse schema and table name
+        if "." in table_name:
+            nspname, relname = table_name.split(".", 1)
+        else:
+            nspname, relname = "public", table_name
+            
         # Query pg_description for table comment
         table_comment_query = """
             SELECT obj_description(c.oid)
             FROM pg_class c
             JOIN pg_namespace n ON n.oid = c.relnamespace
-            WHERE c.relname = %s AND n.nspname = 'public'
+            WHERE c.relname = %s AND n.nspname = %s
         """
         
         # Query pg_attribute and pg_description for columns
@@ -97,17 +103,17 @@ class DBSchemaRetriever:
             FROM pg_catalog.pg_attribute a
             JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
             JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-            WHERE c.relname = %s AND n.nspname = 'public' AND a.attnum > 0 AND NOT a.attisdropped
+            WHERE c.relname = %s AND n.nspname = %s AND a.attnum > 0 AND NOT a.attisdropped
             ORDER BY a.attnum
         """
         
         try:
             async with get_db_connection() as conn:
-                cursor = await conn.execute(table_comment_query, [table_name])
+                cursor = await conn.execute(table_comment_query, [relname, nspname])
                 t_row = await cursor.fetchone()
                 table_comment = t_row[0] if t_row and t_row[0] else ""
                 
-                cursor = await conn.execute(columns_query, [table_name])
+                cursor = await conn.execute(columns_query, [relname, nspname])
                 c_rows = await cursor.fetchall()
                 
                 if not c_rows:

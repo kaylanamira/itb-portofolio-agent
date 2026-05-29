@@ -12,48 +12,36 @@
 
 ## Lookup / Reference Tables (Global, No RLS)
 
-### fakultas (list of all faculties — no scope filter needed)
+### utama.fakultas (list of all faculties)
 ```
-fakultas_id UUID PK
-kode_fakultas VARCHAR(20) UNIQUE  -- e.g. "STEI", "FITB", "SBM"
-nama_fakultas VARCHAR(100)
-is_active BOOLEAN
+kd_fak VARCHAR(20) PK -- e.g. "STEI", "FITB"
+nama_pendek VARCHAR(20) -- e.g. "STEI"
+nama JSONB
+active BOOLEAN
 ```
-Example: `SELECT COUNT(*) FROM fakultas WHERE is_active = TRUE AND {SCOPE_FILTER}` → total faculties at ITB
+Example: `SELECT COUNT(*) FROM utama.fakultas WHERE active = TRUE AND {SCOPE_FILTER}` → total faculties at ITB
 
-### program_studi (list of all study programs — no scope filter needed)
+### utama.dosen (list of all lecturers)
 ```
-prodi_id UUID PK
-fakultas_id UUID FK→fakultas
-kode_prodi VARCHAR(10) UNIQUE
-singkatan_prodi VARCHAR(10)  -- e.g. "IF", "STI"
-nama_prodi VARCHAR(150)
-jenjang VARCHAR(10)  -- S1|S2|S3|Profesi
-is_active BOOLEAN
+dosen_id INTEGER PK
+kk_id INTEGER FK→utama.kk
+kd_fak VARCHAR(20) FK→utama.fakultas
+nama VARCHAR
+active BOOLEAN
 ```
-
-### dosen (list of all lecturers — no scope filter needed)
-```
-dosen_id UUID PK
-kk_id UUID FK→kelompok_keahlian
-nama_dosen VARCHAR(150)
-is_active BOOLEAN
-```
-⚠️ IMPORTANT: dosen does NOT have a fakultas_id column!
-To filter dosen by faculty, you MUST JOIN through kelompok_keahlian:
+To filter dosen by faculty, you can directly use kd_fak OR JOIN through utama.kk depending on the query logic:
 ```sql
-SELECT d.nama_dosen FROM dosen d
-JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id
-JOIN fakultas f ON f.fakultas_id = kk.fakultas_id
-WHERE f.kode_fakultas = 'STEI' AND d.is_active = TRUE AND {SCOPE_FILTER}
-ORDER BY d.nama_dosen LIMIT 5;
+SELECT d.nama FROM utama.dosen d
+WHERE d.kd_fak = 'STEI' AND d.active = TRUE AND {SCOPE_FILTER}
+ORDER BY d.nama LIMIT 5;
 ```
 
-### kelompok_keahlian (research groups)
+### utama.kk (research groups)
 ```
-kk_id UUID PK
-fakultas_id UUID FK→fakultas
-nama_kk VARCHAR(200)
+kk_id INTEGER PK
+kd_fak VARCHAR(20) FK→utama.fakultas
+nama JSONB
+active BOOLEAN
 ```
 
 ### mata_kuliah (course catalog — no scope filter needed)
@@ -213,31 +201,25 @@ teks_komentar TEXT NOT NULL
 ### Institutional fact queries (use lookup tables, scope filter = TRUE)
 ```sql
 -- Total faculties at ITB
-SELECT COUNT(*) AS total_fakultas FROM fakultas WHERE is_active = TRUE AND {SCOPE_FILTER};
+SELECT COUNT(*) AS total_fakultas FROM utama.fakultas WHERE active = TRUE AND {SCOPE_FILTER};
 
 -- List all faculties
-SELECT kode_fakultas, nama_fakultas FROM fakultas WHERE is_active = TRUE AND {SCOPE_FILTER};
-
--- Total active prodi
-SELECT COUNT(*) AS total_prodi FROM program_studi WHERE is_active = TRUE AND {SCOPE_FILTER};
+SELECT kd_fak, nama->>'id' AS nama_fakultas FROM utama.fakultas WHERE active = TRUE AND {SCOPE_FILTER};
 
 -- Total active dosen
-SELECT COUNT(*) AS total_dosen FROM dosen WHERE is_active = TRUE AND {SCOPE_FILTER};
+SELECT COUNT(*) AS total_dosen FROM utama.dosen WHERE active = TRUE AND {SCOPE_FILTER};
 
 -- Dosen in a specific faculty
-SELECT d.nama_dosen FROM dosen d
-JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id
-JOIN fakultas f ON f.fakultas_id = kk.fakultas_id
-WHERE f.kode_fakultas = 'STEI' AND d.is_active = TRUE AND {SCOPE_FILTER}
-ORDER BY d.nama_dosen;
+SELECT d.nama FROM utama.dosen d
+WHERE d.kd_fak = 'STEI' AND d.active = TRUE AND {SCOPE_FILTER}
+ORDER BY d.nama;
 
 -- Compare total dosen between faculties
-SELECT f.kode_fakultas, COUNT(d.dosen_id) AS total_dosen
-FROM dosen d
-JOIN kelompok_keahlian kk ON kk.kk_id = d.kk_id
-JOIN fakultas f ON f.fakultas_id = kk.fakultas_id
-WHERE f.kode_fakultas IN ('FTTM', 'STEI') AND d.is_active = TRUE AND {SCOPE_FILTER}
-GROUP BY f.kode_fakultas;
+SELECT f.kd_fak, COUNT(d.dosen_id) AS total_dosen
+FROM utama.dosen d
+JOIN utama.fakultas f ON f.kd_fak = d.kd_fak
+WHERE f.kd_fak IN ('FTTM', 'STEI') AND d.active = TRUE AND {SCOPE_FILTER}
+GROUP BY f.kd_fak;
 ```
 
 
