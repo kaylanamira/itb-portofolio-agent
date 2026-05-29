@@ -97,10 +97,10 @@ INSERT INTO evaluasi_wisudawan.ref_opsi
     (kd_set, nilai, label, user_id_entry)
 VALUES
 -- S4_AGREE (Section A/B/C1/C2/G-S104/I-D01)
-('S4_AGREE', 1, '{"id":"Tidak Setuju","en":"Strongly Disagree"}',         1),
-('S4_AGREE', 2, '{"id":"Cenderung Tidak Setuju","en":"Disagree"}',        1),
-('S4_AGREE', 3, '{"id":"Cenderung Setuju","en":"Agree"}',                 1),
-('S4_AGREE', 4, '{"id":"Setuju","en":"Strongly Agree"}',                  1),
+('S4_AGREE', 1, '{"id":"Tidak Setuju","en":"Disagree"}',         1),
+('S4_AGREE', 2, '{"id":"Cenderung Tidak Setuju","en":"Somewhat Disagree"}',        1),
+('S4_AGREE', 3, '{"id":"Cenderung Setuju","en":"Somewhat Agree"}',                 1),
+('S4_AGREE', 4, '{"id":"Setuju","en":"Agree"}',                  1),
 
 -- S4_FREQ (Section D1/U06)
 ('S4_FREQ',  1, '{"id":"Tidak pernah atau sama sekali tidak","en":"Never"}', 1),
