@@ -126,6 +126,7 @@ CREATE INDEX ON evaluasi_wisudawan.mv_distribusi_jawaban (kd_grup);
 CREATE INDEX ON evaluasi_wisudawan.mv_distribusi_jawaban (tipe_opsi);
 CREATE INDEX ON evaluasi_wisudawan.mv_distribusi_jawaban (kd_strata, kd_fak);
 CREATE INDEX ON evaluasi_wisudawan.mv_distribusi_jawaban (no_ps);
+CREATE INDEX ON evaluasi_wisudawan.mv_distribusi_jawaban (kd_strata, kd_fak, no_ps);
 
 
 -- ============================================================
@@ -561,7 +562,23 @@ COMMENT ON COLUMN evaluasi_wisudawan.mv_wide_respons.sbm01_sq031 IS 'Section K (
 
 -- ============================================================
 -- REFRESH (jalankan setelah setiap batch import)
+
+--   JANGAN gunakan CONCURRENTLY untuk mv_distribusi_jawaban dan mv_skor_pertanyaan.
+--   Alasan: kolom periode_ijazah_id di kedua MV tersebut nullable (66.6% NULL
+--   di data aktual). PostgreSQL UNIQUE index memperlakukan NULL ≠ NULL, sehingga
+--   REFRESH CONCURRENTLY tidak dapat mencocokkan baris lama vs baru untuk row
+--   dengan periode_ijazah_id = NULL — berisiko error atau data tidak konsisten.
+--
+--   mv_wide_respons aman pakai CONCURRENTLY karena UNIQUE INDEX-nya hanya
+--   pada response_id (SERIAL, tidak pernah NULL).
+--
+--   Keputusan ini acceptable karena data survey diimport secara batch
+--   (bukan real-time), sehingga downtime singkat saat refresh tidak berdampak.
+--   Jika di masa depan periode_ijazah_id dijamin NOT NULL (semua baris
+--   berhasil di-resolve), unique index bisa diganti dan CONCURRENTLY diaktifkan.
+
 -- ============================================================
--- REFRESH MATERIALIZED VIEW CONCURRENTLY evaluasi_wisudawan.mv_distribusi_jawaban;
--- REFRESH MATERIALIZED VIEW CONCURRENTLY evaluasi_wisudawan.mv_skor_pertanyaan;
+
+-- REFRESH MATERIALIZED VIEW evaluasi_wisudawan.mv_distribusi_jawaban;
+-- REFRESH MATERIALIZED VIEW evaluasi_wisudawan.mv_skor_pertanyaan;
 -- REFRESH MATERIALIZED VIEW CONCURRENTLY evaluasi_wisudawan.mv_wide_respons;
