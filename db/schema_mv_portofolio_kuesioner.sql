@@ -644,3 +644,166 @@ CREATE INDEX idx_mv_dosen_kk_sem             ON mv_statistik_dosen (kk_id, semes
 CREATE INDEX idx_mv_dosen_fak_dosen_sem      ON mv_statistik_dosen (kode_fakultas_dosen, semester, tahun);
 CREATE INDEX idx_mv_dosen_no_ps_sem          ON mv_statistik_dosen (kode_prodi, semester, tahun);
 CREATE INDEX idx_mv_dosen_tahun_ajaran       ON mv_statistik_dosen (tahun_ajaran, dosen_id);
+
+
+-- ============================================================
+-- MATERIALIZED VIEW 4 : mv_status_matkul
+--
+-- Tujuan: Menyimpan status/posisi setiap mata kuliah dalam
+--         struktur kurikulum, sebagai referensi join untuk
+--         mv_kelas dan query analitik lainnya.
+--
+-- Grain: 1 baris = 1 kombinasi (mata_kuliah_id, no_ps, paket/struktur)
+--        Satu MK bisa punya >1 baris jika masuk ke >1 paket
+--        dalam prodi yang sama (many-to-many by design).
+--
+-- Sumber data:
+--   kur24.*       → th_kur 2024, 2026 (data kurikulum baru)
+--   kurikulum.*   → th_kur 2003–2023  (data kurikulum lama)
+--
+-- Coverage berdasarkan analisis kelas.kelas:
+--   kur24         : ~14.102 kelas (7%)
+--   kurikulum.*   : ~181.661 kelas (89%)
+--   tidak tercakup: ~7.734 kelas th_kur 2000 (3,8%) — dead zone historis
+--
+-- Kolom kode_sifat: normalisasi lintas era
+--   kur24        : C (Core/Wajib dalam paket) | E (Elective/Pilihan)
+--   kurikulum.*  : W→C | P→E
+--   → gunakan kode_sifat untuk filter/compare lintas era
+--
+-- Kolom is_wajib_itb:
+--   Hanya tersedia untuk data kurikulum lama via
+--   kurikulum.struktur_wajib_itb. Untuk kur24, nilai selalu FALSE
+--   karena tidak ada tabel equivalen (TPB = kode_jenis 'B').
+-- ============================================================
+
+CREATE MATERIALIZED VIEW mv_status_matkul AS
+
+-- ── Bagian 1: kurikulum baru (kur24) ─────────────────────────────────────────
+-- Grain   : (mata_kuliah_id, no_ps, paket_id)
+-- paket_id: PK kur24.paket_mk → kombinasi ini dijamin unik
+-- kode_jenis dan nama_paket tersedia lengkap di sini
+SELECT
+    pm.mata_kuliah_id,
+    p.no_ps                                     AS kode_prodi,
+    ps.kd_ps                                    AS singkatan_prodi,
+    ps.kd_fak                                   AS kode_fakultas,
+    p.th_kur                                    AS tahun_kurikulum,
+
+    -- Identifikasi sumber untuk filtering & debugging
+    'kur24'::TEXT                               AS sumber,
+
+    -- Surrogate key per sumber (dipakai oleh unique index)
+    pm.paket_id                                 AS paket_id,
+    NULL::INTEGER                               AS struktur_id,
+
+    -- Dimensi kurikulum (hanya tersedia di kur24)
+    p.kode_jenis                                  AS kode_jenis,
+    rjp.nama->>'id'                             AS nama_jenis,
+    p.nama->>'id'                               AS nama_paket,
+
+    -- Sifat MK dalam paket (format asli kur24): C=Core, E=Elective
+    pm.kd_sifat                                 AS kode_sifat,
+
+    -- Wajib ITB tidak tersedia di kur24
+    -- Gunakan kode_jenis='B' (TPB) sebagai indikator setara wajib ITB
+    FALSE                                       AS is_wajib_itb
+
+FROM kur24.paket_mk            pm
+JOIN kur24.paket                p   ON p.paket_id   = pm.paket_id
+JOIN kur24.ref_jenis_paket      rjp ON rjp.kode_jenis = p.kode_jenis
+JOIN utama.program_studi        ps  ON ps.no_ps      = p.no_ps
+
+UNION ALL
+
+-- ── Bagian 2: kurikulum lama (kurikulum.*) ───────────────────────────────────
+-- Grain      : (mata_kuliah_id, no_ps, struktur_id)
+-- struktur_id: PK kurikulum.struktur → kombinasi ini dijamin unik
+-- kode_jenis dan nama_paket tidak ada di schema ini → NULL
+-- kd_sifat asli: W (Wajib) | P (Pilihan) → dinormalisasi ke C/E di kode_sifat
+SELECT
+    ks.mata_kuliah_id,
+    ks.no_ps                                    AS kode_prodi,
+    ps.kd_ps                                    AS singkatan_prodi,
+    ps.kd_fak                                   AS kode_fakultas,
+    ks.th_kur                                   AS tahun_kurikulum,
+
+    'kurikulum_lama'::TEXT                      AS sumber,
+
+    NULL::INTEGER                               AS paket_id,
+    ks.struktur_id                              AS struktur_id,
+
+    -- Tidak ada konsep kode_jenis di kurikulum lama
+    NULL::CHAR(1)                               AS kode_jenis,
+    NULL::TEXT                                  AS nama_jenis,
+    NULL::TEXT                                  AS nama_paket,
+
+    -- Normalisasi ke standar kur24: W→C, P→E
+    CASE ks.kd_sifat
+        WHEN 'W' THEN 'C'
+        WHEN 'P' THEN 'E'
+        ELSE ks.kd_sifat
+    END                                         AS kode_sifat,
+
+    -- Wajib ITB: TRUE jika MK ini terdaftar di struktur_wajib_itb
+    -- untuk prodi yang sama
+    (EXISTS (
+        SELECT 1
+        FROM kurikulum.struktur_wajib_itb swi
+        WHERE swi.mata_kuliah_id = ks.mata_kuliah_id
+          AND swi.no_ps          = ks.no_ps
+    ))                                          AS is_wajib_itb
+
+FROM kurikulum.struktur         ks
+JOIN utama.program_studi        ps  ON ps.no_ps = ks.no_ps;
+
+
+-- ============================================================
+-- INDEX
+--
+-- Unique index wajib ada untuk REFRESH CONCURRENTLY.
+-- Karena MV ini gabungan dua sumber dengan grain berbeda,
+-- unique key dibentuk dari:
+--   sumber + mata_kuliah_id + kode_prodi + COALESCE(paket_id, struktur_id)
+--
+-- COALESCE(paket_id, struktur_id):
+--   → paket_id   terisi untuk kur24,         struktur_id NULL
+--   → struktur_id terisi untuk kurikulum_lama, paket_id   NULL
+--   → selalu menghasilkan tepat satu nilai non-NULL
+-- ============================================================
+
+CREATE UNIQUE INDEX idx_mv_status_matkul_pk
+    ON mv_status_matkul (sumber, mata_kuliah_id, kode_prodi, COALESCE(paket_id, struktur_id));
+
+-- Index utama untuk join dari mv_kelas
+CREATE INDEX idx_mv_status_matkul_mk_ps
+    ON mv_status_matkul (mata_kuliah_id, kode_prodi);
+
+-- Index untuk filter per jalur kurikulum (partial: hanya baris kur24)
+CREATE INDEX idx_mv_status_matkul_kode_jenis
+    ON mv_status_matkul (kode_jenis)
+    WHERE kode_jenis IS NOT NULL;
+
+-- Index untuk filter wajib ITB (partial: hanya baris yang relevan)
+CREATE INDEX idx_mv_status_matkul_wajib_itb
+    ON mv_status_matkul (is_wajib_itb, kode_prodi)
+    WHERE is_wajib_itb = TRUE;
+
+-- Index untuk filter per era kurikulum
+CREATE INDEX idx_mv_status_matkul_th_kur
+    ON mv_status_matkul (tahun_kurikulum, sumber);
+
+-- Index untuk filter per fakultas
+CREATE INDEX idx_mv_status_matkul_fak
+    ON mv_status_matkul (kode_fakultas, kode_jenis);
+
+
+-- ============================================================
+-- REFRESH
+--
+-- Jalankan setelah ada perubahan data di kur24.* atau kurikulum.*.
+-- Tidak perlu mengikuti jadwal refresh mv_kelas kecuali ada
+-- update struktur kurikulum.
+--
+-- REFRESH MATERIALIZED VIEW CONCURRENTLY mv_status_matkul;
+-- ============================================================
