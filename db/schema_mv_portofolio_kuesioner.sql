@@ -840,72 +840,41 @@ COMMENT ON FUNCTION analitik.strip_html(text) IS
 -- ================================================================
 CREATE MATERIALIZED VIEW analitik.mv_portofolio AS
 WITH
-
--- ── CTE: Satu pass baca tabel portofolio ─────────────────────────
--- Ekstrak semua JSONB key → text di sini.
--- HTML stripping dilakukan di SELECT utama via strip_html()
--- supaya regex hanya dipanggil sekali per kolom.
 raw AS (
     SELECT
         p.kelas_id,
         p.tgl_entri,
         p.lengkap,
         p.nilai                  AS nilai_portofolio,
-
-        -- Deteksi era berdasarkan key yang ada di isian
         CASE
             WHEN p.isian ? '12'  THEN 'baru'
             WHEN p.isian ? '1'   THEN 'lama'
             ELSE                      'kosong'
         END                      AS skema_pertanyaan,
-
-        -- ── ERA BARU: isian (key = kd_pertanyaan 12–19) ───────────
-        p.isian->>'12'           AS r12,
-        p.isian->>'13'           AS r13,
-        p.isian->>'14'           AS r14,
-        p.isian->>'15'           AS r15,
-        p.isian->>'16'           AS r16,
-        p.isian->>'17'           AS r17,
-        p.isian->>'18'           AS r18,
-        p.isian->>'19'           AS r19,
-
-        -- ── ERA LAMA: isian (key = kd_pertanyaan 1–11) ───────────
-        p.isian->>'1'            AS r1,
-        p.isian->>'2'            AS r2,
-        p.isian->>'3'            AS r3,
-        p.isian->>'4'            AS r4,
-        p.isian->>'5'            AS r5,
-        p.isian->>'6'            AS r6,
-        p.isian->>'7'            AS r7,
-        p.isian->>'8'            AS r8,
-        p.isian->>'9'            AS r9,
-        p.isian->>'10'           AS r10,
-        p.isian->>'11'           AS r11,
-
-        -- ── KOMENTAR VERIFIKATOR — ERA BARU (key = kd_grup 6–9) ───
-        p.komentar->>'6'         AS k6,
-        p.komentar->>'7'         AS k7,
-        p.komentar->>'8'         AS k8,
-        p.komentar->>'9'         AS k9,
-
-        -- ── KOMENTAR VERIFIKATOR — ERA LAMA (key = kd_grup 1–5) ───
-        p.komentar->>'1'         AS kg1,
-        p.komentar->>'2'         AS kg2,
-        p.komentar->>'3'         AS kg3,
-        p.komentar->>'4'         AS kg4,
-        p.komentar->>'5'         AS kg5
-
+        p.isian->>'12' AS r12, p.isian->>'13' AS r13,
+        p.isian->>'14' AS r14, p.isian->>'15' AS r15,
+        p.isian->>'16' AS r16, p.isian->>'17' AS r17,
+        p.isian->>'18' AS r18, p.isian->>'19' AS r19,
+        p.isian->>'1'  AS r1,  p.isian->>'2'  AS r2,
+        p.isian->>'3'  AS r3,  p.isian->>'4'  AS r4,
+        p.isian->>'5'  AS r5,  p.isian->>'6'  AS r6,
+        p.isian->>'7'  AS r7,  p.isian->>'8'  AS r8,
+        p.isian->>'9'  AS r9,  p.isian->>'10' AS r10,
+        p.isian->>'11' AS r11,
+        p.komentar->>'6' AS k6, p.komentar->>'7' AS k7,
+        p.komentar->>'8' AS k8, p.komentar->>'9' AS k9,
+        p.komentar->>'1' AS kg1, p.komentar->>'2' AS kg2,
+        p.komentar->>'3' AS kg3, p.komentar->>'4' AS kg4,
+        p.komentar->>'5' AS kg5
     FROM evaluasi.portofolio p
     WHERE p.isian IS NOT NULL
       AND p.isian <> '{}'::jsonb
 )
-
 SELECT
-    -- ── Dimensi kelas (dari analitik.mv_kelas) ───────────────────
     mk.kelas_id,
-    mk.kode_matkul AS kode_matkul,
-    mk.nama_matkul_id,
-    mk.nama_matkul_en,
+    mk.kode_mk,
+    mk.nama_mk_id,
+    mk.nama_mk_en,
     mk.sks,
     mk.no_kelas,
     mk.semester,
@@ -921,87 +890,60 @@ SELECT
     mk.nama_fakultas_id,
     mk.semua_dosen_id,
     mk.semua_dosen_nama_gelar,
-
-    -- ── Metadata portofolio ───────────────────────────────────────
-    r.tgl_entri                 AS tanggal_entri,
+    r.tgl_entri         AS tanggal_entri,
     r.lengkap,
     r.nilai_portofolio,
     r.skema_pertanyaan,
-
-    -- ── ERA BARU: 8 pertanyaan individual, HTML stripped ──────────
-    -- kd_grup 6 — Penyelenggaraan Perkuliahan
-    analitik.strip_html(r.r12)   AS metode_perkuliahan,
-    analitik.strip_html(r.r13)   AS komponen_penilaian,
-    -- kd_grup 7 — Ketercapaian Outcomes
-    analitik.strip_html(r.r14)   AS statistik_nilai_kelas,
-    analitik.strip_html(r.r15)   AS analisis_ketercapaian_outcomes,
-    -- kd_grup 8 — Refleksi Dosen
-    analitik.strip_html(r.r16)   AS tanggapan_kuesioner_mahasiswa,
-    analitik.strip_html(r.r17)   AS refleksi_perkuliahan,
-    -- kd_grup 9 — Rekomendasi Tindak Lanjut
-    analitik.strip_html(r.r18)   AS usulan_perbaikan_dosen,
-    analitik.strip_html(r.r19)   AS rekomendasi_ke_itb,
-
-    -- ── ERA LAMA: 11 pertanyaan individual, HTML stripped ─────────
-    -- kd_grup 2 — Pelaksanaan Kuliah
-    analitik.strip_html(r.r1)    AS lama_metode_perkuliahan,
-    analitik.strip_html(r.r7)    AS lama_statistik_kelas,
-    -- kd_grup 1 — Pencapaian Tujuan/Outcomes
-    analitik.strip_html(r.r2)    AS lama_outcomes_matakuliah,
-    analitik.strip_html(r.r3)    AS lama_sistem_penilaian,
-    analitik.strip_html(r.r8)    AS lama_analisis_statistik_ketercapaian,
-    -- kd_grup 3 — Refleksi
-    analitik.strip_html(r.r4)    AS lama_uraian_kuesioner_statistik,
-    analitik.strip_html(r.r9)    AS lama_komentar_kuesioner_mahasiswa,
-    analitik.strip_html(r.r5)    AS lama_refleksi_perkuliahan,
-    -- kd_grup 4 — Rencana Tindak Lanjut
-    analitik.strip_html(r.r6)    AS lama_rencana_tindak_lanjut,
-    -- kd_grup 5 — Rekomendasi Tindak Lanjut
-    analitik.strip_html(r.r10)   AS lama_rekomendasi_perbaikan_dosen,
-    analitik.strip_html(r.r11)   AS lama_rekomendasi_itb,
-
-    -- ── KOMENTAR VERIFIKATOR — ERA BARU ───────────────────────────
-    analitik.strip_html(r.k6)    AS komentar_penyelenggaraan,
-    analitik.strip_html(r.k7)    AS komentar_ketercapaian,
-    analitik.strip_html(r.k8)    AS komentar_refleksi,
-    analitik.strip_html(r.k9)    AS komentar_rekomendasi,
-
-    -- ── KOMENTAR VERIFIKATOR — ERA LAMA ───────────────────────────
-    analitik.strip_html(r.kg1)   AS lama_komentar_pencapaian_outcomes,
-    analitik.strip_html(r.kg2)   AS lama_komentar_pelaksanaan_kuliah,
-    analitik.strip_html(r.kg3)   AS lama_komentar_refleksi,
-    analitik.strip_html(r.kg4)   AS lama_komentar_rencana_tindak_lanjut,
-    analitik.strip_html(r.kg5)   AS lama_komentar_rekomendasi
-
+    -- ERA BARU
+    analitik.strip_html(r.r12) AS metode_perkuliahan,
+    analitik.strip_html(r.r13) AS komponen_penilaian,
+    analitik.strip_html(r.r14) AS statistik_nilai_kelas,
+    analitik.strip_html(r.r15) AS analisis_ketercapaian_outcomes,
+    analitik.strip_html(r.r16) AS tanggapan_kuesioner_mahasiswa,
+    analitik.strip_html(r.r17) AS refleksi_perkuliahan,
+    analitik.strip_html(r.r18) AS usulan_perbaikan_dosen,
+    analitik.strip_html(r.r19) AS rekomendasi_ke_itb,
+    -- ERA LAMA
+    analitik.strip_html(r.r1)  AS lama_metode_perkuliahan,
+    analitik.strip_html(r.r7)  AS lama_statistik_kelas,
+    analitik.strip_html(r.r2)  AS lama_outcomes_matakuliah,
+    analitik.strip_html(r.r3)  AS lama_sistem_penilaian,
+    analitik.strip_html(r.r8)  AS lama_analisis_statistik_ketercapaian,
+    analitik.strip_html(r.r4)  AS lama_uraian_kuesioner_statistik,
+    analitik.strip_html(r.r9)  AS lama_komentar_kuesioner_mahasiswa,
+    analitik.strip_html(r.r5)  AS lama_refleksi_perkuliahan,
+    analitik.strip_html(r.r6)  AS lama_rencana_tindak_lanjut,
+    analitik.strip_html(r.r10) AS lama_rekomendasi_perbaikan_dosen,
+    analitik.strip_html(r.r11) AS lama_rekomendasi_itb,
+    -- KOMENTAR VERIFIKATOR ERA BARU
+    analitik.strip_html(r.k6)  AS komentar_penyelenggaraan,
+    analitik.strip_html(r.k7)  AS komentar_ketercapaian,
+    analitik.strip_html(r.k8)  AS komentar_refleksi,
+    analitik.strip_html(r.k9)  AS komentar_rekomendasi,
+    -- KOMENTAR VERIFIKATOR ERA LAMA
+    analitik.strip_html(r.kg1) AS lama_komentar_pencapaian_outcomes,
+    analitik.strip_html(r.kg2) AS lama_komentar_pelaksanaan_kuliah,
+    analitik.strip_html(r.kg3) AS lama_komentar_refleksi,
+    analitik.strip_html(r.kg4) AS lama_komentar_rencana_tindak_lanjut,
+    analitik.strip_html(r.kg5) AS lama_komentar_rekomendasi
 FROM raw r
 JOIN analitik.mv_kelas mk ON mk.kelas_id = r.kelas_id;
 
--- Unique index: wajib untuk REFRESH CONCURRENTLY
--- kelas_id adalah PK di evaluasi.portofolio → dijamin NOT NULL unik
+-- Index untuk mv_portofolio
 CREATE UNIQUE INDEX idx_mv_portofolio_pk
     ON analitik.mv_portofolio (kelas_id);
-
--- Filter utama RAG: tahun ajaran + prodi
 CREATE INDEX idx_mv_portofolio_tahun_ajaran
     ON analitik.mv_portofolio (tahun_ajaran, kode_prodi);
-
--- Filter per mata kuliah lintas tahun
 CREATE INDEX idx_mv_portofolio_matkul
-    ON analitik.mv_portofolio (kode_matkul, tahun_ajaran);
-
--- Filter per dosen (GIN array): semua kelas dari satu dosen
+    ON analitik.mv_portofolio (kode_mk, tahun_ajaran);
 CREATE INDEX idx_mv_portofolio_dosen_arr
     ON analitik.mv_portofolio USING gin (semua_dosen_id);
-
--- Filter per fakultas + semester
 CREATE INDEX idx_mv_portofolio_fak_semester
     ON analitik.mv_portofolio (kode_fakultas, semester, tahun);
-
--- Partial index era baru (mayoritas data, query paling sering)
 CREATE INDEX idx_mv_portofolio_era_baru
     ON analitik.mv_portofolio (kelas_id)
     WHERE skema_pertanyaan = 'baru';
-
+    
 -- ================================================================
 -- COMMENT ON MATERIALIZED VIEW
 -- ================================================================
