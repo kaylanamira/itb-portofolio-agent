@@ -87,8 +87,13 @@ CREATE TABLE evaluasi_wisudawan.pertanyaan (
     kd_pertanyaan   VARCHAR(20) PRIMARY KEY,
     -- Contoh: 'U03_SQ001', 'G01Q23', 'S101', 'FSRD01_SQ001'
 
-    limesurvey_key  VARCHAR(50),
-    -- Original key di CSV, contoh: 'U03[SQ001]' — untuk traceability ingest
+    header_csv_raw  VARCHAR(500),
+    -- Teks lengkap header kolom dari file CSV LimeSurvey export
+    -- Contoh: 'U03[SQ001]. Pernyataan-pernyataan dalam bagian ini
+    --          berhubungan dengan ITB secara keseluruhan. 
+    --          [Tersedia cukup ruang kelas]'
+    -- Disimpan untuk traceability — memungkinkan ingest script
+    -- memetakan kolom CSV ke kd_pertanyaan tanpa hardcode
 
     kd_grup         VARCHAR(15) NOT NULL,
     -- LimeSurvey question group prefix — VARCHAR biasa, bukan FK
@@ -160,10 +165,7 @@ CREATE TABLE evaluasi_wisudawan.respons (
                         ON UPDATE CASCADE ON DELETE RESTRICT
                         DEFERRABLE INITIALLY DEFERRED,
 
-    periode_ijazah_id INTEGER
-                        REFERENCES wisuda.periode_ijazah(periode_ijazah_id)
-                        ON UPDATE CASCADE ON DELETE RESTRICT
-                        DEFERRABLE INITIALLY DEFERRED,
+    periode_ijazah_id INTEGER,
     -- NULLABLE — analisis 100% data (7535 baris):
     --   66.6% (5015 baris) NULL — bukan anomali, bukan missing data
     --   PR: 0% NULL, S1: 81.7% NULL, S2: 51.8% NULL, S3: 43.6% NULL
