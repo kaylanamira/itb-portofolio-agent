@@ -923,7 +923,7 @@ SELECT
     mk.semua_dosen_nama_gelar,
 
     -- ── Metadata portofolio ───────────────────────────────────────
-    r.tgl_entri,
+    r.tgl_entri                 AS tanggal_entri,
     r.lengkap,
     r.nilai_portofolio,
     r.skema_pertanyaan,
