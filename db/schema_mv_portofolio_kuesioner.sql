@@ -647,7 +647,7 @@ CREATE INDEX idx_mv_dosen_tahun_ajaran       ON mv_statistik_dosen (tahun_ajaran
 
 
 -- ============================================================
--- MATERIALIZED VIEW 4 : mv_status_matkul
+-- MATERIALIZED VIEW 4 : mv_jenis_dan_sifat_matkul
 --
 -- Tujuan: Menyimpan status/posisi setiap mata kuliah dalam
 --         struktur kurikulum, sebagai referensi join untuk
@@ -677,7 +677,7 @@ CREATE INDEX idx_mv_dosen_tahun_ajaran       ON mv_statistik_dosen (tahun_ajaran
 --   karena tidak ada tabel equivalen (TPB = kode_jenis 'B').
 -- ============================================================
 
-CREATE MATERIALIZED VIEW mv_status_matkul AS
+CREATE MATERIALIZED VIEW mv_jenis_dan_sifat_matkul AS
 
 -- ── Bagian 1: kurikulum baru (kur24) ─────────────────────────────────────────
 -- Grain   : (mata_kuliah_id, no_ps, paket_id)
@@ -772,30 +772,30 @@ JOIN utama.program_studi        ps  ON ps.no_ps = ks.no_ps;
 --   → selalu menghasilkan tepat satu nilai non-NULL
 -- ============================================================
 
-CREATE UNIQUE INDEX idx_mv_status_matkul_pk
-    ON mv_status_matkul (sumber, mata_kuliah_id, kode_prodi, COALESCE(paket_id, struktur_id));
+CREATE UNIQUE INDEX idx_mv_jenis_dan_sifat_matkul_pk
+    ON mv_jenis_dan_sifat_matkul (sumber, mata_kuliah_id, kode_prodi, COALESCE(paket_id, struktur_id));
 
 -- Index utama untuk join dari mv_kelas
-CREATE INDEX idx_mv_status_matkul_matkul_prodi
-    ON mv_status_matkul (mata_kuliah_id, kode_prodi);
+CREATE INDEX idx_mv_jenis_dan_sifat_matkul_matkul_prodi
+    ON mv_jenis_dan_sifat_matkul (mata_kuliah_id, kode_prodi);
 
 -- Index untuk filter per jalur kurikulum (partial: hanya baris kur24)
-CREATE INDEX idx_mv_status_matkul_kode_jenis
-    ON mv_status_matkul (kode_jenis)
+CREATE INDEX idx_mv_jenis_dan_sifat_matkul_kode_jenis
+    ON mv_jenis_dan_sifat_matkul (kode_jenis)
     WHERE kode_jenis IS NOT NULL;
 
 -- Index untuk filter wajib ITB (partial: hanya baris yang relevan)
-CREATE INDEX idx_mv_status_matkul_wajib_itb
-    ON mv_status_matkul (is_wajib_itb, kode_prodi)
+CREATE INDEX idx_mv_jenis_dan_sifat_matkul_wajib_itb
+    ON mv_jenis_dan_sifat_matkul (is_wajib_itb, kode_prodi)
     WHERE is_wajib_itb = TRUE;
 
 -- Index untuk filter per era kurikulum
-CREATE INDEX idx_mv_status_matkul_th_kur
-    ON mv_status_matkul (tahun_kurikulum, sumber);
+CREATE INDEX idx_mv_jenis_dan_sifat_matkul_th_kur
+    ON mv_jenis_dan_sifat_matkul (tahun_kurikulum, sumber);
 
 -- Index untuk filter per fakultas
-CREATE INDEX idx_mv_status_matkul_fak
-    ON mv_status_matkul (kode_fakultas, kode_jenis);
+CREATE INDEX idx_mv_jenis_dan_sifat_matkul_fak
+    ON mv_jenis_dan_sifat_matkul (kode_fakultas, kode_jenis);
 
 
 -- ================================================================
