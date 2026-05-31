@@ -24,6 +24,19 @@
 --
 -- Nama kolom kd_grup_opsi (bukan kd_set_opsi) sesuai schema evaluasi_wisudawan.
 --
+-- Tabel pendukung seremoni (wajib ada sebelum menjalankan script ini):
+--   evaluasi_wisudawan.ijazah_to_seremoni          — mapping 1:1
+--                                                    periode_ijazah_id_final → periode_seremoni_id
+--   evaluasi_wisudawan.periode_seremoni_sementara  — master seremoni + tgl_seremoni
+--   Lihat dummy_data_seremoni.sql dan patch_tgl_seremoni_dummy.sql
+--
+-- Kolom seremoni yang ditambahkan ke ketiga MV (setelah tahun_ijazah):
+--   periode_seremoni_id  — ID seremoni (YYYYMM, contoh 202504)
+--   tahun_seremoni       — tahun pelaksanaan seremoni
+--   bulan_seremoni       — bulan pelaksanaan seremoni (1–12)
+--   nama_seremoni        — nama seremoni (Bahasa Indonesia)
+-- Semua via LEFT JOIN → NULL jika periode belum dipetakan.
+--
 -- Refresh semua setelah setiap batch import:
 --   REFRESH MATERIALIZED VIEW analitik.mv_wisudawan_distribusi_jawaban;
 --   REFRESH MATERIALIZED VIEW analitik.mv_wisudawan_statistik_pertanyaan;
@@ -72,6 +85,11 @@ SELECT
     r.periode_ijazah_id,
     r.periode_ijazah_id_final,
     (r.periode_ijazah_id_final / 100)::INTEGER   AS tahun_ijazah,
+    -- Dimensi seremoni wisuda (LEFT JOIN — NULL jika belum ada mapping)
+    its.periode_seremoni_id                      AS periode_seremoni_id,
+    EXTRACT(YEAR  FROM lower(ser.tgl_seremoni))::INTEGER AS tahun_seremoni,
+    EXTRACT(MONTH FROM lower(ser.tgl_seremoni))::INTEGER AS bulan_seremoni,
+    ser.nama->>'id'                              AS nama_seremoni,
     -- Dimensi deskriptif program studi & fakultas
     ps.no_ps                                     AS kode_prodi,
     ps.kd_ps                                     AS singkatan_prodi,
@@ -109,6 +127,12 @@ JOIN evaluasi_wisudawan.pertanyaan p
     ON r.jawaban ? p.kd_pertanyaan
 JOIN evaluasi_wisudawan.ref_grup_opsi s
     ON p.kd_grup_opsi = s.kd_grup_opsi
+LEFT JOIN evaluasi_wisudawan.ijazah_to_seremoni its
+    ON its.periode_ijazah_id_final = r.periode_ijazah_id_final
+LEFT JOIN evaluasi_wisudawan.periode_seremoni_sementara ser
+    ON ser.periode_seremoni_id = its.periode_seremoni_id
+-- LEFT JOIN agar baris dengan periode_ijazah_id_final belum dipetakan
+-- tidak hilang dari MV (seremoni columns akan NULL).
 WHERE
     p.batasan IS NULL
     OR (p.batasan -> 'strata'   @> to_jsonb(r.kd_strata::TEXT))
@@ -128,7 +152,10 @@ GROUP BY
     p.kd_grup_pertanyaan,
     p.kd_grup_opsi,
     s.tipe,
-    (r.jawaban ->> p.kd_pertanyaan)::SMALLINT
+    (r.jawaban ->> p.kd_pertanyaan)::SMALLINT,
+    its.periode_seremoni_id,
+    lower(ser.tgl_seremoni),
+    ser.nama->>'id'
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_distribusi_jawaban
@@ -144,6 +171,7 @@ CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kd_strata, kd_fak, no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (tahun_ijazah);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (periode_seremoni_id);
 
 
 -- ============================================================
@@ -166,6 +194,11 @@ SELECT
     r.periode_ijazah_id,
     r.periode_ijazah_id_final,
     (r.periode_ijazah_id_final / 100)::INTEGER   AS tahun_ijazah,
+    -- Dimensi seremoni wisuda (LEFT JOIN — NULL jika belum ada mapping)
+    its.periode_seremoni_id                      AS periode_seremoni_id,
+    EXTRACT(YEAR  FROM lower(ser.tgl_seremoni))::INTEGER AS tahun_seremoni,
+    EXTRACT(MONTH FROM lower(ser.tgl_seremoni))::INTEGER AS bulan_seremoni,
+    ser.nama->>'id'                              AS nama_seremoni,
     -- Dimensi deskriptif program studi & fakultas
     ps.no_ps                                     AS kode_prodi,
     ps.kd_ps                                     AS singkatan_prodi,
@@ -203,6 +236,10 @@ JOIN evaluasi_wisudawan.pertanyaan p
     ON r.jawaban ? p.kd_pertanyaan
 JOIN evaluasi_wisudawan.ref_grup_opsi s
     ON p.kd_grup_opsi = s.kd_grup_opsi
+LEFT JOIN evaluasi_wisudawan.ijazah_to_seremoni its
+    ON its.periode_ijazah_id_final = r.periode_ijazah_id_final
+LEFT JOIN evaluasi_wisudawan.periode_seremoni_sementara ser
+    ON ser.periode_seremoni_id = its.periode_seremoni_id
 WHERE
     s.tipe = 'O'
     AND (
@@ -223,7 +260,10 @@ GROUP BY
     f.nama,
     p.kd_pertanyaan,
     p.kd_grup_pertanyaan,
-    p.kd_grup_opsi
+    p.kd_grup_opsi,
+    its.periode_seremoni_id,
+    lower(ser.tgl_seremoni),
+    ser.nama->>'id'
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan
@@ -237,6 +277,7 @@ CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_strata, kd_fak);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_strata, kd_fak, no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (tahun_ijazah);
+CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (periode_seremoni_id);
 
 
 -- ============================================================
@@ -276,6 +317,12 @@ SELECT
     r.periode_ijazah_id,
     r.periode_ijazah_id_final,
     (r.periode_ijazah_id_final / 100)::INTEGER   AS tahun_ijazah,
+    -- Dimensi seremoni wisuda (LEFT JOIN — NULL jika belum ada mapping)
+    its.periode_seremoni_id                      AS periode_seremoni_id,
+    EXTRACT(YEAR  FROM lower(ser.tgl_seremoni))::INTEGER AS tahun_seremoni,
+    EXTRACT(MONTH FROM lower(ser.tgl_seremoni))::INTEGER AS bulan_seremoni,
+    ser.nama->>'id'                              AS nama_seremoni,
+    -- ─────────────────────────────────────────────────────────
     r.submit_date,
 
     -- ── Dimensi deskriptif program studi & fakultas ───────────
@@ -990,6 +1037,10 @@ SELECT
 FROM evaluasi_wisudawan.respons r
 JOIN utama.program_studi ps ON ps.no_ps = r.no_ps
 JOIN utama.fakultas      f  ON f.kd_fak = r.kd_fak
+LEFT JOIN evaluasi_wisudawan.ijazah_to_seremoni its
+    ON its.periode_ijazah_id_final = r.periode_ijazah_id_final
+LEFT JOIN evaluasi_wisudawan.periode_seremoni_sementara ser
+    ON ser.periode_seremoni_id = its.periode_seremoni_id
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_jawaban_responden (response_id);
@@ -1002,6 +1053,7 @@ CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_ijazah_id);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (tahun_ijazah);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_seremoni_id);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata, kd_fak);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata, kd_fak, no_ps);
 
@@ -1017,6 +1069,10 @@ COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.survey_platform_respon
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.periode_ijazah_id IS 'Periode wisuda format YYYYMM asli dari data sumber, contoh: 202502=Februari 2025. Nullable (66% terisi). FK ke wisuda.periode_ijazah';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.periode_ijazah_id_final IS 'periode_ijazah_id siap pakai: asli jika not null, diimputasi dari submit_date jika null. Gunakan kolom ini untuk filtering per periode';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.tahun_ijazah IS 'Tahun wisuda diturunkan dari periode_ijazah_id_final (YYYYMM / 100). Contoh: 202502 → 2025';
+COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.periode_seremoni_id IS 'ID seremoni wisuda dari ijazah_to_seremoni (LEFT JOIN). Format YYYYMM, contoh: 202504=Seremoni April 2025. NULL jika periode belum dipetakan';
+COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.tahun_seremoni IS 'Tahun pelaksanaan seremoni wisuda, diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
+COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.bulan_seremoni IS 'Bulan pelaksanaan seremoni wisuda (1–12), diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
+COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.nama_seremoni IS 'Nama seremoni wisuda dalam Bahasa Indonesia dari periode_seremoni_sementara.nama->>''id''. NULL jika mapping belum ada';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.kd_strata IS 'Jenjang pendidikan kode: S1=Sarjana, S2=Magister, S3=Doktor, PR=Profesi';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.kd_fak IS 'Kode fakultas/sekolah singkat, contoh: STEI, SBM, FSRD. FK ke utama.fakultas';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.no_ps IS 'Kode numerik program studi, contoh: 135=Teknik Informatika S1. FK ke utama.program_studi';
