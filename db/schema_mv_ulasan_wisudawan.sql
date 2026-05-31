@@ -92,23 +92,23 @@ SELECT
     EXTRACT(MONTH FROM lower(ser.tgl_seremoni))::INTEGER AS bulan_seremoni,
     ser.nama->>'id'                              AS nama_seremoni,
     -- Dimensi deskriptif program studi & fakultas
-    ps.no_ps                                     AS kode_prodi,
+    r.no_ps                                     AS kode_prodi,
     ps.kd_ps                                     AS singkatan_prodi,
     ps.nama->>'id'                               AS nama_prodi_id,
     ps.nama->>'en'                               AS nama_prodi_en,
-    ps.kd_strata                                 AS jenjang,
-    f.kd_fak                                     AS kode_fakultas,
+    r.kd_strata                                 AS jenjang,
+    r.kd_fak                                     AS kode_fakultas,
     f.nama->>'id'                                AS nama_fakultas_id,
     f.nama->>'en'                                AS nama_fakultas_en,
     -- Pertanyaan & distribusi jawaban
-    p.kd_pertanyaan,
-    p.kd_grup_pertanyaan,
-    p.kd_grup_opsi,
+    p.kd_pertanyaan                             AS kode_pertanyaan,
+    p.kd_grup_pertanyaan                        AS kode_grup_pertanyaan,
+    p.kd_grup_opsi                              AS kode_grup_opsi,
     s.tipe                                       AS tipe_opsi,
     -- O = ordinal Likert (nilai bermakna aritmetika)
     -- N = nominal kategoris (nilai hanya kode urut)
     (r.jawaban ->> p.kd_pertanyaan)::SMALLINT    AS nilai,
-    COUNT(*)                                     AS n,
+    COUNT(*)                                     AS jumlah_responden,
     ROUND(
         COUNT(*) * 100.0
         / SUM(COUNT(*)) OVER (
@@ -120,7 +120,7 @@ SELECT
                 p.kd_pertanyaan
         ),
         2
-    )                                            AS pct
+    )                                            AS persentase
 FROM evaluasi_wisudawan.respons r
 JOIN utama.program_studi ps ON ps.no_ps = r.no_ps
 JOIN utama.fakultas      f  ON f.kd_fak = r.kd_fak
@@ -148,8 +148,6 @@ GROUP BY
     r.no_ps,
     ps.kd_ps,
     ps.nama,
-    ps.kd_strata,
-    f.kd_fak,
     f.nama,
     p.kd_pertanyaan,
     p.kd_grup_pertanyaan,
@@ -163,16 +161,16 @@ GROUP BY
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_distribusi_jawaban
-    (periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan, nilai);
+    (periode_ijazah_id, jenjang, kode_fakultas, kode_prodi, kode_pertanyaan, nilai);
 -- UNIQUE INDEX wajib untuk REFRESH CONCURRENTLY
 -- CATATAN: periode_ijazah_id nullable → gunakan REFRESH tanpa CONCURRENTLY
 
-CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kd_grup_opsi, nilai);
-CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kd_grup_pertanyaan);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kode_grup_opsi, nilai);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kode_grup_pertanyaan);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (tipe_opsi);
-CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kd_strata, kd_fak);
-CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (no_ps);
-CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kd_strata, kd_fak, no_ps);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (jenjang, kode_fakultas);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kode_prodi);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (jenjang, kode_fakultas, kode_prodi);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (tahun_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (bulan_ijazah);
@@ -206,19 +204,19 @@ SELECT
     EXTRACT(MONTH FROM lower(ser.tgl_seremoni))::INTEGER AS bulan_seremoni,
     ser.nama->>'id'                              AS nama_seremoni,
     -- Dimensi deskriptif program studi & fakultas
-    ps.no_ps                                     AS kode_prodi,
+    r.no_ps                                     AS kode_prodi,
     ps.kd_ps                                     AS singkatan_prodi,
     ps.nama->>'id'                               AS nama_prodi_id,
     ps.nama->>'en'                               AS nama_prodi_en,
-    ps.kd_strata                                 AS jenjang,
-    f.kd_fak                                     AS kode_fakultas,
+    r.kd_strata                                 AS jenjang,
+    r.kd_fak                                     AS kode_fakultas,
     f.nama->>'id'                                AS nama_fakultas_id,
     f.nama->>'en'                                AS nama_fakultas_en,
     -- Pertanyaan & statistik
-    p.kd_pertanyaan,
-    p.kd_grup_pertanyaan,
-    p.kd_grup_opsi,
-    COUNT(*)                                     AS n_responden,
+    p.kd_pertanyaan                               AS kode_pertanyaan,
+    p.kd_grup_pertanyaan                          AS kode_grup_pertanyaan,
+    p.kd_grup_opsi                               AS kode_grup_opsi,
+    COUNT(*)                                     AS jumlah_responden,
     ROUND(
         AVG((r.jawaban ->> p.kd_pertanyaan)::NUMERIC),
         4
@@ -226,11 +224,11 @@ SELECT
     ROUND(
         PERCENTILE_CONT(0.5) WITHIN GROUP (
             ORDER BY (r.jawaban ->> p.kd_pertanyaan)::NUMERIC
-        ),
+        )::NUMERIC,
         4
     )                                            AS median,
     ROUND(
-        STDDEV((r.jawaban ->> p.kd_pertanyaan)::NUMERIC),
+        STDDEV((r.jawaban ->> p.kd_pertanyaan)::NUMERIC)::NUMERIC,
         4
     )                                            AS std_dev,
     MIN((r.jawaban ->> p.kd_pertanyaan)::NUMERIC)  AS skor_min,
@@ -263,8 +261,6 @@ GROUP BY
     r.no_ps,
     ps.kd_ps,
     ps.nama,
-    ps.kd_strata,
-    f.kd_fak,
     f.nama,
     p.kd_pertanyaan,
     p.kd_grup_pertanyaan,
@@ -276,14 +272,14 @@ GROUP BY
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan
-    (periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan);
+    (periode_ijazah_id, jenjang, kode_fakultas, kode_prodi, kode_pertanyaan);
 -- UNIQUE INDEX wajib untuk REFRESH CONCURRENTLY
 -- CATATAN: periode_ijazah_id nullable → gunakan REFRESH tanpa CONCURRENTLY
 
-CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_grup_pertanyaan);
-CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_grup_opsi);
-CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_strata, kd_fak);
-CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_strata, kd_fak, no_ps);
+CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kode_grup_pertanyaan);
+CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kode_grup_opsi);
+CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (jenjang, kode_fakultas);
+CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (jenjang, kode_fakultas, kode_prodi);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (tahun_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (bulan_ijazah);
@@ -337,12 +333,12 @@ SELECT
     r.submit_date,
 
     -- ── Dimensi deskriptif program studi & fakultas ───────────
-    ps.no_ps                                     AS kode_prodi,
+    r.no_ps                                     AS kode_prodi,
     ps.kd_ps                                     AS singkatan_prodi,
     ps.nama->>'id'                               AS nama_prodi_id,
     ps.nama->>'en'                               AS nama_prodi_en,
-    ps.kd_strata                                 AS jenjang,
-    f.kd_fak                                     AS kode_fakultas,
+    r.kd_strata                                 AS jenjang,
+    r.kd_fak                                     AS kode_fakultas,
     f.nama->>'id'                                AS nama_fakultas_id,
     f.nama->>'en'                                AS nama_fakultas_en,
 
@@ -1060,16 +1056,16 @@ CREATE UNIQUE INDEX ON analitik.mv_wisudawan_jawaban_responden (response_id);
 -- UNIQUE INDEX pada response_id (SERIAL, tidak pernah NULL)
 -- → aman untuk REFRESH CONCURRENTLY
 
-CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata);
-CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_fak);
-CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (no_ps);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (jenjang);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kode_fakultas);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kode_prodi);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_ijazah_id);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (tahun_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (bulan_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_seremoni_id);
-CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata, kd_fak);
-CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata, kd_fak, no_ps);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (jenjang, kode_fakultas);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (jenjang, kode_fakultas, kode_prodi);
 
 
 -- ============================================================
