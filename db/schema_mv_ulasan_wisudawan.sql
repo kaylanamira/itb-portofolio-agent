@@ -84,7 +84,8 @@ SELECT
     -- Periode & dimensi organisasi (raw codes — dipakai UNIQUE INDEX)
     r.periode_ijazah_id,
     r.periode_ijazah_id_final,
-    (r.periode_ijazah_id_final / 100)::INTEGER   AS tahun_ijazah,
+    EXTRACT(YEAR  FROM lower(pij.tgl_ijazah))::INTEGER AS tahun_ijazah,
+    EXTRACT(MONTH FROM lower(pij.tgl_ijazah))::INTEGER AS bulan_ijazah,
     -- Dimensi seremoni wisuda (LEFT JOIN — NULL jika belum ada mapping)
     its.periode_seremoni_id                      AS periode_seremoni_id,
     EXTRACT(YEAR  FROM lower(ser.tgl_seremoni))::INTEGER AS tahun_seremoni,
@@ -131,8 +132,10 @@ LEFT JOIN evaluasi_wisudawan.ijazah_to_seremoni its
     ON its.periode_ijazah_id_final = r.periode_ijazah_id_final
 LEFT JOIN evaluasi_wisudawan.periode_seremoni_sementara ser
     ON ser.periode_seremoni_id = its.periode_seremoni_id
+LEFT JOIN evaluasi_wisudawan.periode_ijazah_sementara pij
+    ON pij.periode_ijazah_id = r.periode_ijazah_id_final
 -- LEFT JOIN agar baris dengan periode_ijazah_id_final belum dipetakan
--- tidak hilang dari MV (seremoni columns akan NULL).
+-- tidak hilang dari MV (seremoni columns dan ijazah columns akan NULL).
 WHERE
     p.batasan IS NULL
     OR (p.batasan -> 'strata'   @> to_jsonb(r.kd_strata::TEXT))
@@ -155,7 +158,8 @@ GROUP BY
     (r.jawaban ->> p.kd_pertanyaan)::SMALLINT,
     its.periode_seremoni_id,
     lower(ser.tgl_seremoni),
-    ser.nama->>'id'
+    ser.nama->>'id',
+    lower(pij.tgl_ijazah)
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_distribusi_jawaban
@@ -171,6 +175,7 @@ CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (kd_strata, kd_fak, no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (tahun_ijazah);
+CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (bulan_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_distribusi_jawaban (periode_seremoni_id);
 
 
@@ -193,7 +198,8 @@ SELECT
     -- Periode & dimensi organisasi (raw codes — dipakai UNIQUE INDEX)
     r.periode_ijazah_id,
     r.periode_ijazah_id_final,
-    (r.periode_ijazah_id_final / 100)::INTEGER   AS tahun_ijazah,
+    EXTRACT(YEAR  FROM lower(pij.tgl_ijazah))::INTEGER AS tahun_ijazah,
+    EXTRACT(MONTH FROM lower(pij.tgl_ijazah))::INTEGER AS bulan_ijazah,
     -- Dimensi seremoni wisuda (LEFT JOIN — NULL jika belum ada mapping)
     its.periode_seremoni_id                      AS periode_seremoni_id,
     EXTRACT(YEAR  FROM lower(ser.tgl_seremoni))::INTEGER AS tahun_seremoni,
@@ -240,6 +246,8 @@ LEFT JOIN evaluasi_wisudawan.ijazah_to_seremoni its
     ON its.periode_ijazah_id_final = r.periode_ijazah_id_final
 LEFT JOIN evaluasi_wisudawan.periode_seremoni_sementara ser
     ON ser.periode_seremoni_id = its.periode_seremoni_id
+LEFT JOIN evaluasi_wisudawan.periode_ijazah_sementara pij
+    ON pij.periode_ijazah_id = r.periode_ijazah_id_final
 WHERE
     s.tipe = 'O'
     AND (
@@ -263,7 +271,8 @@ GROUP BY
     p.kd_grup_opsi,
     its.periode_seremoni_id,
     lower(ser.tgl_seremoni),
-    ser.nama->>'id'
+    ser.nama->>'id',
+    lower(pij.tgl_ijazah)
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan
@@ -277,6 +286,7 @@ CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_strata, kd_fak);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (kd_strata, kd_fak, no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (tahun_ijazah);
+CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (bulan_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_statistik_pertanyaan (periode_seremoni_id);
 
 
@@ -316,7 +326,8 @@ SELECT
     -- ── Periode & dimensi organisasi (raw codes) ──────────────
     r.periode_ijazah_id,
     r.periode_ijazah_id_final,
-    (r.periode_ijazah_id_final / 100)::INTEGER   AS tahun_ijazah,
+    EXTRACT(YEAR  FROM lower(pij.tgl_ijazah))::INTEGER AS tahun_ijazah,
+    EXTRACT(MONTH FROM lower(pij.tgl_ijazah))::INTEGER AS bulan_ijazah,
     -- Dimensi seremoni wisuda (LEFT JOIN — NULL jika belum ada mapping)
     its.periode_seremoni_id                      AS periode_seremoni_id,
     EXTRACT(YEAR  FROM lower(ser.tgl_seremoni))::INTEGER AS tahun_seremoni,
@@ -1041,6 +1052,8 @@ LEFT JOIN evaluasi_wisudawan.ijazah_to_seremoni its
     ON its.periode_ijazah_id_final = r.periode_ijazah_id_final
 LEFT JOIN evaluasi_wisudawan.periode_seremoni_sementara ser
     ON ser.periode_seremoni_id = its.periode_seremoni_id
+LEFT JOIN evaluasi_wisudawan.periode_ijazah_sementara pij
+    ON pij.periode_ijazah_id = r.periode_ijazah_id_final
 WITH DATA;
 
 CREATE UNIQUE INDEX ON analitik.mv_wisudawan_jawaban_responden (response_id);
@@ -1053,6 +1066,7 @@ CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (no_ps);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_ijazah_id);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_ijazah_id_final);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (tahun_ijazah);
+CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (bulan_ijazah);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (periode_seremoni_id);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata, kd_fak);
 CREATE INDEX ON analitik.mv_wisudawan_jawaban_responden (kd_strata, kd_fak, no_ps);
@@ -1068,7 +1082,8 @@ COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.response_id IS 'Surrog
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.survey_platform_response_id IS 'ID response asli dari LimeSurvey (bisa NULL jika tidak tercatat)';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.periode_ijazah_id IS 'Periode wisuda format YYYYMM asli dari data sumber, contoh: 202502=Februari 2025. Nullable (66% terisi). FK ke wisuda.periode_ijazah';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.periode_ijazah_id_final IS 'periode_ijazah_id siap pakai: asli jika not null, diimputasi dari submit_date jika null. Gunakan kolom ini untuk filtering per periode';
-COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.tahun_ijazah IS 'Tahun wisuda diturunkan dari periode_ijazah_id_final (YYYYMM / 100). Contoh: 202502 → 2025';
+COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.tahun_ijazah IS 'Tahun ijazah diekstrak dari lower(tgl_ijazah) di periode_ijazah_sementara (LEFT JOIN). NULL jika periode_ijazah_id_final belum dipetakan';
+COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.bulan_ijazah IS 'Bulan ijazah (1–12) diekstrak dari lower(tgl_ijazah) di periode_ijazah_sementara (LEFT JOIN). NULL jika periode_ijazah_id_final belum dipetakan';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.periode_seremoni_id IS 'ID seremoni wisuda dari ijazah_to_seremoni (LEFT JOIN). Format YYYYMM, contoh: 202504=Seremoni April 2025. NULL jika periode belum dipetakan';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.tahun_seremoni IS 'Tahun pelaksanaan seremoni wisuda, diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
 COMMENT ON COLUMN analitik.mv_wisudawan_jawaban_responden.bulan_seremoni IS 'Bulan pelaksanaan seremoni wisuda (1–12), diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
