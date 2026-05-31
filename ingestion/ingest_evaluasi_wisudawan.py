@@ -119,13 +119,13 @@ _Q_CONFIG_RAW = [
 ]
 Q_CONFIG = sorted(_Q_CONFIG_RAW, key=lambda x: len(x[0]), reverse=True)
 
-# Mapping prefix → kd_grup untuk tabel pertanyaan
+# Mapping prefix → kd_grup_pertanyaan untuk tabel pertanyaan
 _GRUP_MAP = [
     ("SBM01",  "SBM01"),
     ("FSRD05", "FSRD05"), ("FSRD04", "FSRD04"), ("FSRD03", "FSRD03"),
     ("FSRD02", "FSRD02"), ("FSRD01", "FSRD01"),
     ("D01",    "D01"),
-    ("S1",     "S1"),    # S101, S102, S103, S104_SQxxx semuanya → kd_grup "S1"
+    ("S1",     "S1"),    # S101, S102, S103, S104_SQxxx semuanya → kd_grup_pertanyaan "S1"
     ("M0",     "M"),     # M01, M02, M03
     ("U07",    "U07"),   ("U06", "U06"),   ("U05", "U05"),
     ("U04",    "U04"),   ("U03", "U03"),   ("U02", "U02"),   ("U01", "U01"),
@@ -258,7 +258,7 @@ CREATE TABLE IF NOT EXISTS evaluasi_wisudawan.ref_opsi (
 CREATE TABLE IF NOT EXISTS evaluasi_wisudawan.pertanyaan (
     kd_pertanyaan  VARCHAR(20) PRIMARY KEY,
     header_csv_raw VARCHAR(500),
-    kd_grup        VARCHAR(15) NOT NULL,
+    kd_grup_pertanyaan        VARCHAR(15) NOT NULL,
     pertanyaan     JSONB       NOT NULL,
     kd_grup_opsi   VARCHAR(30)
                        REFERENCES evaluasi_wisudawan.ref_grup_opsi(kd_grup_opsi)
@@ -271,8 +271,8 @@ CREATE TABLE IF NOT EXISTS evaluasi_wisudawan.pertanyaan (
     user_id_entry  INTEGER     NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_pertanyaan_kd_grup
-    ON evaluasi_wisudawan.pertanyaan (kd_grup);
+CREATE INDEX IF NOT EXISTS idx_pertanyaan_kd_grup_pertanyaan
+    ON evaluasi_wisudawan.pertanyaan (kd_grup_pertanyaan);
 CREATE INDEX IF NOT EXISTS idx_pertanyaan_kd_grup_opsi
     ON evaluasi_wisudawan.pertanyaan (kd_grup_opsi);
 
@@ -374,8 +374,8 @@ def get_opsi_config(kd: str) -> tuple[str | None, str | None]:
     return None, None
 
 
-def get_kd_grup(kd: str) -> str:
-    """Mengembalikan kd_grup dari kd_pertanyaan (prefix match)."""
+def get_kd_grup_pertanyaan(kd: str) -> str:
+    """Mengembalikan kd_grup_pertanyaan dari kd_pertanyaan (prefix match)."""
     for prefix, grup in _GRUP_MAP:
         if kd.startswith(prefix):
             return grup
@@ -583,7 +583,7 @@ def phase_2_seed_ref(conn: psycopg.Connection) -> None:
 def phase_3_seed_pertanyaan(conn: psycopg.Connection, df: pd.DataFrame) -> None:
     """
     Membaca header kolom CSV dan mengisi tabel pertanyaan.
-    kd_pertanyaan, kd_grup, teks pertanyaan semua diturunkan dari header CSV.
+    kd_pertanyaan, kd_grup_pertanyaan, teks pertanyaan semua diturunkan dari header CSV.
     """
     log.info("Phase 3 — Seed pertanyaan dari header CSV ...")
     seen_kd: set[str] = set()
@@ -601,7 +601,7 @@ def phase_3_seed_pertanyaan(conn: psycopg.Connection, df: pd.DataFrame) -> None:
         seen_kd.add(kd)
 
         kd_grup_opsi, batasan_str = get_opsi_config(kd)
-        kd_grup   = get_kd_grup(kd)
+        kd_grup_pertanyaan   = get_kd_grup_pertanyaan(kd)
         text      = extract_question_text(col)
         ptanyaan  = {"id": text, "en": text}   # en = id untuk sekarang, update manual jika perlu
         batasan   = json.loads(batasan_str) if batasan_str else None
@@ -610,7 +610,7 @@ def phase_3_seed_pertanyaan(conn: psycopg.Connection, df: pd.DataFrame) -> None:
         rows.append((
             kd,
             col[:500],
-            kd_grup,
+            kd_grup_pertanyaan,
             Jsonb(ptanyaan),
             kd_grup_opsi,
             Jsonb(batasan) if batasan else None,
@@ -622,7 +622,7 @@ def phase_3_seed_pertanyaan(conn: psycopg.Connection, df: pd.DataFrame) -> None:
         cur.executemany(
             """
             INSERT INTO evaluasi_wisudawan.pertanyaan
-                (kd_pertanyaan, header_csv_raw, kd_grup, pertanyaan,
+                (kd_pertanyaan, header_csv_raw, kd_grup_pertanyaan, pertanyaan,
                  kd_grup_opsi, batasan, urutan, user_id_entry)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (kd_pertanyaan) DO NOTHING
