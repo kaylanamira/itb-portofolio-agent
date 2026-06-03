@@ -1,52 +1,109 @@
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_anthropic import ChatAnthropic
 from core.config import settings
-from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
-TASK_MODEL_MAPPING = {
-    "intent_classification": os.getenv("INTENT_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "query_rewriter": os.getenv("REWRITER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "planning": os.getenv("PLANNING_MODEL", "openai/gpt-oss-120b:free"),
-    "schema_linking": os.getenv("LINKING_MODEL", "openai/gpt-oss-120b:free"),
-    "sql_generation": os.getenv("SQL_GEN_MODEL", "openai/gpt-oss-120b:free"),
-    "answer_validation": os.getenv("VALIDATION_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "step_reasoning": os.getenv("REASONING_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"), 
-    "synthesis": os.getenv("SYNTHESIS_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "clarification": os.getenv("CLARIFICATION_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
-    "general": "nvidia/nemotron-3-super-120b-a12b:free"
+OPENROUTER_MODEL_ENVS: dict[str, tuple[str, ...]] = {
+    "intent_classification": ("INTENT_MODEL", "INTENT_CLASSIFICATION_MODEL"),
+    "query_rewriter": ("REWRITER_MODEL", "QUERY_REWRITER_MODEL"),
+    "planning": ("PLANNING_MODEL",),
+    "schema_linking": ("LINKING_MODEL", "SCHEMA_LINKING_MODEL"),
+    "sql_generation": ("SQL_GEN_MODEL", "SQL_GENERATION_MODEL"),
+    "answer_validation": ("VALIDATION_MODEL", "ANSWER_VALIDATION_MODEL"),
+    "step_reasoning": ("REASONING_MODEL", "STEP_REASONING_MODEL"),
+    "synthesis": ("SYNTHESIS_MODEL",),
+    "clarification": ("CLARIFICATION_MODEL",),
 }
 
+
+def _default_provider() -> str:
+    return (settings.HEAVY_LLM_PROVIDER or settings.LLM_PROVIDER).lower()
+
+
+def _default_model(provider: str) -> str:
+    if provider == "google":
+        return os.getenv("GOOGLE_MODEL", settings.FAST_LLM_MODEL)
+
+    explicit_heavy_model = os.getenv("HEAVY_LLM_MODEL")
+    if explicit_heavy_model:
+        return explicit_heavy_model
+
+    if provider == "groq":
+        return os.getenv("GROQ_MODEL", settings.HEAVY_LLM_MODEL)
+    if provider == "openai":
+        return os.getenv("OPENAI_MODEL", settings.HEAVY_LLM_MODEL)
+    if provider == "anthropic":
+        return os.getenv("ANTHROPIC_MODEL", settings.HEAVY_LLM_MODEL)
+    if provider == "ollama":
+        return os.getenv("OLLAMA_MODEL", settings.HEAVY_LLM_MODEL)
+    if provider == "openrouter":
+        return os.getenv("OPENROUTER_MODEL", settings.HEAVY_LLM_MODEL)
+
+    return settings.HEAVY_LLM_MODEL
+
+
+def _openrouter_model(task_type: str, default_model: str) -> str:
+    env_names = OPENROUTER_MODEL_ENVS.get(task_type, ())
+    for env_name in env_names:
+        model_name = os.getenv(env_name)
+        if model_name:
+            return model_name
+    return default_model
+
+
+DEFAULT_PROVIDER = _default_provider()
+DEFAULT_MODEL = _default_model(DEFAULT_PROVIDER)
+
+TASK_MODEL_MAPPING: dict[str, dict[str, str]] = {
+    task_type: {"provider": DEFAULT_PROVIDER, "model": DEFAULT_MODEL}
+    for task_type in (
+        "intent_classification",
+        "query_rewriter",
+        "answer_validation",
+        "step_reasoning",
+        "clarification",
+        "synthesis",
+        "planning",
+        "schema_linking",
+        "sql_generation",
+        "general",
+    )
+}
+
+
 def get_llm(task_type: str = "general", force_json: bool = True):
+    """Returns a LangChain Chat Model instance for the given task.
+
+    Args:
+        task_type: Key from TASK_MODEL_MAPPING.
+        force_json: If True, requests JSON output format where supported.
     """
-    Retrieves a LangChain Chat Model instance.
-    If settings.OPENROUTER_API_KEY is defined, routes the task to a specific OpenRouter model
-    (utilizing free/cost-effective models for simpler tasks and high-reasoning models for SQL/Planning).
-    Otherwise, falls back to legacy provider configuration.
-    """
-    if settings.OPENROUTER_API_KEY:
-        model_name = TASK_MODEL_MAPPING.get(task_type, TASK_MODEL_MAPPING["general"])
+    mapping = TASK_MODEL_MAPPING.get(
+        task_type,
+        {"provider": DEFAULT_PROVIDER, "model": DEFAULT_MODEL},
+    )
+    provider = mapping["provider"].lower()
+    model_name = mapping["model"]
+
+    if provider == "openrouter":
         kwargs = {
             "api_key": settings.OPENROUTER_API_KEY,
             "base_url": "https://openrouter.ai/api/v1",
-            "model": model_name,
+            "model": _openrouter_model(task_type, model_name),
             "temperature": 0.0,
             "max_retries": 3,
             "default_headers": {
                 "HTTP-Referer": "https://github.com/kaylanamira/itb-portofolio",
-                "X-Title": "ITB Academic Portfolio Agent"
-            }
+                "X-Title": "ITB Academic Portfolio Agent",
+            },
         }
         if force_json:
             kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
         return ChatOpenAI(**kwargs)
-
-    provider = getattr(settings, "HEAVY_LLM_PROVIDER", settings.LLM_PROVIDER).lower()
-    model_name = getattr(settings, "HEAVY_LLM_MODEL", getattr(settings, "FAST_LLM_MODEL", ""))
 
     if provider == "google":
         kwargs = {
@@ -55,9 +112,40 @@ def get_llm(task_type: str = "general", force_json: bool = True):
             "temperature": 0.0,
             "max_retries": 3,
         }
+        if force_json:
+            kwargs["response_mime_type"] = "application/json"
         return ChatGoogleGenerativeAI(**kwargs)
-        
-    elif provider == "openai":
+
+    if provider == "groq":
+        kwargs = {
+            "api_key": settings.GROQ_API_KEY,
+            "model_name": model_name,
+            "temperature": 0.0,
+            "max_retries": 5,
+        }
+        if force_json:
+            kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+        return ChatGroq(**kwargs)
+
+    if provider == "anthropic":
+        return ChatAnthropic(
+            api_key=settings.ANTHROPIC_API_KEY,
+            model=model_name,
+            temperature=0.0,
+            max_retries=3,
+        )
+
+    if provider == "ollama":
+        kwargs = {
+            "base_url": settings.OLLAMA_BASE_URL,
+            "model": model_name,
+            "temperature": 0.0,
+        }
+        if force_json:
+            kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+        return ChatOpenAI(api_key="ollama", **kwargs)
+
+    if provider == "openai":
         kwargs = {
             "api_key": settings.OPENAI_API_KEY,
             "model": model_name,
@@ -68,33 +156,4 @@ def get_llm(task_type: str = "general", force_json: bool = True):
             kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
         return ChatOpenAI(**kwargs)
 
-    elif provider == "anthropic":
-        kwargs = {
-            "api_key": settings.ANTHROPIC_API_KEY,
-            "model": model_name,
-            "temperature": 0.0,
-            "max_retries": 3,
-        }
-        return ChatAnthropic(**kwargs)
-
-    elif provider == "ollama":
-        # Local Ollama — OpenAI-compatible, no API key needed.
-        # Run: ollama pull qwen2.5-coder:7b && ollama serve
-        kwargs = {
-            "base_url": settings.OLLAMA_BASE_URL,
-            "model": model_name,
-            "temperature": 0.0,
-        }
-        if force_json:
-            kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
-        return ChatOpenAI(api_key="ollama", **kwargs)
-        
-    kwargs = {
-        "api_key": settings.GROQ_API_KEY,
-        "model_name": model_name,
-        "temperature": 0.0,
-        "max_retries": 5,
-    }
-    if force_json:
-        kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
-    return ChatGroq(**kwargs)
+    raise ValueError(f"Unsupported LLM provider '{provider}' for task '{task_type}'.")

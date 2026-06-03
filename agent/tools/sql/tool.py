@@ -1,4 +1,7 @@
-"""SQLTool — domain-agnostic Text-to-SQL pipeline."""
+"""SQLTool — Text-to-SQL pipeline.
+
+Handles: schema linking → SQL generation → validation → execution → answer validation.
+"""
 
 from __future__ import annotations
 
@@ -7,10 +10,10 @@ import logging
 import re
 from typing import Any, Callable, Optional
 
-import sqlglot
-from sqlglot import exp
 import asyncio
+import sqlglot
 from langchain_core.messages import SystemMessage, HumanMessage
+
 from agent.llm import get_llm
 from agent.prompts.sql_generator import SQL_GENERATOR_SYSTEM, SQL_GENERATOR_RETRY
 from agent.prompts.answer_validator import ANSWER_VALIDATOR_PROMPT
@@ -27,24 +30,18 @@ logger = logging.getLogger(__name__)
 
 
 class SQLTool:
-    """
-    Text-to-SQL pipeline.
+    """Text-to-SQL pipeline.
 
-    Constructor params:
-        schema_linker_prompt  — system prompt for entity extraction LLM call.
-                                Must be fully domain-specific (tables, entities, rules).
-        human_message_builder — callable(task, user_scope, plan_context) -> str.
-                                Builds the human message for the schema linker.
-                                Defaults to a simple passthrough if not provided.
-        entity_resolver       — async callable(dict) -> Any.
-                                Resolves raw entity dict from LLM to canonical form.
-                                Shape of return value is domain-specific; SQLTool
-                                only passes it through to _format_entities().
-        few_shot_examples     — callable(query_type: str | None) -> str.
-                                Returns formatted few-shot SQL examples.
-        schema_context        — full DDL/schema text for the target domain.
-        default_table         — fallback table name when none detected in query.
-        max_attempts          — retry limit for generate→validate→execute loop.
+    Args:
+        schema_linker_prompt: System prompt for entity extraction LLM call.
+        entity_resolver: Async callable that resolves raw entity dict to canonical form.
+        few_shot_examples: Callable that returns formatted few-shot SQL examples.
+        schema_context: DDL/schema text or async callable returning it.
+        default_table: Fallback table name when none detected.
+        executor: QueryExecutor implementation for SQL execution.
+        max_attempts: Retry limit for the generate→validate→execute loop.
+        human_message_builder: Builds the human message for schema linker.
+        domain_rules: Domain-specific SQL generation rules.
     """
 
     def __init__(
@@ -70,8 +67,7 @@ class SQLTool:
         self._human_message_builder = human_message_builder or self._default_human_message
 
     async def run(self, state: SQLState) -> SQLState:
-        """
-        Runs the full pipeline: link_schema → (generate → validate → execute → validate_answer) × retry.
+        """Runs the full pipeline: link → (generate → validate → execute → check) × retry.
 
         Args:
             state: SQLState with question and user_scope populated.
@@ -82,14 +78,11 @@ class SQLTool:
         question = state["question"]
         user_scope = state["user_scope"]
         plan_step_context = state.get("plan_step_context")
-        plan_context = state.get("plan_context")
+        prior_steps_context = state.get("prior_steps_context")
         query_type = state.get("query_type")
 
         schema_result = await self.link_schema(
-            question,
-            user_scope,
-            plan_step_context,
-            plan_context,
+            question, user_scope, plan_step_context, prior_steps_context,
         )
         detected_entities = schema_result["detected_entities"]
         relevant_tables = schema_result["relevant_tables"]
@@ -116,7 +109,7 @@ class SQLTool:
             )
             state["generated_sql"] = generated_sql
 
-            val = await self.validate_sql(generated_sql, user_scope)
+            val = await self.validate_sql(generated_sql)
             state["validation_status"] = val["validation_status"]
 
             if val["validation_status"] != "pass":
@@ -135,8 +128,7 @@ class SQLTool:
                 state["sql_error"] = None
                 continue
 
-            exec_result = await self.execute_sql(generated_sql, user_scope, relevant_tables)
-            state["sql_with_scope"] = exec_result["sql_with_scope"]
+            exec_result = await self.execute_sql(generated_sql, user_scope)
             state["sql_result"] = exec_result["sql_result"]
             state["sql_error"] = exec_result["sql_error"]
             state["sql_row_count"] = exec_result["sql_row_count"]
@@ -145,7 +137,7 @@ class SQLTool:
                 error_cat, correction_hint = classify_sql_error(exec_result["sql_error"])
                 state["error_history"].append({
                     "attempt": attempt_num - 1,
-                    "sql": exec_result["sql_with_scope"],
+                    "sql": generated_sql,
                     "error": exec_result["sql_error"],
                     "type": "execution_error",
                     "error_category": error_cat.value,
@@ -191,24 +183,22 @@ class SQLTool:
         question: str,
         user_scope: UserScope,
         plan_step_context: Optional[dict] = None,
-        plan_context: Optional[str] = None,
+        prior_steps_context: Optional[str] = None,
     ) -> dict:
-        """
-        Runs schema linking: extracts entities and selects relevant tables.
+        """Extracts entities and selects relevant tables from the query.
 
         Args:
             question: The original user question.
             user_scope: Caller's access scope.
-            plan_step_context: Current plan step dict (overrides question as the task).
-            plan_context: Summary of what previous steps already retrieved,
-                          used to guide table selection in multi-step plans.
+            plan_step_context: Current plan step dict.
+            prior_steps_context: Summary of what previous steps already retrieved.
 
         Returns:
             Dict with 'detected_entities' and 'relevant_tables'.
         """
         llm = get_llm("schema_linking")
         task = plan_step_context.get("task", question) if plan_step_context else question
-        human_content = self._human_message_builder(task, user_scope, plan_context)
+        human_content = self._human_message_builder(task, user_scope, prior_steps_context)
 
         messages = [
             SystemMessage(content=self.schema_linker_prompt),
@@ -241,11 +231,11 @@ class SQLTool:
     def _default_human_message(
         task: str,
         user_scope: UserScope,
-        plan_context: Optional[str] = None,
+        prior_steps_context: Optional[str] = None,
     ) -> str:
         lines = [f"User Role: {user_scope.role.value}"]
-        if plan_context:
-            lines.append(f"\nPrevious steps context: {plan_context}")
+        if prior_steps_context:
+            lines.append(f"\nPrevious steps context: {prior_steps_context}")
         lines.append(f"\nUSER QUERY: {task}")
         return "\n".join(lines)
 
@@ -260,25 +250,23 @@ class SQLTool:
         error_history: Optional[list[dict]] = None,
         attempt_count: int = 0,
     ) -> str:
-        """
-        Generates SQL from natural language with retry context.
+        """Generates SQL from natural language with retry context.
 
         Args:
-            question: original user query.
-            detected_entities: resolved entity object.
-            user_scope: UserScope for scope injection.
-            relevant_tables: tables selected by schema linker.
-            query_type: planner query type string.
-            plan_step_context: current plan step dict.
-            error_history: list of prior attempt errors.
-            attempt_count: current retry index.
+            question: Original user query.
+            detected_entities: Resolved entity object.
+            user_scope: UserScope for role context.
+            relevant_tables: Tables selected by schema linker.
+            query_type: Planner query type string.
+            plan_step_context: Current plan step dict.
+            error_history: List of prior attempt errors.
+            attempt_count: Current retry index.
 
         Returns:
             SQL string.
         """
         llm = get_llm(task_type="sql_generation", force_json=False)
 
-        scope_desc, scope_hint = self._build_scope_context(user_scope, relevant_tables)
         entities_str = self._format_entities(detected_entities)
         few_shots = self.few_shot_examples(query_type)
 
@@ -294,8 +282,7 @@ class SQLTool:
             schema_context=schema_str,
             domain_rules=self.domain_rules or "(none)",
             detected_entities=entities_str,
-            scope_description=scope_desc,
-            scope_hint=scope_hint,
+            user_role=user_scope.role.value,
             few_shot_examples=few_shots,
         )
 
@@ -320,18 +307,21 @@ class SQLTool:
         response = await llm.ainvoke(messages)
         return self._extract_sql(response.content)
 
-    async def validate_sql(self, generated_sql: str, user_scope: Optional[UserScope] = None) -> dict:
-        """
-        Validates SQL for security, syntax, and scope enforcement policy.
+    async def validate_sql(
+        self,
+        generated_sql: str,
+        allowed_schemas: frozenset[str] | None = None,
+    ) -> dict:
+        """Validates SQL for security and syntax.
 
         Args:
             generated_sql: SQL string to validate.
-            user_scope: Optional UserScope to check against protected tables.
+            allowed_schemas: Override schema allowlist. None uses the module default.
 
         Returns:
-            Dict with 'validation_status' ('pass'|'fail'), 'error', 'error_type'.
+            Dict with 'validation_status', 'error', 'error_type'.
         """
-        is_safe, sec_err = check_sql_security(generated_sql)
+        is_safe, sec_err = check_sql_security(generated_sql, allowed_schemas=allowed_schemas)
         if not is_safe:
             error_type = "parse_error" if sec_err and sec_err.startswith("SQL Parse Error") else "security_violation"
             return {"validation_status": "fail", "error": sec_err, "error_type": error_type}
@@ -344,15 +334,15 @@ class SQLTool:
                 raise ValueError("Query must be a SELECT statement.")
                 
             # AST Scope Validation: ensuring {SCOPE_FILTER} is used if any protected table is queried
-            tables = [t.name.lower() for t in parsed.find_all(exp.Table) if t.name]
-            protected_tables = [t for t in tables if t not in UserScope.LOOKUP_TABLES]
+            # tables = [t.name.lower() for t in parsed.find_all(exp.Table) if t.name]
+            # protected_tables = [t for t in tables if t not in UserScope.LOOKUP_TABLES]
             
-            if protected_tables and "{SCOPE_FILTER}" not in generated_sql:
-                return {
-                    "validation_status": "fail", 
-                    "error": "Missing {SCOPE_FILTER} placeholder for protected tables.", 
-                    "error_type": "security_violation"
-                }
+            # if protected_tables and "{SCOPE_FILTER}" not in generated_sql:
+            #     return {
+            #         "validation_status": "fail", 
+            #         "error": "Missing {SCOPE_FILTER} placeholder for protected tables.", 
+            #         "error_type": "security_violation"
+            #     }
         except Exception as e:
             return {"validation_status": "fail", "error": f"SQL Parse Error: {str(e)}", "error_type": "parse_error"}
 
@@ -362,40 +352,23 @@ class SQLTool:
         self,
         generated_sql: str,
         user_scope: UserScope,
-        relevant_tables: Optional[list[str]] = None,
     ) -> dict:
-        """
-        Executes SQL with scope filter injection.
+        """Executes SQL via the configured executor.
+
+        RLS session variables are set by the executor automatically.
 
         Args:
-            generated_sql: SQL string with {SCOPE_FILTER} placeholder.
-            user_scope: UserScope instance providing scope_where().
-            relevant_tables: tables referenced in the query; first entry used for scope.
+            generated_sql: Valid SQL string (no placeholders needed).
+            user_scope: UserScope for RLS session variable injection.
 
         Returns:
-            Dict with 'sql_with_scope', 'sql_result', 'sql_error', 'sql_row_count'.
+            Dict with 'sql_result', 'sql_error', 'sql_row_count'.
         """
-        try:
-            parsed = sqlglot.parse_one(generated_sql, read="postgres")
-            tables = [t.name.lower() for t in parsed.find_all(exp.Table) if t.name]
-            
-            # Policy: if multiple tables, use the first protected table for scope rules, 
-            # or default table if none found.
-            protected_tables = [t for t in tables if t not in UserScope.LOOKUP_TABLES]
-            target_table = protected_tables[0] if protected_tables else (tables[0] if tables else self.default_table)
-        except Exception:
-            target_table = relevant_tables[0] if relevant_tables else self.default_table
+        logger.info("Executing SQL:\\n%s", generated_sql)
 
-        scope_where, scope_params = user_scope.scope_where(target_table)
-        escaped_sql = generated_sql.replace("%", "%%")
-        sql_with_scope = escaped_sql.replace("{SCOPE_FILTER}", f"({scope_where})")
+        exec_result = await self.executor.execute(generated_sql, user_scope)
 
-        logger.info("Prepared SQL for execution (table=%s):\n%s", target_table, sql_with_scope)
-
-        exec_result = await self.executor.execute(sql_with_scope, scope_params, user_scope)
-        
         return {
-            "sql_with_scope": sql_with_scope,
             "sql_result": exec_result.rows,
             "sql_error": exec_result.error,
             "sql_row_count": exec_result.row_count,
@@ -409,15 +382,14 @@ class SQLTool:
         sql_row_count: int,
         plan_step_context: Optional[dict] = None,
     ) -> dict:
-        """
-        Checks if the SQL result answers the question via LLM.
+        """Checks if the SQL result answers the question via LLM.
 
         Args:
-            question: original user query.
-            generated_sql: executed SQL string.
-            sql_result: rows returned by the query.
-            sql_row_count: number of rows returned.
-            plan_step_context: current plan step dict.
+            question: Original user query.
+            generated_sql: Executed SQL string.
+            sql_result: Rows returned by the query.
+            sql_row_count: Number of rows returned.
+            plan_step_context: Current plan step dict.
 
         Returns:
             Dict with 'answer_is_valid' (bool) and 'reason' (str).
@@ -445,44 +417,17 @@ class SQLTool:
             result = extract_json_from_llm(response.content)
             is_valid = result.get("is_valid", True)
             reason = result.get("reason", "Answer checked.")
-            
-            logger.info("Answer validation outcome: is_valid=%s, reason=%s, row_count=%d", is_valid, reason, sql_row_count)
-            
-            return {
-                "answer_is_valid": is_valid,
-                "reason": reason,
-            }
+
+            logger.info("Answer validation: is_valid=%s, reason=%s, rows=%d", is_valid, reason, sql_row_count)
+
+            return {"answer_is_valid": is_valid, "reason": reason}
         except Exception as e:
             logger.error("Answer validation failed: %s", e)
             return {"answer_is_valid": False, "reason": "Validation failed, defaulting to valid."}
 
-    def _build_scope_context(self, user_scope: UserScope, relevant_tables: list[str]) -> tuple[str, str]:
-        """
-        Builds scope description and hint strings for the SQL generator prompt.
-
-        Args:
-            user_scope: UserScope instance.
-            relevant_tables: tables selected by schema linker.
-
-        Returns:
-            Tuple of (scope_description, scope_hint).
-        """
-        if not user_scope:
-            return "Unknown", "TRUE"
-
-        target_table = relevant_tables[0] if relevant_tables else self.default_table
-        scope_where, _ = user_scope.scope_where(target_table)
-        hint = scope_where if scope_where != "FALSE" else "TRUE"
-        return f"Role: {user_scope.role.value}", f"For {target_table}: {hint}"
-
     @staticmethod
     def _format_entities(entities: Any) -> str:
-        """
-        Formats detected entities into string for the SQL generator prompt.
-
-        Uses JSON serialization (not Python repr) so UUID fields appear as
-        plain strings that the LLM can use directly in SQL literals.
-        """
+        """Formats detected entities for the SQL generator prompt."""
         if not entities:
             return "None detected"
         if hasattr(entities, "model_dump"):
@@ -515,20 +460,12 @@ class SQLTool:
 
     @staticmethod
     def _extract_sql(raw_response: str) -> str:
-        """
-        Extracts a SQL string from an LLM response.
+        """Extracts a SQL string from an LLM response.
 
-        Handles three output formats:
-        1. JSON wrapper: {"sql": "SELECT ..."}
-        2. Markdown fence: ```sql\nSELECT ...\n```
-        3. CoT comment block + bare SQL:
-           /* TABLES: ... JOINS: ... */ SELECT ...
-
-        Args:
-            raw_response: raw LLM output string.
+        Handles JSON wrapper, markdown fences, and CoT comment blocks.
 
         Returns:
-            SQL string starting with SELECT or WITH, or 'SELECT 1' if extraction fails.
+            SQL string starting with SELECT/WITH, or 'SELECT 1' on failure.
         """
         raw = raw_response.strip()
         try:

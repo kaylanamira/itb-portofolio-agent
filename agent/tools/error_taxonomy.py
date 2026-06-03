@@ -12,12 +12,11 @@ class ErrorCategory(str, Enum):
     """
     WRONG_TABLE        = "wrong_table"        # Relation does not exist
     WRONG_COLUMN       = "wrong_column"       # Column does not exist in table
-    TYPE_MISMATCH      = "type_mismatch"      # Operator/type incompatibility (e.g. uuid = text)
+    TYPE_MISMATCH      = "type_mismatch"      # Operator/type incompatibility
     WRONG_AGGREGATION  = "wrong_aggregation"  # GROUP BY missing non-aggregate columns
     JOIN_INCONSISTENCY = "join_inconsistency" # Ambiguous column ref across joined tables
     NULL_HANDLING      = "null_handling"      # Unexpected NULL breaks aggregation/comparison
     NO_RESULTS         = "no_results"         # Query valid but returned 0 rows (over-filtered)
-    SCOPE_FILTER_ERROR = "scope_filter_error" # {SCOPE_FILTER} placeholder not injected or duplicated
     SECURITY_VIOLATION = "security_violation" # Blocked by security check
     PARSE_ERROR        = "parse_error"        # SQL syntax error
     ANSWER_INVALID     = "answer_invalid"     # Result doesn't answer the question
@@ -74,19 +73,12 @@ _PATTERNS: list[tuple[str, ErrorCategory, str]] = [
         "Wrap denominator in NULLIF(..., 0) to avoid division by zero. "
         "Example: COUNT(*) * 100.0 / NULLIF(total, 0).",
     ),
-    # SCOPE_FILTER placeholder issues
-    (
-        r"syntax error at or near \"\{\"",
-        ErrorCategory.SCOPE_FILTER_ERROR,
-        "The {SCOPE_FILTER} placeholder was not replaced before execution. "
-        "Ensure the SQL contains exactly one WHERE {SCOPE_FILTER} or WHERE {SCOPE_FILTER} AND ... clause.",
-    ),
     # Security
     (
         r"Security Violation",
         ErrorCategory.SECURITY_VIOLATION,
         "SQL was rejected by security check. Ensure: only SELECT statements, "
-        "no forbidden tables (pengguna, user_scope), no pg_* system calls, no vector operators.",
+        "no forbidden schemas, no PII columns in SELECT, no pg_* system calls.",
     ),
     # Syntax / parse
     (
@@ -129,5 +121,5 @@ def classify_sql_error(error_str: str) -> tuple[ErrorCategory, str]:
     return (
         ErrorCategory.UNKNOWN,
         "Unknown error. Carefully re-read the DATABASE SCHEMA, verify all table and column names, "
-        "and ensure the {SCOPE_FILTER} placeholder is present in the WHERE clause.",
+        "and check that the query logic matches the question intent.",
     )

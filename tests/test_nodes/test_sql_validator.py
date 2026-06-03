@@ -1,16 +1,28 @@
-import pytest
-from agent.state import AgentState, ValidationStatus
-from agent.nodes.sql_validator import sql_validator
+from agent.tools.security import check_sql_security
 
-@pytest.mark.asyncio
-async def test_sql_validator_blocks_destructive():
-    state = AgentState(generated_sql="DROP TABLE mv_kelas;", attempt_count=0)
-    result = await sql_validator(state)
-    assert result["validation_status"] == ValidationStatus.FAIL
-    assert "security_violation" in result["error_history"][0]["type"]
 
-@pytest.mark.asyncio
-async def test_sql_validator_allows_select():
-    state = AgentState(generated_sql="SELECT * FROM mv_kelas LIMIT 10;")
-    result = await sql_validator(state)
-    assert result["validation_status"] == ValidationStatus.PASS
+def test_security_blocks_destructive():
+    ok, err = check_sql_security("DROP TABLE mv_kelas;")
+    assert not ok
+    assert "Security Violation" in err
+
+
+def test_security_allows_select():
+    ok, err = check_sql_security("SELECT * FROM analitik.mv_kelas LIMIT 10;")
+    assert ok
+    assert err is None
+
+
+def test_security_blocks_forbidden_schema():
+    ok, err = check_sql_security("SELECT * FROM wisuda.lulusan;")
+    assert not ok
+    assert "forbidden schema" in err.lower()
+
+
+def test_security_domain_agnostic_mode():
+    ok, err = check_sql_security(
+        "SELECT * FROM wisuda.lulusan;",
+        allowed_schemas=frozenset(),
+    )
+    assert ok
+    assert err is None

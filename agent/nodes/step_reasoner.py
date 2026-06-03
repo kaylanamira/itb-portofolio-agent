@@ -70,7 +70,6 @@ async def step_reasoner(state: AgentState) -> dict:
         "current_step_index": new_idx,
         "reasoning_history": [f"[Step {new_idx}] {observation}"],
         "generated_sql": None,
-        "sql_with_scope": None,
         "validation_status": ValidationStatus.PENDING,
         "sql_result": None,
         "sql_error": None,

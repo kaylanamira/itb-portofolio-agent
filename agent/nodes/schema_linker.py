@@ -2,26 +2,21 @@ from core.utils import extract_json_from_llm
 from agent.state import AgentState, DetectedEntities
 from agent.prompts.schema_linker import SCHEMA_LINKER_SYSTEM_PROMPT, build_schema_linker_human_message
 from agent.llm import get_llm
-from agent.tools.schema_loader import load_schema_context
+from agent.tools.schema_retriever import describe_tables
 from agent.tools.fuzzy_search import fuzzy_resolve_entities
 from langchain_core.messages import SystemMessage, HumanMessage
 from agent.tools.academic_calendar import get_current_academic_period
 
 
 def _build_plan_context(state: AgentState) -> str | None:
-    """
-    Summarizes what previous steps already retrieved so the schema linker
-    can avoid selecting redundant tables in multi-step plans.
-    """
+    """Summarizes what previous steps already retrieved."""
     steps = state.get("steps_completed", [])
     if not steps:
         return None
-
-    summaries = []
-    for step in steps:
-        summaries.append(
-            f"Step {step.step_number} ({step.action}): {step.observation}"
-        )
+    summaries = [
+        f"Step {step.step_number} ({step.action}): {step.observation}"
+        for step in steps
+    ]
     return "; ".join(summaries)
 
 
@@ -53,20 +48,19 @@ async def schema_linker(state: AgentState) -> dict:
     ]
     response = await llm.ainvoke(messages)
 
-    schema_context = load_schema_context()
-
     try:
         content = extract_json_from_llm(response.content)
         entities_dict = content.get("detected_entities") or {}
-        relevant_tables = content.get("relevant_tables") or ["mv_kelas"]
+        relevant_tables = content.get("relevant_tables") or ["analitik.mv_kelas"]
         valid_fields = DetectedEntities.model_fields.keys()
         filtered = {k: v for k, v in entities_dict.items() if k in valid_fields and v is not None}
         entities = DetectedEntities(**filtered)
     except Exception:
         entities = DetectedEntities()
-        relevant_tables = ["mv_kelas"]
+        relevant_tables = ["analitik.mv_kelas"]
 
     resolved_entities = await fuzzy_resolve_entities(entities)
+    schema_context = await describe_tables(relevant_tables)
 
     return {
         "detected_entities": resolved_entities,

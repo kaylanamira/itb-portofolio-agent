@@ -1,0 +1,76 @@
+examples:
+  - nl: "Berapa rata-rata skor evaluasi IF2210 semester ini?"
+    sql: |
+      SELECT kode_mk, nama_mk_id, AVG(avg_skor_overall) AS avg_skor_evaluasi
+      FROM analitik.mv_kelas
+      WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun = 2024
+      GROUP BY kode_mk, nama_mk_id
+      LIMIT 1;
+
+  - nl: "Siapa saja dosen yang mengajar matkul basis data semester ini?"
+    sql: |
+      SELECT DISTINCT unnest(semua_dosen_nama_gelar) AS nama_dosen
+      FROM analitik.mv_kelas
+      WHERE nama_mk_id ILIKE '%basis data%' AND semester = 1 AND tahun = 2024
+      ORDER BY nama_dosen
+      LIMIT 100;
+
+  - nl: "Berapa jumlah kelas di prodi IF semester ini?"
+    sql: |
+      SELECT COUNT(*) AS jumlah_kelas
+      FROM analitik.mv_kelas
+      WHERE singkatan_prodi = 'IF' AND semester = 1 AND tahun = 2024;
+
+  - nl: "Apa saja fakultas di ITB?"
+    sql: |
+      SELECT nama->>'id' as nama, kd_fak
+      FROM utama.fakultas
+      WHERE active = TRUE;
+
+  - nl: "Berapa persentase kehadiran di kelas IF3140?"
+    sql: |
+      SELECT kode_mk, no_kelas, pct_kehadiran_dosen, pct_kehadiran_mahasiswa
+      FROM analitik.mv_kelas
+      WHERE kode_mk = 'IF3140' AND semester = 1 AND tahun = 2024
+      ORDER BY no_kelas
+      LIMIT 100;
+
+  - nl: "Berapa persen dosen di STEI yang ada di bawah kelompok keahlian RPL?"
+    sql: |
+      WITH stei_dosen AS (
+        SELECT d.dosen_id, k.nama->>'id' AS nama_kk
+        FROM utama.dosen d
+        JOIN utama.kk k ON k.kk_id = d.kk_id
+        WHERE d.kd_fak = 'STEI' AND d.active = TRUE
+      ),
+      summary AS (
+        SELECT
+          COUNT(*) AS total_dosen,
+          COUNT(*) FILTER (WHERE nama_kk ILIKE '%Rekayasa Perangkat Lunak%') AS total_dosen_rpl
+        FROM stei_dosen
+      )
+      SELECT
+        total_dosen,
+        total_dosen_rpl,
+        ROUND(total_dosen_rpl * 100.0 / NULLIF(total_dosen, 0), 2) AS persentase_dosen_rpl
+      FROM summary;
+
+  - nl: "Berapa total prodi di STEI yang aktif?"
+    sql: |
+      SELECT COUNT(*) AS total_prodi
+      FROM utama.program_studi
+      WHERE kd_fak = 'STEI' AND active = TRUE;
+
+  - nl: "Siapa dekan STEI saat ini?"
+    sql: |
+      SELECT d.nama_gelar AS nama_dekan
+      FROM utama.fakultas f
+      JOIN utama.dosen d ON d.dosen_id = f.dosen_id_dekan
+      WHERE f.kd_fak = 'STEI' AND f.active = TRUE
+      LIMIT 1;
+
+  - nl: "Berapa jumlah dosen di fakultas STEI?"
+    sql: |
+      SELECT COUNT(*) AS jumlah_dosen
+      FROM utama.dosen
+      WHERE kd_fak = 'STEI' AND active = TRUE;
