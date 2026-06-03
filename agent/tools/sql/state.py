@@ -10,19 +10,17 @@ class SQLState(TypedDict, total=False):
     question: str
     user_scope: UserScope
     plan_step_context: Optional[dict]
+    prior_steps_context: Optional[str]
     query_type: Optional[str]
-    # default_table: Optional[str]
 
-    # ── Schema linking outputs ──────────────────────────────────────────────────
-    plan_context: Optional[str]           
+    # Schema linking outputs
     detected_entities: Optional[Any]
     relevant_tables: Optional[list[str]]
     schema_context: Optional[str]
 
-    # ── Generation / execution outputs ─────────────────────────────────────────
+    # Generation / execution outputs
     generated_sql: Optional[str]
-    sql_with_scope: Optional[str]
-    validation_status: Optional[str]          # "pass" | "fail" | "pending"
+    validation_status: Optional[str]
     validation_errors: Annotated[list[str], operator.add]
 
     sql_result: Optional[list[dict]]
@@ -30,9 +28,8 @@ class SQLState(TypedDict, total=False):
     sql_row_count: Optional[int]
     answer_is_valid: Optional[bool]
 
-    # ── Retry / abort tracking ──────────────────────────────────────────────────
+    # Retry / abort tracking
     attempt_count: int
-    max_attempts: int
     error_history: Annotated[list[dict], operator.add]
     is_aborted: bool
     abort_reason: Optional[str]

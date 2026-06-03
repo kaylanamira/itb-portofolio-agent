@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
+import asyncio
 from langgraph.graph import StateGraph, END
 from agent.tools.error_taxonomy import classify_sql_error
 from agent.tools.sql.state import SQLState
@@ -20,11 +21,21 @@ def build_sql_pipeline(
     human_message_builder: Optional[Callable] = None,
     domain_rules: str = "",
 ):
-    """
-    Builds a compiled LangGraph subgraph for the SQL pipeline.
+    """Builds a compiled LangGraph subgraph for the SQL pipeline.
 
-    Input: domain-specific callables and config.
-    Output: compiled StateGraph[SQLState].
+    Args:
+        schema_linker_prompt: System prompt for schema linking LLM call.
+        entity_resolver: Async callable to resolve entities.
+        few_shot_examples: Callable returning formatted few-shot examples.
+        schema_context: Schema text or async callable returning it.
+        default_table: Fallback table name.
+        executor: QueryExecutor implementation.
+        max_attempts: Max retries for SQL generation loop.
+        human_message_builder: Builds human message for schema linker.
+        domain_rules: Domain-specific SQL rules string.
+
+    Returns:
+        Compiled StateGraph[SQLState].
     """
     tool = SQLTool(
         schema_linker_prompt=schema_linker_prompt,
@@ -43,22 +54,21 @@ def build_sql_pipeline(
             question=state["question"],
             user_scope=state["user_scope"],
             plan_step_context=state.get("plan_step_context"),
-            plan_context=state.get("plan_context"),
+            prior_steps_context=state.get("plan_context"),
         )
-        
+
         relevant_tables = result["relevant_tables"]
         if default_table and default_table not in relevant_tables:
             relevant_tables.append(default_table)
-            
+
         if callable(schema_context):
-            import asyncio
             if asyncio.iscoroutinefunction(schema_context):
                 resolved_schema = await schema_context(relevant_tables)
             else:
                 resolved_schema = schema_context(relevant_tables)
         else:
             resolved_schema = schema_context
-            
+
         return {
             "detected_entities": result["detected_entities"],
             "relevant_tables": relevant_tables,
@@ -79,7 +89,7 @@ def build_sql_pipeline(
         return {"generated_sql": sql}
 
     async def sql_validator(state: SQLState) -> dict:
-        result = await tool.validate_sql(state.get("generated_sql", ""), state.get("user_scope"))
+        result = await tool.validate_sql(state.get("generated_sql", ""))
         if result["validation_status"] != "pass":
             error_cat, correction_hint = classify_sql_error(result["error"])
             return {
@@ -100,7 +110,6 @@ def build_sql_pipeline(
         return await tool.execute_sql(
             generated_sql=state.get("generated_sql", ""),
             user_scope=state["user_scope"],
-            relevant_tables=state.get("relevant_tables"),
         )
 
     async def answer_validator(state: SQLState) -> dict:
