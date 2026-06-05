@@ -1,45 +1,13 @@
 services:
-  postgres:
-    image: pgvector/pgvector:pg16 
-    container_name: itb_portofolio_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB:       ${POSTGRES_DB}
-      POSTGRES_USER:     ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./db/schema_portofolio_kuesioner.sql:/docker-entrypoint-initdb.d/01_schema.sql
-      - ./db/schema_auth_and_ingestion.sql:/docker-entrypoint-initdb.d/02_schema_auth.sql
-      - ./db/schema_mv_portofolio_kuesioner.sql:/docker-entrypoint-initdb.d/03_schema_mv.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  adminer:
-    image: adminer:latest
-    container_name: itb_adminer
+  redis:
+    image: redis:7-alpine
+    container_name: itb_redis
     restart: unless-stopped
     ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: itb_redis
-  #   restart: unless-stopped
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis_data:/data
-  #   command: redis-server --save 60 1 --loglevel warning
+      - "6379:6379"
+    # volumes:
+    #   - redis_data:/data
+    # command: redis-server --save 60 1 --loglevel warning
 
 volumes:
-  postgres_data:
   redis_data:
