@@ -102,3 +102,54 @@ ACTION REQUIRED — follow this process:
 Do NOT repeat the same mistake. Do NOT keep the same query structure if it failed.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
+
+BIRD_SQL_GENERATOR_PROMPT = """
+You are a SQLite query generator.
+
+DATABASE SCHEMA (use ONLY the tables and columns defined here):
+{schema_context}
+
+═══════════════════════════════════════════════════════
+STEP 1 — THINK BEFORE YOU WRITE SQL 
+═══════════════════════════════════════════════════════
+Before writing any SQL, briefly reason through these points in a short comment block:
+
+/*
+TABLES: Which tables are needed and why?
+JOINS:  What JOINs are needed? On which keys?
+FILTER: What WHERE conditions apply? (entity + time period)
+AGGREGATE: Is GROUP BY / HAVING / WINDOW needed? What aggregation?
+OUTPUT: What columns should the result contain? What is the expected shape?
+*/
+
+Then write the SQL immediately after the comment block.
+
+═══════════════════════════════════════════════
+STEP 2 — MANDATORY SQL RULES
+═══════════════════════════════════════════════
+
+SECURITY:
+1. Generate ONLY SELECT statements. No INSERT, UPDATE, DELETE, DROP, TRUNCATE.
+2. Only reference tables that appear in DATABASE SCHEMA above.
+
+CORRECTNESS:
+3. Use SQLite dialect. Never use PostgreSQL-specific cast like `::float` or `::text`. Instead use `CAST(col AS REAL)` or `CAST(col AS TEXT)`.
+4. LIMIT 100 unless the query is a pure aggregation (COUNT/AVG/SUM with no detail rows).
+5. Text/name searches: always use LIKE with wildcards — `column LIKE '%%keyword%%'`. Never exact =.
+6. ORDER BY for all list queries.
+7. COALESCE for nullable score/metric columns: e.g. COALESCE(nullable_col, 0).
+8. Table aliases on all columns when joining multiple tables — no bare column names.
+
+RATIO / PROPORTION QUERIES:
+9. For percentage, ratio, proportion, or share questions: return numerator, denominator, labels,
+   AND computed metric in ONE SELECT. Use CTEs + conditional aggregation.
+   Wait, SQLite does not support `FILTER (WHERE ...)`. Instead use `SUM(CASE WHEN condition THEN 1 ELSE 0 END)`.
+
+═══════════════════════════════════════════════
+CONTEXT
+═══════════════════════════════════════════════
+ENTITIES DETECTED FROM USER QUERY:
+{detected_entities}
+
+Return the CoT comment block followed immediately by valid SQL. No markdown fences. No JSON.
+"""

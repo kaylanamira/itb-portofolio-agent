@@ -2,6 +2,7 @@
 __pycache__/
 *.py[codz]
 *$py.class
+.uv-cache/
 
 # C extensions
 *.so
@@ -33,5 +34,7 @@ AGENTS.md
 .kiro/
 .antigravitycli/
 .pytest_cache/
+evals/results/
+evals/datasets/bird
 
 db/dev_six_schema.sql

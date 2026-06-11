@@ -1,0 +1,376 @@
+[
+  {
+    "id": "PL-DL-S-KP-001",
+    "description": "Grade count lookup → data_lookup, single sql step",
+    "query": "Berapa jumlah mahasiswa yang mendapat nilai A di IF1220 semester ganjil 2024?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "PL-DL-S-KP-002",
+    "description": "Dosen attendance lookup → data_lookup",
+    "query": "Berapa kehadiran dosen di IF1220 kelas 2 semester ganjil 2024?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "attendance"
+    ]
+  },
+  {
+    "id": "PL-DL-S-KP-003",
+    "description": "SKS lookup → data_lookup",
+    "query": "Berapa SKS IF1220 semester ganjil 2024?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "metadata"
+    ]
+  },
+  {
+    "id": "PL-DL-S-KP-004",
+    "description": "Questionnaire specific question score → data_lookup",
+    "query": "Berapa skor Q24 (pelaksanaan perkuliahan) IF1220 kelas 1 semester ganjil 2024?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "questionnaire"
+    ]
+  },
+  {
+    "id": "PL-DL-S-KP-005",
+    "description": "Grade distribution full breakdown → data_lookup",
+    "query": "Tampilkan distribusi nilai lengkap (A, AB, B, BC, C, D, E) IF1220 kelas 1 semester ganjil 2024",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "distribution"
+    ]
+  },
+  {
+    "id": "PL-AN-M-KP-001",
+    "description": "Top-N ranking → data_lookup",
+    "query": "5 mata kuliah dengan rata-rata IP mahasiswa terendah di S1 IF semester ganjil 2024",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "ranking"
+    ]
+  },
+  {
+    "id": "PL-AN-M-KP-002",
+    "description": "Percentage calculation → data_lookup",
+    "query": "Berapa persen kelas di S1 IF yang tingkat kelulusannya (A-C) di bawah 80% semester ganjil 2024?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "distribution"
+    ]
+  },
+  {
+    "id": "PL-AN-M-DS-001",
+    "description": "Dosen self-ranking → comparative",
+    "query": "Di antara semua kelas yang saya ajar semester ini, kelas mana yang skor kuesioner pelaksanaannya tertinggi?",
+    "expected_query_type": "comparative",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "comparative",
+      "dosen_scoped"
+    ]
+  },
+  {
+    "id": "PL-CM-M-KP-001",
+    "description": "Cross-prodi comparison → comparative",
+    "query": "Bandingkan rata-rata nilai mahasiswa antar prodi di STEI semester ganjil 2024",
+    "expected_query_type": "comparative",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "comparative"
+    ]
+  },
+  {
+    "id": "PL-CM-M-KP-002",
+    "description": "Year-over-year trend → comparative",
+    "query": "Bandingkan rata-rata kelulusan IF1220 antara semester ganjil 2023/2024 dan 2024/2025",
+    "expected_query_type": "comparative",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "comparative",
+      "trend"
+    ]
+  },
+  {
+    "id": "PL-CM-M-DK-001",
+    "description": "Intra-course cross-class comparison → comparative",
+    "query": "Bandingkan persentase kelulusan IF1220 antar kelas semester ganjil 2024",
+    "expected_query_type": "comparative",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "comparative",
+      "intra_course"
+    ]
+  },
+  {
+    "id": "PL-DG-C-KP-001",
+    "description": "Multi-condition data_lookup → data_lookup",
+    "query": "Mata kuliah apa di S1 IF yang kehadiran mahasiswanya di bawah 70% DAN kelulusannya di bawah 50%?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "PL-DG-C-DS-001",
+    "description": "Dosen data_lookup: classes with low attendance → data_lookup",
+    "query": "Kelas mana yang kehadiran dosen saya kurang dari 85% semester ini?",
+    "expected_query_type": "data_lookup",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "data_lookup",
+      "dosen_scoped"
+    ]
+  },
+  {
+    "id": "PL-CG-M-KP-001",
+    "description": "Bar chart generation → chart_generate",
+    "query": "Tampilkan grafik distribusi nilai IF1220 kelas 1 semester ganjil 2024",
+    "expected_query_type": "chart_generate",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "chart_generate",
+      "bar"
+    ]
+  },
+  {
+    "id": "PL-CG-M-KP-002",
+    "description": "Line trend chart → chart_generate",
+    "query": "Tampilkan grafik tren rata-rata nilai IF1220 dari semester ganjil 2022 sampai 2024",
+    "expected_query_type": "chart_generate",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "chart_generate",
+      "line"
+    ]
+  },
+  {
+    "id": "PL-CG-M-DK-001",
+    "description": "Radar chart for questionnaire → chart_generate",
+    "query": "Buat grafik radar skor kuesioner IF1220 kelas 1 semester ganjil 2024",
+    "expected_query_type": "chart_generate",
+    "expected_tools": [
+      "sql"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "chart_generate",
+      "radar"
+    ]
+  },
+  {
+    "id": "PL-TL-S-KP-001",
+    "description": "Portfolio text retrieval (RAG only) → text_lookup",
+    "query": "Apa metode pembelajaran yang digunakan di IF1220 semester ganjil 2024?",
+    "expected_query_type": "text_lookup",
+    "expected_tools": [
+      "rag"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "text_lookup",
+      "rag"
+    ]
+  },
+  {
+    "id": "PL-TL-S-DS-001",
+    "description": "Portfolio self-reflection retrieval → text_lookup",
+    "query": "Apa refleksi dan usulan yang saya tulis di portofolio IF1220 semester ganjil 2024?",
+    "expected_query_type": "text_lookup",
+    "expected_tools": [
+      "rag"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "text_lookup",
+      "rag",
+      "dosen_scoped"
+    ]
+  },
+  {
+    "id": "PL-SM-S-KP-001",
+    "description": "Portfolio text_lookup (RAG) → text_lookup",
+    "query": "Rangkum portofolio dosen IF1220 kelas 1 semester ganjil 2024",
+    "expected_query_type": "text_lookup",
+    "expected_tools": [
+      "rag"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": false,
+    "tags": [
+      "text_lookup",
+      "rag"
+    ]
+  },
+  {
+    "id": "PL-AH-C-KP-001",
+    "description": "Hybrid: SQL data + RAG text → analytical_hybrid, 2 steps",
+    "query": "Apakah skor kuesioner IF1220 yang rendah berkorelasi dengan metode ajar di portofolio?",
+    "expected_query_type": "analytical_hybrid",
+    "expected_tools": [
+      "sql",
+      "rag"
+    ],
+    "expected_max_steps": 3,
+    "should_clarify": false,
+    "tags": [
+      "analytical_hybrid",
+      "sql",
+      "rag"
+    ]
+  },
+  {
+    "id": "PL-AH-C-DS-001",
+    "description": "Hybrid: numeric comparison + portfolio explanation → analytical_hybrid",
+    "query": "Kelas mana yang kelulusannya rendah dan apa kata portofolio dosen tentang kendalanya?",
+    "expected_query_type": "analytical_hybrid",
+    "expected_tools": [
+      "sql",
+      "rag"
+    ],
+    "expected_max_steps": 3,
+    "should_clarify": false,
+    "tags": [
+      "analytical_hybrid",
+      "diagnostic",
+      "rag"
+    ]
+  },
+  {
+    "id": "PL-CL-S-KP-001",
+    "description": "Ambiguous: bare referent → clarification_needed",
+    "query": "Bagaimana hasilnya?",
+    "expected_query_type": "clarification_needed",
+    "expected_tools": [
+      "clarification"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": true,
+    "tags": [
+      "clarification_needed"
+    ]
+  },
+  {
+    "id": "PL-CL-S-KP-002",
+    "description": "No metric specified → clarification_needed",
+    "query": "Tampilkan",
+    "expected_query_type": "clarification_needed",
+    "expected_tools": [
+      "clarification"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": true,
+    "tags": [
+      "clarification_needed"
+    ]
+  },
+  {
+    "id": "PL-CL-S-KP-003",
+    "description": "No course/scope → clarification_needed",
+    "query": "Berapa rata-rata nilainya?",
+    "expected_query_type": "clarification_needed",
+    "expected_tools": [
+      "clarification"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": true,
+    "tags": [
+      "clarification_needed"
+    ]
+  },
+  {
+    "id": "PL-CL-S-KP-004",
+    "description": "Vague metric: 'kelas paling buruk' without defining criterion → clarification_needed",
+    "query": "Kelas saya yang paling buruk yang mana?",
+    "expected_query_type": "clarification_needed",
+    "expected_tools": [
+      "clarification"
+    ],
+    "expected_max_steps": 1,
+    "should_clarify": true,
+    "tags": [
+      "clarification_needed",
+      "vague_metric"
+    ]
+  }
+]

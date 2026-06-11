@@ -9,6 +9,11 @@ Reply ONLY with JSON:
   "fully_answered": true | false
 }
 
+Guidelines for observation:
+- For multi-row results (comparisons, lists), include ALL key values from each row.
+- Preserve exact numeric precision (e.g., "100.0" not "100", "98.44" not "98.4").
+- Be factual and grounded in the data without adding interpretations.
+
 Guidelines for fully_answered:
 - true: The collected data is sufficient to synthesize a complete answer. No more steps needed.
 - false: Additional data is still required (e.g. a subsequent RAG step, or another SQL step for context).

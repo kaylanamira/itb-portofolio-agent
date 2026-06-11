@@ -1,0 +1,202 @@
+[
+  {
+    "id": "EH-001",
+    "description": "Single validation failure, retry succeeds",
+    "attempt_count": 0,
+    "max_attempts": 3,
+    "error_message": "security_violation",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "validation_failure"]
+  },
+  {
+    "id": "EH-002",
+    "description": "Max retries reached, abort triggered",
+    "attempt_count": 2,
+    "max_attempts": 3,
+    "error_message": "repeated_validation_failure",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "max_retries"]
+  },
+  {
+    "id": "EH-003",
+    "description": "Attempt 1 of 3, no premature abort",
+    "attempt_count": 0,
+    "max_attempts": 3,
+    "error_message": "execution_error",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "no_premature_abort"]
+  },
+  {
+    "id": "EH-004",
+    "description": "Attempt 2 of 3, still retry",
+    "attempt_count": 1,
+    "max_attempts": 3,
+    "error_message": "answer_invalid",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "no_premature_abort"]
+  },
+  {
+    "id": "EH-005",
+    "description": "Exactly at max_attempts, should abort",
+    "attempt_count": 3,
+    "max_attempts": 3,
+    "error_message": "persistent_error",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "boundary"]
+  },
+  {
+    "id": "EH-006",
+    "description": "Executor error on first attempt",
+    "attempt_count": 0,
+    "max_attempts": 2,
+    "error_message": "database_unavailable",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "execution_error"]
+  },
+  {
+    "id": "EH-007",
+    "description": "Executor error reaches max",
+    "attempt_count": 1,
+    "max_attempts": 2,
+    "error_message": "database_unavailable",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "execution_error"]
+  },
+  {
+    "id": "EH-008",
+    "description": "Answer validation failure, state should reset",
+    "attempt_count": 0,
+    "max_attempts": 3,
+    "error_message": "answer_incomplete",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "state_reset"]
+  },
+  {
+    "id": "EH-009",
+    "description": "Validation failure with max_attempts=1",
+    "attempt_count": 0,
+    "max_attempts": 1,
+    "error_message": "security_violation",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "single_attempt"]
+  },
+  {
+    "id": "EH-010",
+    "description": "Zero attempts remaining",
+    "attempt_count": 5,
+    "max_attempts": 5,
+    "error_message": "timeout",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "exhausted"]
+  },
+  {
+    "id": "EH-011",
+    "description": "First failure in high-attempt-limit scenario",
+    "attempt_count": 0,
+    "max_attempts": 5,
+    "error_message": "syntax_error",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "high_limit"]
+  },
+  {
+    "id": "EH-012",
+    "description": "Mid-retry scenario 3 of 5",
+    "attempt_count": 2,
+    "max_attempts": 5,
+    "error_message": "validation_failure",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "mid_range"]
+  },
+  {
+    "id": "EH-013",
+    "description": "One before max 4 of 5",
+    "attempt_count": 3,
+    "max_attempts": 5,
+    "error_message": "execution_timeout",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "near_limit"]
+  },
+  {
+    "id": "EH-014",
+    "description": "Exactly at limit 5 of 5",
+    "attempt_count": 4,
+    "max_attempts": 5,
+    "error_message": "persistent_error",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "exact_limit"]
+  },
+  {
+    "id": "EH-015",
+    "description": "SQL injection blocked, retry",
+    "attempt_count": 0,
+    "max_attempts": 3,
+    "error_message": "security_injection",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "security"]
+  },
+  {
+    "id": "EH-016",
+    "description": "Repeated SQL injection, abort",
+    "attempt_count": 2,
+    "max_attempts": 3,
+    "error_message": "security_injection",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "security"]
+  },
+  {
+    "id": "EH-017",
+    "description": "Empty result retry",
+    "attempt_count": 0,
+    "max_attempts": 2,
+    "error_message": "empty_result",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "empty_result"]
+  },
+  {
+    "id": "EH-018",
+    "description": "PII column detected, retry",
+    "attempt_count": 0,
+    "max_attempts": 3,
+    "error_message": "pii_violation",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "pii"]
+  },
+  {
+    "id": "EH-019",
+    "description": "Attempt 0 of 10, far from limit",
+    "attempt_count": 0,
+    "max_attempts": 10,
+    "error_message": "minor_error",
+    "expected_abort": false,
+    "expected_route": "sql_generator",
+    "tags": ["retry", "large_budget"]
+  },
+  {
+    "id": "EH-020",
+    "description": "Attempt 9 of 10, last chance",
+    "attempt_count": 9,
+    "max_attempts": 10,
+    "error_message": "last_attempt_failure",
+    "expected_abort": true,
+    "expected_route": "END",
+    "tags": ["abort", "last_attempt"]
+  }
+]

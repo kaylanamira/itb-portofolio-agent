@@ -1,0 +1,170 @@
+[
+  {
+    "id": "IC-DL-S-KP-001",
+    "description": "Grade distribution → portfolio",
+    "query": "Berapa jumlah mahasiswa yang mendapat nilai A di IF1220 semester ganjil 2024?",
+    "expected_domain": "portfolio",
+    "tags": ["data_lookup", "grades"]
+  },
+  {
+    "id": "IC-DL-S-DS-001",
+    "description": "Dosen attendance → portfolio",
+    "query": "Berapa kehadiran dosen di IF1220 kelas 2 semester ganjil 2024?",
+    "expected_domain": "portfolio",
+    "tags": ["data_lookup", "attendance"]
+  },
+  {
+    "id": "IC-AN-M-KP-001",
+    "description": "Top-N ranking → portfolio",
+    "query": "Siapa 3 dosen dengan skor kuesioner pelaksanaan tertinggi di STEI?",
+    "expected_domain": "portfolio",
+    "tags": ["analytical_numeric", "ranking"]
+  },
+  {
+    "id": "IC-CM-M-DK-001",
+    "description": "Cross-prodi comparison → portfolio",
+    "query": "Bandingkan rata-rata nilai mahasiswa antar prodi di STEI semester ganjil 2024",
+    "expected_domain": "portfolio",
+    "tags": ["comparative"]
+  },
+  {
+    "id": "IC-DG-C-KP-001",
+    "description": "Diagnostic multi-condition → portfolio",
+    "query": "Mata kuliah apa di S1 IF yang kehadiran mahasiswanya di bawah 70% DAN kelulusannya di bawah 50%?",
+    "expected_domain": "portfolio",
+    "tags": ["diagnostic"]
+  },
+  {
+    "id": "IC-CG-M-KP-001",
+    "description": "Chart generation → portfolio",
+    "query": "Tampilkan grafik distribusi nilai IF1220 kelas 1 semester ganjil 2024",
+    "expected_domain": "portfolio",
+    "tags": ["chart_generate"]
+  },
+  {
+    "id": "IC-DL-S-KP-002",
+    "description": "Questionnaire score → portfolio",
+    "query": "Berapa skor kuesioner sarana prasarana untuk IF1220 kelas 1?",
+    "expected_domain": "portfolio",
+    "tags": ["data_lookup", "questionnaire"]
+  },
+  {
+    "id": "IC-DL-S-KP-003",
+    "description": "Curriculum metadata → portfolio",
+    "query": "Apa saja prasyarat MK IF1220?",
+    "expected_domain": "portfolio",
+    "tags": ["data_lookup", "curriculum"]
+  },
+  {
+    "id": "IC-AN-M-DK-001",
+    "description": "Prodi performance ranking → portfolio",
+    "query": "Prodi mana di STEI yang punya rata-rata nilai mahasiswa tertinggi semester ini?",
+    "expected_domain": "portfolio",
+    "tags": ["analytical_numeric", "ranking"]
+  },
+  {
+    "id": "IC-DL-S-KP-004",
+    "description": "Portfolio completion check → portfolio",
+    "query": "Ada berapa kelas di STEI yang belum mengisi portofolio?",
+    "expected_domain": "portfolio",
+    "tags": ["data_lookup", "portfolio"]
+  },
+  {
+    "id": "IC-DL-S-DS-002",
+    "description": "CPMK lookup for taught course → portfolio",
+    "query": "Apa saja CPMK dari matkul IF1220?",
+    "expected_domain": "portfolio",
+    "tags": ["data_lookup", "curriculum"]
+  },
+  {
+    "id": "IC-OS-S-AD-001",
+    "description": "OOS: rector information",
+    "query": "Siapa rektor ITB saat ini?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope"]
+  },
+  {
+    "id": "IC-OS-S-AD-002",
+    "description": "OOS: salary data",
+    "query": "Berapa gaji dosen di ITB?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope"]
+  },
+  {
+    "id": "IC-OS-S-AD-003",
+    "description": "OOS: exam generation (content generation, not analytics)",
+    "query": "Buatkan saya soal ujian untuk IF1220",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope"]
+  },
+  {
+    "id": "IC-OS-S-AD-004",
+    "description": "OOS: weather query",
+    "query": "Cuaca hari ini di Bandung bagaimana?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope"]
+  },
+  {
+    "id": "IC-OS-S-AD-005",
+    "description": "OOS: per-student GPA (PII domain, not in system)",
+    "query": "Tampilkan IPK mahasiswa yang di bawah 2.0",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "pii_adjacent"]
+  },
+  {
+    "id": "IC-OS-S-AD-006",
+    "description": "OOS: write operation request",
+    "query": "Hapus data kelas IF1220 dari database",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "write_op"]
+  },
+  {
+    "id": "IC-OS-S-AD-007",
+    "description": "OOS: tuition payment data",
+    "query": "Berapa tunggakan UKT mahasiswa prodi IF?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "keuangan"]
+  },
+  {
+    "id": "IC-OS-S-AD-008",
+    "description": "OOS: extracurricular/student activities",
+    "query": "Berapa mahasiswa IF yang mengikuti kegiatan himpunan semester ini?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "kemahasiswaan"]
+  },
+  {
+    "id": "IC-OS-S-AD-009",
+    "description": "OOS: IVC class (international visiting course — out of scope per PRD)",
+    "query": "Tampilkan data kelas IVC semester ganjil 2024",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "ivc"]
+  },
+  {
+    "id": "IC-WS-S-AD-001",
+    "description": "Wisudawan: graduation data query",
+    "query": "Siapa wisudawan terbaik ITB tahun ini?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "wisudawan_adjacent"]
+  },
+  {
+    "id": "IC-WS-S-AD-002",
+    "description": "Wisudawan: graduation ceremony info",
+    "query": "Kapan jadwal wisuda semester ini?",
+    "expected_domain": "out_of_scope",
+    "tags": ["out_of_scope", "wisudawan_adjacent"]
+  },
+  {
+    "id": "IC-DL-S-KP-005",
+    "description": "Portfolio text retrieval (RAG scope) → portfolio",
+    "query": "Apa metode perkuliahan yang digunakan di IF1220 semester ganjil 2024?",
+    "expected_domain": "portfolio",
+    "tags": ["text_lookup", "rag"]
+  },
+  {
+    "id": "IC-CL-S-KP-001",
+    "description": "Clarification needed: ambiguous referent → portfolio",
+    "query": "Bagaimana hasilnya?",
+    "expected_domain": "portfolio",
+    "tags": ["clarification_needed"]
+  }
+]

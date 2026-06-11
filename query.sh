@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QUERY="${1:-siapa itu}"
+QUERY="${1:-Berapa skor pelaksanaan perkuliahan (Q24) IF1220 kelas 1 semester ganjil 2024}"
 ROLE="${2:-direktorat}"
 
 curl -N -X POST http://127.0.0.1:8000/chat/stream \

@@ -18,6 +18,5 @@ def test_analytical_numeric_examples_load():
 
 
 def test_unknown_query_type_falls_back_gracefully():
-    # A type with no YAML file falls back gracefully
     examples = retrieve_few_shots(QueryType.CHART_INTERPRET, n=3)
     assert isinstance(examples, str)

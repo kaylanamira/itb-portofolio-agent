@@ -1,0 +1,94 @@
+{
+  "metrics": {
+    "input_guard": {
+      "true_positive_rate": 0.95,
+      "false_positive_rate": 0.02
+    },
+    "intent_classifier": {
+      "routing_accuracy": 0.92,
+      "oos_recall": 0.95,
+      "oos_precision": 0.9
+    },
+    "query_rewriter": {
+      "rewrite_trigger_accuracy": 0.95,
+      "semantic_preservation": 0.85,
+      "rewrite_completeness": 0.8
+    },
+    "planner": {
+      "query_type_accuracy": 0.9,
+      "tool_membership_correctness": 0.88,
+      "clarification_precision": 0.9
+    },
+    "schema_linker": {
+      "entity_precision": 0.88,
+      "entity_recall": 0.85,
+      "table_selection_accuracy": 0.85,
+      "fuzzy_resolution_rate": 0.75
+    },
+    "sql_generator": {
+      "execution_accuracy": 0.7,
+      "execution_accuracy_simple": 0.85,
+      "execution_accuracy_medium": 0.7,
+      "execution_accuracy_complex": 0.55,
+      "soft_f1_score": 0.75,
+      "soft_f1_simple": 0.85,
+      "soft_f1_medium": 0.7,
+      "soft_f1_complex": 0.55,
+      "sql_syntax_validity": 0.98,
+      "security_pass_rate": 1.0,
+      "no_pii_column_rate": 1.0,
+      "correct_table_usage": 0.85
+    },
+    "sql_validator": {
+      "true_block_rate": 0.99,
+      "false_block_rate": 0.01
+    },
+    "sql_executor": {
+      "correct_row_return": 0.99,
+      "rls_enforcement": 1.0,
+      "empty_result_handling": 1.0
+    },
+    "answer_validator": {
+      "validity_precision": 0.9,
+      "validity_recall": 0.88,
+      "false_invalid_rate": 0.08
+    },
+    "error_handler": {
+      "abort_trigger": 1.0,
+      "no_premature_abort": 1.0,
+      "state_reset": 1.0,
+      "router_correctness": 1.0
+    },
+    "step_reasoner": {
+      "faithfulness": 0.75,
+      "answer_relevance": 0.75,
+      "observation_completeness": 0.8
+    },
+    "synthesizer": {
+      "answer_relevance": 0.8,
+      "faithfulness": 0.8,
+      "toxicity_bias": 0.95,
+      "format_compliance": 1.0,
+      "abort_path_format": 1.0
+    },
+    "clarification_handler": {
+      "response_format_rate": 1.0,
+      "clarification_relevance": 0.8
+    },
+    "rag_retriever": {
+      "context_precision": 0.7,
+      "context_recall": 0.65,
+      "faithfulness": 0.8
+    }
+  },
+  "valid_tools": [
+    "sql",
+    "rag",
+    "clarification"
+  ],
+  "result_dir": "evals/results",
+  "deepeval": {
+    "include_reason": true,
+    "use_geval_for_rubric_metrics": true
+  }
+}

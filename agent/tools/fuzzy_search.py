@@ -86,7 +86,6 @@ async def fuzzy_resolve_entities(
     try:
         async with get_db_connection() as conn:
 
-            # ── mata_kuliah by name ──
             if entities.nama_mk and not entities.resolved_matkul_id:
                 rows = await _query_many(conn, """
                     SELECT mata_kuliah_id, kd_kuliah, nama->>'id' AS nama_id,
@@ -111,7 +110,6 @@ async def fuzzy_resolve_entities(
                             for r in rows
                         ]
 
-            # ── mata_kuliah by code ──
             if entities.kode_mk and not updates.get("kode_mk") and not entities.resolved_matkul_id:
                 rows = await _query_many(conn, """
                     SELECT mata_kuliah_id, kd_kuliah, nama->>'id' AS nama_id,
@@ -133,22 +131,25 @@ async def fuzzy_resolve_entities(
                             for r in rows
                         ]
 
-            # ── dosen by name ──
             if entities.nama_dosen and not entities.resolved_dosen_id:
                 mention = entities.nama_dosen.strip()
                 clean_mention = CLEAN_HONORIFICS_PATTERN.sub("", mention).strip()
 
-                rows = await _query_many(conn, """
-                    SELECT dosen_id, nama_gelar,
-                           GREATEST(
-                               similarity(nama_gelar::text, %s::text),
-                               similarity(nama_gelar::text, %s::text)
-                           ) AS sim
-                    FROM utama.dosen
-                    WHERE active = TRUE
-                    ORDER BY sim DESC
-                    LIMIT 3
-                """, (mention, clean_mention), threshold=config.name_threshold)
+                try:
+                    rows = await _query_many(conn, """
+                        SELECT dosen_id, nama_gelar,
+                               GREATEST(
+                                   similarity(nama_gelar::text, %s::text),
+                                   similarity(nama_gelar::text, %s::text)
+                               ) AS sim
+                        FROM utama.dosen
+                        WHERE active = TRUE
+                        ORDER BY sim DESC
+                        LIMIT 3
+                    """, (mention, clean_mention), threshold=config.name_threshold)
+                except Exception as e:
+                    logger.warning("Dosen fuzzy query failed: %s", e)
+                    rows = []
 
                 if rows:
                     updates["nama_dosen"] = rows[0]["nama_gelar"]
@@ -160,7 +161,6 @@ async def fuzzy_resolve_entities(
                             for r in rows
                         ]
 
-            # ── program_studi by abbreviation ──
             if entities.singkatan_prodi and not entities.resolved_prodi_id:
                 rows = await _query_many(conn, """
                     SELECT no_ps, kd_ps, nama->>'id' AS nama_id,

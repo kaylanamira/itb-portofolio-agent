@@ -1,0 +1,120 @@
+[
+  {
+    "id": "SY-DL-S-KP-001",
+    "description": "Synthesizer produces clean narrative for grade count",
+    "query": "Berapa jumlah mahasiswa yang mendapat nilai A di IF1220 semester ganjil 2024?",
+    "steps_completed": [
+      {
+        "step_number": 1,
+        "thought": "Hitung jumlah mahasiswa dengan nilai A",
+        "action": "sql",
+        "query": "SELECT COALESCE(SUM(dist_jumlah_a), 0) AS total_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+        "result": [
+          {
+            "total_a": 47
+          }
+        ],
+        "observation": "Total mahasiswa yang mendapat nilai A di IF1220 semester ganjil 2024 adalah 47 orang dari seluruh kelas."
+      }
+    ],
+    "is_aborted": false,
+    "expected_response_type": "text",
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "SY-AN-M-KP-001",
+    "description": "Synthesizer produces narrative for top-N ranking",
+    "query": "Siapa 3 dosen dengan skor kuesioner pelaksanaan tertinggi di STEI?",
+    "steps_completed": [
+      {
+        "step_number": 1,
+        "thought": "Ambil 3 dosen dengan avg_skor_pelaksanaan tertinggi di STEI",
+        "action": "sql",
+        "query": "SELECT nama_dosen_gelar, COALESCE(avg_skor_pelaksanaan, 0) FROM mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC NULLS LAST LIMIT 3",
+        "result": [
+          {
+            "nama_dosen_gelar": "Joseph Estes, S.T, M.T, Ph.D.",
+            "avg_skor_pelaksanaan": 3.9632
+          },
+          {
+            "nama_dosen_gelar": "Stanley Hughes, S.Kom., M.T.",
+            "avg_skor_pelaksanaan": 3.9372
+          },
+          {
+            "nama_dosen_gelar": "Dr.Eng. Jimmy Keith, S.T., M.Eng.",
+            "avg_skor_pelaksanaan": 3.9284
+          }
+        ],
+        "observation": "Tiga dosen dengan skor pelaksanaan tertinggi adalah Dr. Ir. Clifford Mcpherson (3.98), Ir. Patty Preston (3.76), dan Dr. Curtis Price (3.67)."
+      }
+    ],
+    "is_aborted": false,
+    "expected_response_type": "text",
+    "tags": [
+      "analytical_numeric",
+      "ranking"
+    ]
+  },
+  {
+    "id": "SY-OS-S-AD-001",
+    "description": "Synthesizer produces error response on abort",
+    "query": "Siapa rektor ITB?",
+    "steps_completed": [],
+    "is_aborted": true,
+    "abort_reason": "Pertanyaan ini di luar cakupan sistem analitik portofolio akademik.",
+    "expected_response_type": "error",
+    "tags": [
+      "abort",
+      "out_of_scope"
+    ]
+  },
+  {
+    "id": "SY-CL-S-KP-001",
+    "description": "Synthesizer produces clarification response",
+    "query": "Bagaimana hasilnya?",
+    "steps_completed": [],
+    "is_aborted": true,
+    "abort_reason": "Pertanyaan membutuhkan klarifikasi lebih lanjut tentang subjek dan konteks yang dimaksud.",
+    "expected_response_type": "error",
+    "tags": [
+      "clarification_needed",
+      "abort"
+    ]
+  },
+  {
+    "id": "SY-CM-M-KP-001",
+    "description": "Synthesizer handles multi-row comparative result",
+    "query": "Bandingkan rata-rata nilai IF1220 antar kelas semester ganjil 2024",
+    "steps_completed": [
+      {
+        "step_number": 1,
+        "thought": "Ambil rata-rata IP per kelas IF1220",
+        "action": "sql",
+        "query": "SELECT no_kelas, rata_ip_akhir_mahasiswa FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024 AND rata_ip_akhir_mahasiswa IS NOT NULL ORDER BY no_kelas",
+        "result": [
+          {
+            "no_kelas": 1,
+            "rata_ip_akhir_mahasiswa": 3.42
+          },
+          {
+            "no_kelas": 2,
+            "rata_ip_akhir_mahasiswa": 3.16
+          },
+          {
+            "no_kelas": 3,
+            "rata_ip_akhir_mahasiswa": 2.30
+          }
+        ],
+        "observation": "Kelas 1 memiliki rata-rata IP tertinggi (3.42), diikuti kelas 2 (3.16), dan kelas 3 terendah (2.30)."
+      }
+    ],
+    "is_aborted": false,
+    "expected_response_type": "text",
+    "tags": [
+      "comparative",
+      "multi_row"
+    ]
+  }
+]

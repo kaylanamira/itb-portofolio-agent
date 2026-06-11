@@ -1,0 +1,98 @@
+[
+  {
+    "id": "SE-DL-S-KP-001",
+    "description": "Count query returns at least 1 row for a known active matkul",
+    "query": "Berapa jumlah mahasiswa nilai A di IF1220 semester ganjil 2024?",
+    "sql": "SELECT COALESCE(SUM(dist_jumlah_a), 0) AS total_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+    "scope_role": "kaprodi",
+    "expected_min_rows": 1,
+    "expected_max_rows": 1,
+    "expected_columns": ["total_a"],
+    "should_return_empty": false,
+    "tags": ["data_lookup", "aggregate", "kaprodi"]
+  },
+  {
+    "id": "SE-DL-S-KP-002",
+    "description": "Ranking query returns multiple rows",
+    "query": "Tampilkan 3 dosen dengan skor pelaksanaan tertinggi di STEI",
+    "sql": "SELECT nama_dosen_gelar, COALESCE(avg_skor_pelaksanaan, 0) FROM analitik.mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC NULLS LAST LIMIT 3",
+    "scope_role": "kaprodi",
+    "expected_min_rows": 1,
+    "expected_max_rows": 3,
+    "expected_columns": ["nama_dosen_gelar"],
+    "should_return_empty": false,
+    "tags": ["data_lookup", "ranking", "kaprodi"]
+  },
+  {
+    "id": "SE-DL-S-KP-003",
+    "description": "Non-existent kode_mk returns empty result without exception",
+    "query": "Berapa jumlah A di XFAKE999?",
+    "sql": "SELECT COALESCE(SUM(dist_jumlah_a), 0) AS total_a FROM analitik.mv_kelas WHERE kode_mk = 'XFAKE999' AND semester = 1 AND tahun = 2024",
+    "scope_role": "kaprodi",
+    "expected_min_rows": 1,
+    "expected_max_rows": 1,
+    "expected_columns": ["total_a"],
+    "should_return_empty": false,
+    "tags": ["empty_result", "coalesce", "kaprodi"]
+  },
+  {
+    "id": "SE-DL-S-DK-001",
+    "description": "Dekan scope: Aggregate across prodis in a faculty",
+    "query": "Berapa rata-rata IPK di fakultas STEI tahun 2024?",
+    "sql": "SELECT nama_prodi_id, avg_ip_mhs FROM analitik.mv_statistik_prodi WHERE kode_fakultas = 'STEI' AND tahun = 2024 ORDER BY avg_ip_mhs DESC NULLS LAST",
+    "scope_role": "dekan",
+    "expected_min_rows": 1,
+    "expected_max_rows": 50,
+    "expected_columns": ["nama_prodi_id", "avg_ip_mhs"],
+    "should_return_empty": false,
+    "tags": ["data_lookup", "dekan", "aggregate"]
+  },
+  {
+    "id": "SE-DL-S-DS-001",
+    "description": "Dosen scope: Query their own execution scores",
+    "query": "Berapa rata-rata skor kuesioner saya?",
+    "sql": "SELECT avg_skor_pelaksanaan FROM analitik.mv_statistik_dosen WHERE nama_dosen_gelar LIKE '%Clifford%'",
+    "scope_role": "dosen",
+    "expected_min_rows": 0,
+    "expected_max_rows": 200,
+    "expected_columns": ["avg_skor_pelaksanaan"],
+    "should_return_empty": false,
+    "tags": ["data_lookup", "dosen", "personal_stats"]
+  },
+  {
+    "id": "SE-DL-S-AD-001",
+    "description": "Admin scope: Cross-faculty summary",
+    "query": "Fakultas dengan rata-rata IPK tertinggi",
+    "sql": "SELECT kode_fakultas, AVG(avg_ip_mhs) as avg_fakultas FROM analitik.mv_statistik_prodi GROUP BY kode_fakultas ORDER BY avg_fakultas DESC NULLS LAST LIMIT 5",
+    "scope_role": "admin",
+    "expected_min_rows": 1,
+    "expected_max_rows": 5,
+    "expected_columns": ["kode_fakultas", "avg_fakultas"],
+    "should_return_empty": false,
+    "tags": ["data_lookup", "admin", "global_aggregate"]
+  },
+  {
+    "id": "SE-DL-M-KP-001",
+    "description": "Complex JOIN returning result",
+    "query": "Apa saja CPMK dari matkul IF1220?",
+    "sql": "SELECT c.nama->>'id' AS cpmk_id FROM kur24.cpmk c JOIN utama.mata_kuliah mk ON mk.mata_kuliah_id = c.mata_kuliah_id WHERE mk.kd_kuliah = 'IF1220'",
+    "scope_role": "kaprodi",
+    "expected_min_rows": 0,
+    "expected_max_rows": 20,
+    "expected_columns": ["cpmk_id"],
+    "should_return_empty": false,
+    "tags": ["data_lookup", "kaprodi", "join"]
+  },
+  {
+    "id": "SE-DL-S-KP-004",
+    "description": "Explicit empty result query (no coalesce, should strictly return 0 rows)",
+    "query": "Cari data yang tidak mungkin ada",
+    "sql": "SELECT kode_mk FROM analitik.mv_kelas WHERE semester = 99",
+    "scope_role": "kaprodi",
+    "expected_min_rows": 0,
+    "expected_max_rows": 0,
+    "expected_columns": [],
+    "should_return_empty": true,
+    "tags": ["empty_result", "kaprodi"]
+  }
+]

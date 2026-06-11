@@ -107,10 +107,24 @@ def build_sql_pipeline(
         return {"validation_status": "pass"}
 
     async def sql_executor(state: SQLState) -> dict:
-        return await tool.execute_sql(
+        result = await tool.execute_sql(
             generated_sql=state.get("generated_sql", ""),
             user_scope=state["user_scope"],
         )
+        if result.get("sql_error"):
+            error_cat, correction_hint = classify_sql_error(result["sql_error"])
+            return {
+                **result,
+                "error_history": [{
+                    "attempt": state.get("attempt_count", 0),
+                    "sql": state.get("generated_sql", ""),
+                    "error": result["sql_error"],
+                    "type": "execution_error",
+                    "error_category": error_cat.value,
+                    "correction_hint": correction_hint,
+                }],
+            }
+        return result
 
     async def answer_validator(state: SQLState) -> dict:
         result = await tool.validate_answer(
@@ -138,19 +152,7 @@ def build_sql_pipeline(
         return {"answer_is_valid": True}
 
     async def error_handler(state: SQLState) -> dict:
-        new_attempt = state.get("attempt_count", 0) + 1
-        if new_attempt <= max_attempts:
-            return {
-                "attempt_count": new_attempt,
-                "generated_sql": None,
-                "sql_result": None,
-                "sql_error": None,
-            }
-        return {
-            "attempt_count": new_attempt,
-            "is_aborted": True,
-            "abort_reason": "MAX_RETRIES_EXCEEDED",
-        }
+        return await tool.error_handler(state, max_attempts=max_attempts)
 
     def route_after_validation(state: SQLState) -> str:
         if state.get("validation_status") == "pass":

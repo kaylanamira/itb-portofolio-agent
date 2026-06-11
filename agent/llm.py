@@ -17,6 +17,7 @@ OPENROUTER_MODEL_ENVS: dict[str, tuple[str, ...]] = {
     "step_reasoning": ("REASONING_MODEL", "STEP_REASONING_MODEL"),
     "synthesis": ("SYNTHESIS_MODEL",),
     "clarification": ("CLARIFICATION_MODEL",),
+    "llm_evaluation": ("EVAL_MODEL", "LLM_EVALUATION_MODEL"),
 }
 
 
@@ -71,7 +72,12 @@ TASK_MODEL_MAPPING: dict[str, dict[str, str]] = {
         "schema_linking",
         "sql_generation",
         "general",
+        "llm_evaluation"
     )
+}
+TASK_MODEL_MAPPING["llm_evaluation"] = {
+    "provider": os.getenv("EVAL_PROVIDER", "google"), 
+    "model": os.getenv("EVAL_MODEL", os.getenv("GOOGLE_MODEL", "gemini-1.5-pro"))
 }
 
 

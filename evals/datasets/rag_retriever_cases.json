@@ -1,0 +1,16 @@
+[
+  {
+    "id": "RAG-001",
+    "description": "Basic policy document retrieval",
+    "query": "Apa syarat kelulusan S1 Informatika?",
+    "task": "Cari dokumen kebijakan syarat kelulusan S1 Informatika",
+    "tags": ["policy"]
+  },
+  {
+    "id": "RAG-002",
+    "description": "Syllabus retrieval",
+    "query": "Apa materi minggu ke-3 IF1220?",
+    "task": "Cari silabus atau RPKPS IF1220 untuk materi minggu ke-3",
+    "tags": ["syllabus"]
+  }
+]

@@ -1,0 +1,798 @@
+[
+  {
+    "id": "SL-DL-S-KP-001",
+    "description": "Simple lookup from mv_kelas",
+    "query": "Berapa rata-rata nilai IF1220 semester 1 tahun 2024?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF1220",
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-DL-S-KP-002",
+    "description": "Lookup from utama.mata_kuliah master",
+    "query": "Tampilkan daftar mata kuliah IF dengan SKS 4",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF",
+      "sks": 4
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-DL-S-DK-003",
+    "description": "Lookup from utama.program_studi",
+    "query": "Berapa program studi S1 di STEI?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "scope_role": "dekan",
+    "scope_value": {
+      "kd_fak": "STEI"
+    },
+    "expected_entities": {
+      "kd_fak": "STEI",
+      "kd_strata": "S1"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "utama.program_studi"
+    ]
+  },
+  {
+    "id": "SL-DL-S-KP-004",
+    "description": "Lookup from utama.dosen by KK",
+    "query": "Siapa dosen di KK Rekayasa Perangkat Lunak?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "nama_kk": "Rekayasa Perangkat Lunak"
+    },
+    "expected_resolved": {
+      "kk_id": "fuzzy_match_expected"
+    },
+    "expected_tables_subset": [
+      "utama.dosen",
+      "utama.kk"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-005",
+    "description": "Grade distribution from mahasiswa.kuliah",
+    "query": "Berapa mahasiswa yang dapat nilai A di IF2210 semester ini?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF2210",
+      "semester": 3,
+      "tahun_ajaran": "2025/2026"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "mahasiswa.kuliah",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-AN-M-KP-006",
+    "description": "Aggregation from mahasiswa.kuliah - grade distribution",
+    "query": "Distribusi grade (A, AB, B, BC, C, D, E) untuk IF1220 tahun ini",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "mahasiswa.kuliah",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-007",
+    "description": "Lookup from evaluasi.nilai_kelas - questionnaire scores",
+    "query": "Berapa skor kuesioner Q21 untuk IF3110 kelas 2?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF3110",
+      "no_kelas": 2
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-DL-M-DS-008",
+    "description": "Lookup from evaluasi.nilai_dosen - dosen-specific scores",
+    "query": "Berapa skor Q25 (penguasaan materi) saya di IF2210 kelas 1?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "dosen",
+    "scope_value": {
+      "dosen_id": 42
+    },
+    "expected_entities": {
+      "kode_mk": "IF2210",
+      "no_kelas": 1,
+      "kd_pertanyaan": "25"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "evaluasi.nilai_dosen",
+      "kelas.kelas",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-AN-M-KP-009",
+    "description": "Aggregation from mv_statistik_prodi",
+    "query": "Berapa rata-rata kelulusan prodi IF dalam 3 tahun terakhir?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_prodi": 135
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SL-AN-M-DS-010",
+    "description": "Aggregation from mv_statistik_dosen",
+    "query": "Berapa total SKS yang saya ajar per semester selama 2 tahun terakhir?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "dosen",
+    "scope_value": {
+      "dosen_id": 42
+    },
+    "expected_entities": {},
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_dosen"
+    ]
+  },
+  {
+    "id": "SL-CM-M-DK-011",
+    "description": "Compare aggregated data from mv_statistik_prodi",
+    "query": "Bandingkan jumlah mahasiswa aktif IF, STI, dan EL semester ini",
+    "query_type": "comparative",
+    "complexity": "medium",
+    "scope_role": "dekan",
+    "scope_value": {
+      "kd_fak": "STEI"
+    },
+    "expected_entities": {
+      "kode_prodi": [
+        "IF",
+        "STI",
+        "EL"
+      ],
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SL-DG-M-KP-012",
+    "description": "Diagnostic join evaluasi.nilai_kelas and mv_kelas",
+    "query": "Kenapa skor Q22 (capaian pembelajaran) IF3150 lebih rendah dari mata kuliah lain?",
+    "query_type": "diagnostic",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF3150",
+      "kd_pertanyaan": "22"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "evaluasi.nilai_kelas",
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-013",
+    "description": "Lookup from mahasiswa.nonaktif - inactive students",
+    "query": "Berapa mahasiswa IF yang cuti semester ini?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF",
+      "semester": 1,
+      "kd_stat_daftar": "C"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "mahasiswa.nonaktif",
+      "utama.mahasiswa"
+    ]
+  },
+  {
+    "id": "SL-AN-C-KP-014",
+    "description": "Complex aggregation from mahasiswa.ip - GPA distribution",
+    "query": "Distribusi IPK mahasiswa IF: berapa persen di setiap rentang (3.5-4.0, 3.0-3.5, 2.5-3.0, <2.5)?",
+    "query_type": "analytical_numeric",
+    "complexity": "complex",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "mahasiswa.ip",
+      "utama.mahasiswa"
+    ]
+  },
+  {
+    "id": "SL-CM-C-DK-015",
+    "description": "Complex compare mv_statistik_prodi across multiple dimensions",
+    "query": "Bandingkan tren kelulusan (A-C vs A-D) dan rata-rata IP untuk IF, STI, EL dari 2022-2024, breakdown per semester",
+    "query_type": "comparative",
+    "complexity": "complex",
+    "scope_role": "dekan",
+    "scope_value": {
+      "kd_fak": "STEI"
+    },
+    "expected_entities": {
+      "singkatan_prodi": [
+        "IF",
+        "STI",
+        "EL"
+      ],
+      "semester": [
+        1,
+        2,
+        3
+      ],
+      "tahun": [
+        2022,
+        2023,
+        2024
+      ]
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SL-DL-S-KP-016",
+    "description": "Lookup specific column from evaluasi.portofolio",
+    "query": "Apakah dosen IF2210 kelas 1 sudah submit portofolio?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF2210",
+      "no_kelas": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "evaluasi.portofolio",
+      "kelas.kelas",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-AN-M-KP-017",
+    "description": "Aggregation from evaluasi.portofolio - completion rate",
+    "query": "Berapa persen kelas IF yang portofolionya sudah lengkap semester ini?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF",
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "evaluasi.portofolio",
+      "kelas.kelas",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-CM-M-DS-018",
+    "description": "Compare dosen scores across semesters from evaluasi.nilai_dosen",
+    "query": "Bandingkan rata-rata skor evaluasi saya di tahun ajaran 2023/2024 vs 2024/2025",
+    "query_type": "comparative",
+    "complexity": "medium",
+    "scope_role": "dosen",
+    "scope_value": {
+      "dosen_id": 42
+    },
+    "expected_entities": {
+      "tahun_ajaran": [
+        "2023/2024",
+        "2024/2025"
+      ]
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_dosen"
+    ]
+  },
+  {
+    "id": "SL-DG-C-KP-019",
+    "description": "Complex diagnostic joining multiple tables",
+    "query": "Identifikasi mata kuliah IF dengan tingkat kelulusan rendah (<70%) DAN skor kuesioner pelaksanaan rendah (<3.5) - apakah ada korelasi?",
+    "query_type": "diagnostic",
+    "complexity": "complex",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-020",
+    "description": "Lookup from kelas.kelas - class metadata",
+    "query": "Berapa kuota kelas IF2210 kelas 2 semester ini?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF2210",
+      "no_kelas": 2,
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "kelas.kelas",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-021",
+    "description": "Lookup co-teaching from kelas.pengajar",
+    "query": "Siapa dosen pengampu IF3110 kelas 1?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF3110",
+      "no_kelas": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "kelas.pengajar",
+      "utama.mata_kuliah",
+      "utama.dosen"
+    ]
+  },
+  {
+    "id": "SL-AN-M-DS-022",
+    "description": "Aggregation from mv_statistik_dosen - trend analysis",
+    "query": "Bagaimana tren evaluasi saya (Q25-Q27) dari semester ke semester?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "dosen",
+    "scope_value": {
+      "dosen_id": 42
+    },
+    "expected_entities": {},
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_dosen"
+    ]
+  },
+  {
+    "id": "SL-CM-M-DK-023",
+    "description": "Compare faculty-level aggregation from mv_statistik_prodi",
+    "query": "Bandingkan rata-rata skor kuesioner overall STEI vs FMIPA semester ini",
+    "query_type": "comparative",
+    "complexity": "medium",
+    "scope_role": "admin",
+    "scope_value": {},
+    "expected_entities": {
+      "kd_fak": [
+        "STEI",
+        "FMIPA"
+      ],
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SL-DL-S-KP-024",
+    "description": "Fuzzy resolution - dosen name to dosen_id",
+    "query": "Berapa kelas yang diajar huber semester 1 2025/2026?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 101
+    },
+    "expected_entities": {
+      "nama_dosen": "Abigail Huber, S.Sn., M.Sn.",
+      "semester": 1,
+      "tahun_ajaran": "2025/2026"
+    },
+    "expected_resolved": {
+      "dosen_id": "fuzzy_match_expected"
+    },
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-025",
+    "description": "Fuzzy resolution - course name to kode_mk",
+    "query": "Berapa mahasiswa Basis Data kelas 1?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "nama_mk": "Basis Data",
+      "no_kelas": 1
+    },
+    "expected_resolved": {
+      "kode_mk": "fuzzy_match_expected"
+    },
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-AN-C-KP-026",
+    "description": "Complex aggregation with percentile from mahasiswa.kuliah",
+    "query": "Hitung persentil 25, 50, 75 dari nilai IF (dalam angka IP) per semester selama 2 tahun",
+    "query_type": "analytical_numeric",
+    "complexity": "complex",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "mahasiswa.kuliah",
+      "utama.mata_kuliah",
+      "utama.mahasiswa"
+    ]
+  },
+  {
+    "id": "SL-DG-M-KP-027",
+    "description": "Diagnostic - identify outliers from mv_kelas",
+    "query": "Kelas fitbd mana yang jumlah mahasiswanya lebih dari 2x rata-rata?",
+    "query_type": "diagnostic",
+    "complexity": "medium",
+    "scope_role": "dekan",
+    "scope_value": {
+      "kd_fak": "FITB"
+    },
+    "expected_entities": {
+      "kode_fakultas": "FITB"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-CG-M-KP-028",
+    "description": "Chart from mahasiswa.kuliah - grade distribution",
+    "query": "Buatkan bar chart distribusi nilai semua mata kuliah IF semester 1 2022/2023",
+    "query_type": "chart_generate",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF",
+      "semester": 1,
+      "tahun_ajaran": "2022/2023"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-CG-M-DK-029",
+    "description": "Chart from mv_statistik_prodi - trend line",
+    "query": "Buatkan line chart tren jumlah mahasiswa aktif per prodi STEI dari 2022-2024",
+    "query_type": "chart_generate",
+    "complexity": "medium",
+    "scope_role": "dekan",
+    "scope_value": {
+      "kd_fak": "STEI"
+    },
+    "expected_entities": {
+      "kode_fakultas": "STEI"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-030",
+    "description": "Lookup specific questionnaire question from evaluasi.pertanyaan_kuesioner",
+    "query": "Apa pertanyaan kuesioner nomor 12?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kd_pertanyaan": 12
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "evaluasi.pertanyaan_kuesioner"
+    ]
+  },
+  {
+    "id": "SL-AN-M-DS-031",
+    "description": "Aggregation comparing self vs peers from mv_statistik_dosen",
+    "query": "Bagaimana rata-rata evaluasi saya dibandingkan dosen lain di KK yang sama?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "dosen",
+    "scope_value": {
+      "dosen_id": 42
+    },
+    "expected_entities": {},
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_dosen"
+    ]
+  },
+  {
+    "id": "SL-CM-C-KP-032",
+    "description": "Complex comparison - grade distribution across multiple courses",
+    "query": "Bandingkan distribusi grade (A, AB, B, BC, C, D, E) untuk IF2210, IF2211, IF2212 semester ini",
+    "query_type": "comparative",
+    "complexity": "complex",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": [
+        "IF2210",
+        "IF2211",
+        "IF2212"
+      ],
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "mahasiswa.kuliah",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-DG-C-DK-033",
+    "description": "Complex diagnostic - correlation analysis",
+    "query": "Apakah ada korelasi antara ukuran kelas dan skor evaluasi dosen di STEI?",
+    "query_type": "diagnostic",
+    "complexity": "complex",
+    "scope_role": "dekan",
+    "scope_value": {
+      "kd_fak": "STEI"
+    },
+    "expected_entities": {
+      "kd_fak": "STEI"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas",
+      "evaluasi.nilai_dosen"
+    ]
+  },
+  {
+    "id": "SL-AN-C-AD-034",
+    "description": "Complex aggregation - cross-faculty ranking",
+    "query": "Ranking 10 dosen dengan evaluasi tertinggi di seluruh ITB semester 1",
+    "query_type": "analytical_numeric",
+    "complexity": "complex",
+    "scope_role": "admin",
+    "scope_value": {},
+    "expected_entities": {
+      "semester": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_dosen"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-035",
+    "description": "Lookup attendance from evaluasi.nilai_kelas",
+    "query": "Berapa persentase kehadiran dosen di IF2210 kelas 1?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_mk": "IF2210",
+      "no_kelas": 1
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "evaluasi.nilai_kelas",
+      "kelas.kelas",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SL-AN-M-KP-036",
+    "description": "Aggregation - count NULL values",
+    "query": "Berapa kelas IF yang belum ada skor kuesioner?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-CM-M-KP-037",
+    "description": "Comparison - semester ganjil vs genap from mv_statistik_prodi",
+    "query": "Bandingkan rata-rata IP mahasiswa prodi 135 semester ganjil vs genap 2024",
+    "query_type": "comparative",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kode_prodi": 135,
+      "semester": [
+        1,
+        2
+      ]
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-038",
+    "description": "Lookup from utama.fakultas - dean information",
+    "query": "Siapa dekan STEI saat ini?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "kd_fak": "STEI"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "utama.fakultas",
+      "utama.dosen"
+    ]
+  },
+  {
+    "id": "SL-DL-M-KP-039",
+    "description": "Lookup from mahasiswa.nr - semester GPA",
+    "query": "Berapa rata-rata NR (semester GPA) mahasiswa manajemen rekayasa?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 144
+    },
+    "expected_entities": {
+      "singkatan_prodi": "MR"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SL-CG-C-KP-040",
+    "description": "Complex chart - multi-series stacked bar from evaluasi.nilai_kelas",
+    "query": "Buatkan stacked bar chart skor kuesioner per dimensi (capaian, pelaksanaan, sarana, perilaku) untuk semua mata kuliah IF, diurutkan dari tertinggi",
+    "query_type": "chart_generate",
+    "complexity": "complex",
+    "scope_role": "kaprodi",
+    "scope_value": {
+      "prodi_id": 135
+    },
+    "expected_entities": {
+      "singkatan_prodi": "IF"
+    },
+    "expected_resolved": {},
+    "expected_tables_subset": [
+      "analitik.mv_kelas"
+    ]
+  }
+]
