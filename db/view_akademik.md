@@ -87,7 +87,7 @@ Tanpa skor evaluasi — itu di `v_akademik_statistik_dosen` (filtered+masked).
 |---|---|
 | `pct_kehadiran_mahasiswa`, `pct_kehadiran_dosen` | 0–100, NULL jika belum ada evaluasi |
 | `avg_ip_akhir_mahasiswa` | NULL jika belum ada evaluasi |
-| `skor_dna`, `ts_dna`, `ip_mhs_dna` | Did Not Attend; NULL jika tidak ada kasus DNA |
+| `skor_dna`, `ts_dna`, `ip_mhs_dna` ||
 
 ### Distribusi Nilai — gate `is_distribusi_nilai_sah`
 | Kolom | Isi |
@@ -221,6 +221,4 @@ Tanpa skor evaluasi — itu di `v_akademik_statistik_dosen` (filtered+masked).
 | `avg_skor_q25/q26/q27` | per-dosen, skala 1–4 |
 | `avg_skor_capaian/pelaksanaan/sarana_prasarana/perilaku_mahasiswa/overall` | dimensi evaluasi dosen |
 | `jumlah_kelas_dengan_skor` | jumlah kelas dgn data evaluasi |
-| `avg_nilai_akhir` | sering NULL (tidak konsisten diisi) |
-
-⚠️ Role DOSEN: baris diri sendiri terisi penuh, baris dosen lain → kolom di atas NULL meski raw ada isi. Agregasi lintas-dosen oleh role DOSEN akan bias (hanya 1 baris non-NULL = dirinya).
+| `avg_nilai_akhir` | sering NULL  |
