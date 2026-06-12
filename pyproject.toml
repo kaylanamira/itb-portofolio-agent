@@ -11,6 +11,7 @@ dependencies = [
     "google-genai>=1.73.1",
     "google-generativeai>=0.8.6",
     "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
     "langchain-anthropic>=1.4.2",
     "langchain-community>=0.4.1",
     "langchain-core>=1.3.2",
@@ -19,6 +20,7 @@ dependencies = [
     "langchain-openai>=1.2.1",
     "langgraph>=1.1.10",
     "lxml>=6.1.0",
+    "msal>=1.37.0",
     "pandas>=3.0.2",
     "playwright>=1.58.0",
     "psycopg2-binary>=2.9.12",
@@ -27,6 +29,7 @@ dependencies = [
     "pydantic-settings>=2.14.0",
     "pytest-asyncio>=1.3.0",
     "python-dotenv>=1.2.2",
+    "python-ulid>=3.1.0",
     "rank-bm25>=0.2.2",
     "rapidfuzz>=3.14.5",
     "redis>=7.0.0",
@@ -36,9 +39,6 @@ dependencies = [
     "sqlglot>=30.6.0",
     "uvicorn>=0.46.0",
 ]
-[project.scripts]
-ingest-master = "ingestion.ingest_master:main"
-ingest-kelas  = "ingestion.ingest_kelas:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
