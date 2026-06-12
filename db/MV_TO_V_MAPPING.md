@@ -7,7 +7,7 @@ Dokumen ini dipakai sebagai referensi untuk update:
 
 ---
 
-## Perubahan paling berisiko: makna `kode_prodi` TERTUKAR
+## Perubahan makna `kode_prodi` 
 
 Di MV lama, `kode_prodi` adalah **integer** (=`no_ps`) dan `singkatan_prodi` adalah
 **string 2-karakter** ("IF", "EL"). Di view baru, **konvensi dibalik**:
