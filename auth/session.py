@@ -6,6 +6,7 @@ CRUD operasi untuk session dan OAuth flow di Redis.
 Tanggung jawab file ini HANYA:
     - Simpan / baca / hapus session user (setelah login berhasil)
     - Simpan / ambil / hapus MSAL auth flow dict (saat proses OAuth berlangsung)
+    - Ganti active_role pada session yang sedang aktif
 
 File ini TIDAK tahu tentang:
     - MSAL atau Microsoft (itu urusan auth/microsoft.py)
@@ -119,6 +120,60 @@ def session_to_user_scope(session_data: dict[str, Any]) -> UserScope:
         active_role=active_role,
         available_roles=available_roles,
     )
+
+
+async def switch_active_role(session_id: str, user_role_id: int) -> bool:
+    """
+    Ganti active_role pada session berdasarkan user_role_id yang diminta.
+
+    Validasi server-side: user_role_id harus ada di available_roles session ini.
+    Jika valid, active_role diperbarui dan TTL session di-reset ke penuh.
+
+    Args:
+        session_id: ID session yang sedang aktif (dari cookie).
+        user_role_id: user_role_id dari ScopeEntry yang ingin dijadikan active.
+
+    Returns:
+        True  — berhasil, active_role sudah diganti.
+        False — gagal: session tidak ditemukan atau user_role_id tidak ada
+                di available_roles user ini.
+    """
+    redis = get_redis()
+    raw = await redis.get(_session_key(session_id))
+    if raw is None:
+        return False
+
+    data = json.loads(raw)
+
+    # Cari role yang diminta di available_roles — validasi server-side
+    target = next(
+        (r for r in data["available_roles"] if r["user_role_id"] == user_role_id),
+        None,
+    )
+    if target is None:
+        logger.warning(
+            "switch_active_role ditolak: user_role_id=%s tidak ada di session %s...",
+            user_role_id,
+            session_id[:8],
+        )
+        return False
+
+    data["active_role"] = target
+
+    # Simpan kembali dengan TTL penuh (refresh agar tidak expired saat aktif)
+    await redis.setex(
+        name=_session_key(session_id),
+        time=settings.SESSION_TTL_SECONDS,
+        value=json.dumps(data),
+    )
+
+    logger.info(
+        "Role switched | session=%s... | role=%s | user_role_id=%s",
+        session_id[:8],
+        target["role"],
+        user_role_id,
+    )
+    return True
 
 
 # ─── OAuth Flow Storage ───────────────────────────────────────────────────────
