@@ -1,34 +1,34 @@
 examples:
   - nl: "Bandingkan skor evaluasi IF2210 dan IF3140 semester ini"
     sql: |
-      SELECT kode_mk, nama_mk_id, no_kelas, avg_skor_overall, avg_skor_pelaksanaan, avg_skor_capaian
-      FROM analitik.mv_kelas
-      WHERE kode_mk IN ('IF2210', 'IF3140') AND semester = 1 AND tahun = 2024
-      ORDER BY kode_mk, no_kelas
+      SELECT kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_pelaksanaan, avg_skor_capaian
+      FROM analitik.v_akademik_kelas
+      WHERE kode_matkul IN ('IF2210', 'IF3140') AND semester = 1 AND tahun = 2024
+      ORDER BY kode_matkul, no_kelas
       LIMIT 100;
 
   - nl: "Perbandingan rata-rata nilai per prodi di STEI semester ini"
     sql: |
-      SELECT singkatan_prodi, nama_prodi_id,
-        ROUND(AVG(rata_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai,
+      SELECT kode_prodi, nama_prodi_id,
+        ROUND(AVG(avg_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai,
         ROUND(AVG(avg_skor_overall)::numeric, 2) AS avg_evaluasi,
         COUNT(*) AS jumlah_kelas
-      FROM analitik.mv_kelas
+      FROM analitik.v_akademik_kelas
       WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024
-      GROUP BY kode_prodi, singkatan_prodi, nama_prodi_id
+      GROUP BY no_prodi, kode_prodi, nama_prodi_id
       ORDER BY avg_nilai DESC
       LIMIT 100;
 
   - nl: "Perbandingan kehadiran dosen prodi IF vs II semester ini"
     sql: |
-      SELECT singkatan_prodi,
+      SELECT kode_prodi,
         ROUND(AVG(pct_kehadiran_dosen)::numeric, 2) AS avg_kehadiran_dosen,
         ROUND(AVG(pct_kehadiran_mahasiswa)::numeric, 2) AS avg_kehadiran_mahasiswa,
         COUNT(*) AS jumlah_kelas
-      FROM analitik.mv_kelas
-      WHERE singkatan_prodi IN ('IF', 'II') AND semester = 1 AND tahun = 2024
-      GROUP BY kode_prodi, singkatan_prodi
-      ORDER BY singkatan_prodi
+      FROM analitik.v_akademik_kelas
+      WHERE kode_prodi IN ('IF', 'II') AND semester = 1 AND tahun = 2024
+      GROUP BY no_prodi, kode_prodi
+      ORDER BY kode_prodi
       LIMIT 100;
 
   - nl: "Mana dosen yang skor evaluasinya paling tinggi dan paling rendah semester ini di prodi IF?"
@@ -43,8 +43,8 @@ examples:
             unnest(semua_dosen_id) AS d_id,
             unnest(semua_dosen_nama_gelar) AS d_nama,
             avg_skor_overall
-          FROM analitik.mv_kelas
-          WHERE singkatan_prodi = 'IF' AND semester = 1 AND tahun = 2024
+          FROM analitik.v_akademik_kelas
+          WHERE kode_prodi = 'IF' AND semester = 1 AND tahun = 2024
             AND avg_skor_overall IS NOT NULL
         ) sub
         ORDER BY d_id, avg_skor_overall DESC

@@ -1,25 +1,25 @@
 examples:
   - nl: "Berapa rata-rata skor evaluasi IF2210 semester ini?"
     sql: |
-      SELECT kode_mk, nama_mk_id, AVG(avg_skor_overall) AS avg_skor_evaluasi
-      FROM analitik.mv_kelas
-      WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun = 2024
-      GROUP BY kode_mk, nama_mk_id
+      SELECT kode_matkul, nama_matkul_id, AVG(avg_skor_overall) AS avg_skor_evaluasi
+      FROM analitik.v_akademik_kelas
+      WHERE kode_matkul = 'IF2210' AND semester = 1 AND tahun = 2024
+      GROUP BY kode_matkul, nama_matkul_id
       LIMIT 1;
 
   - nl: "Siapa saja dosen yang mengajar matkul basis data semester ini?"
     sql: |
       SELECT DISTINCT unnest(semua_dosen_nama_gelar) AS nama_dosen
-      FROM analitik.mv_kelas
-      WHERE nama_mk_id ILIKE '%basis data%' AND semester = 1 AND tahun = 2024
+      FROM analitik.v_akademik_kelas
+      WHERE nama_matkul_id ILIKE '%basis data%' AND semester = 1 AND tahun = 2024
       ORDER BY nama_dosen
       LIMIT 100;
 
   - nl: "Berapa jumlah kelas di prodi IF semester ini?"
     sql: |
       SELECT COUNT(*) AS jumlah_kelas
-      FROM analitik.mv_kelas
-      WHERE singkatan_prodi = 'IF' AND semester = 1 AND tahun = 2024;
+      FROM analitik.v_akademik_kelas
+      WHERE kode_prodi = 'IF' AND semester = 1 AND tahun = 2024;
 
   - nl: "Apa saja fakultas di ITB?"
     sql: |
@@ -29,9 +29,9 @@ examples:
 
   - nl: "Berapa persentase kehadiran di kelas IF3140?"
     sql: |
-      SELECT kode_mk, no_kelas, pct_kehadiran_dosen, pct_kehadiran_mahasiswa
-      FROM analitik.mv_kelas
-      WHERE kode_mk = 'IF3140' AND semester = 1 AND tahun = 2024
+      SELECT kode_matkul, no_kelas, pct_kehadiran_dosen, pct_kehadiran_mahasiswa
+      FROM analitik.v_akademik_kelas
+      WHERE kode_matkul = 'IF3140' AND semester = 1 AND tahun = 2024
       ORDER BY no_kelas
       LIMIT 100;
 

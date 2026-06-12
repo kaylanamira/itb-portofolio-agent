@@ -3,30 +3,31 @@ examples:
     sql: |
       SELECT grade, jumlah FROM (
         VALUES
-          ('A',  (SELECT COALESCE(dist_jumlah_a, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1)),
-          ('AB', (SELECT COALESCE(dist_jumlah_ab, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1)),
-          ('B',  (SELECT COALESCE(dist_jumlah_b, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1)),
-          ('BC', (SELECT COALESCE(dist_jumlah_bc, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1)),
-          ('C',  (SELECT COALESCE(dist_jumlah_c, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1)),
-          ('D',  (SELECT COALESCE(dist_jumlah_d, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1)),
-          ('E',  (SELECT COALESCE(dist_jumlah_e, 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 LIMIT 1))
+          ('A',  (SELECT COALESCE(dist_jumlah_a, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1)),
+          ('AB', (SELECT COALESCE(dist_jumlah_ab, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1)),
+          ('B',  (SELECT COALESCE(dist_jumlah_b, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1)),
+          ('BC', (SELECT COALESCE(dist_jumlah_bc, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1)),
+          ('C',  (SELECT COALESCE(dist_jumlah_c, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1)),
+          ('D',  (SELECT COALESCE(dist_jumlah_d, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1)),
+          ('E',  (SELECT COALESCE(dist_jumlah_e, 0) FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND no_kelas = 1 AND semester = 1 AND tahun = 2024 AND is_distribusi_nilai_sah = TRUE LIMIT 1))
       ) AS t(grade, jumlah);
 
   - nl: "Buat grafik tren rata-rata nilai per semester untuk matkul IF2210"
     sql: |
-      SELECT tahun_ajaran, semester, ROUND(AVG(rata_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
-      FROM analitik.mv_kelas
-      WHERE kode_mk = 'IF2210'
+      SELECT tahun_ajaran, semester, ROUND(AVG(avg_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
+      FROM analitik.v_akademik_kelas
+      WHERE kode_matkul = 'IF2210'
+        AND avg_ip_akhir_mahasiswa IS NOT NULL
       GROUP BY tahun_ajaran, semester, tahun
       ORDER BY tahun, semester
       LIMIT 100;
 
   - nl: "Visualisasikan perbandingan skor evaluasi per prodi di STEI semester ini"
     sql: |
-      SELECT singkatan_prodi, nama_prodi_id,
+      SELECT kode_prodi, nama_prodi_id,
         ROUND(avg_skor_overall::numeric, 2) AS avg_skor_evaluasi,
         jumlah_kelas
-      FROM analitik.mv_statistik_prodi
+      FROM analitik.v_akademik_statistik_prodi
       WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024
       ORDER BY avg_skor_overall DESC
       LIMIT 100;

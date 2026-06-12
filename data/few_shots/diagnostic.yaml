@@ -3,15 +3,15 @@ examples:
     sql: |
       SELECT
         no_kelas,
-        rata_ip_akhir_mahasiswa,
+        avg_ip_akhir_mahasiswa,
         pct_kehadiran_dosen,
         pct_kehadiran_mahasiswa,
         avg_skor_overall,
         avg_skor_pelaksanaan,
         avg_skor_capaian,
         jumlah_mahasiswa
-      FROM analitik.mv_kelas
-      WHERE kode_mk = 'IF3140' AND semester = 1 AND tahun = 2024
+      FROM analitik.v_akademik_kelas
+      WHERE kode_matkul = 'IF3140' AND semester = 1 AND tahun = 2024
       ORDER BY no_kelas
       LIMIT 100;
 
@@ -24,9 +24,9 @@ examples:
         ROUND(AVG(avg_skor_overall)::numeric, 2) AS avg_evaluasi,
         ROUND(AVG(pct_kehadiran_dosen)::numeric, 2) AS avg_kehadiran_dosen,
         ROUND(AVG(pct_kehadiran_mahasiswa)::numeric, 2) AS avg_kehadiran_mahasiswa,
-        ROUND(AVG(rata_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
-      FROM analitik.mv_kelas
-      WHERE singkatan_prodi = 'IF'
+        ROUND(AVG(avg_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
+      FROM analitik.v_akademik_kelas
+      WHERE kode_prodi = 'IF'
         AND ((semester = 2 AND tahun = 2023) OR (semester = 1 AND tahun = 2024))
       GROUP BY semester, tahun, tahun_ajaran
       ORDER BY tahun, semester
