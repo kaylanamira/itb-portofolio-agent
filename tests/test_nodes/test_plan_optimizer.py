@@ -1,4 +1,4 @@
-from agent.nodes.plan_optimizer import optimize_plan, should_compact_ratio_plan
+from agent.utils.plan_optimizer import optimize_plan, should_compact_ratio_plan
 from agent.state import QueryType
 
 

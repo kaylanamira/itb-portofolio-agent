@@ -19,7 +19,16 @@ logger = logging.getLogger(__name__)
 async def _portfolio_entity_resolver(entities_dict: dict):
     """Resolves raw LLM-extracted entity dict to DetectedEntities."""
     valid_fields = DetectedEntities.model_fields.keys()
-    filtered = {k: v for k, v in entities_dict.items() if k in valid_fields and v is not None}
+    filtered: dict = {}
+
+    for k, v in entities_dict.items():
+        if k not in valid_fields or v is None or str(v).strip().lower() in ("null", "none", ""):
+            continue
+        if k in ["no_kelas", "kode_prodi"] and isinstance(v, int):
+            filtered[k] = str(v)
+        else:
+            filtered[k] = v
+
     raw_entities = DetectedEntities(**filtered)
     try:
         return await fuzzy_resolve_entities(raw_entities)
@@ -28,7 +37,7 @@ async def _portfolio_entity_resolver(entities_dict: dict):
         return raw_entities
 
 
-def _portfolio_few_shot_examples(query_type: str | None) -> str:
+def portfolio_few_shot_examples(query_type: str | None) -> str:
     """Returns few-shot SQL examples for the given query type."""
     if not query_type:
         return "(no examples)"
@@ -69,7 +78,7 @@ def _portfolio_human_message_builder(
 _portfolio_sql_pipeline = build_sql_pipeline(
     schema_linker_prompt=SCHEMA_LINKER_SYSTEM_PROMPT,
     entity_resolver=_portfolio_entity_resolver,
-    few_shot_examples=_portfolio_few_shot_examples,
+    few_shot_examples=portfolio_few_shot_examples,
     human_message_builder=_portfolio_human_message_builder,
     schema_context=describe_tables,
     default_table="analitik.mv_kelas",

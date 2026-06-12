@@ -55,6 +55,7 @@ class SQLTool:
         max_attempts: int = 3,
         human_message_builder: Optional[Callable] = None,
         domain_rules: str = "",
+        system_prompt_template: str = SQL_GENERATOR_SYSTEM,
     ):
         self.schema_linker_prompt = schema_linker_prompt
         self.entity_resolver = entity_resolver
@@ -64,119 +65,8 @@ class SQLTool:
         self.executor = executor
         self.max_attempts = max_attempts
         self.domain_rules = domain_rules
+        self.system_prompt_template = system_prompt_template
         self._human_message_builder = human_message_builder or self._default_human_message
-
-    async def run(self, state: SQLState) -> SQLState:
-        """Runs the full pipeline: link → (generate → validate → execute → check) × retry.
-
-        Args:
-            state: SQLState with question and user_scope populated.
-
-        Returns:
-            Updated SQLState with results, or is_aborted=True on max retries.
-        """
-        question = state["question"]
-        user_scope = state["user_scope"]
-        plan_step_context = state.get("plan_step_context")
-        prior_steps_context = state.get("prior_steps_context")
-        query_type = state.get("query_type")
-
-        schema_result = await self.link_schema(
-            question, user_scope, plan_step_context, prior_steps_context,
-        )
-        detected_entities = schema_result["detected_entities"]
-        relevant_tables = schema_result["relevant_tables"]
-
-        state["detected_entities"] = detected_entities
-        state["relevant_tables"] = relevant_tables
-        state["schema_context"] = self.schema_context
-        state["attempt_count"] = 0
-        state["is_aborted"] = False
-        state.setdefault("error_history", [])
-
-        for attempt_num in range(1, self.max_attempts + 1):
-            state["attempt_count"] = attempt_num
-
-            generated_sql = await self.generate_sql(
-                question=question,
-                detected_entities=detected_entities,
-                user_scope=user_scope,
-                relevant_tables=relevant_tables,
-                query_type=query_type,
-                plan_step_context=plan_step_context,
-                error_history=state["error_history"],
-                attempt_count=attempt_num - 1,
-            )
-            state["generated_sql"] = generated_sql
-
-            val = await self.validate_sql(generated_sql)
-            state["validation_status"] = val["validation_status"]
-
-            if val["validation_status"] != "pass":
-                error_cat, correction_hint = classify_sql_error(val["error"])
-                state["error_history"].append({
-                    "attempt": attempt_num - 1,
-                    "sql": generated_sql,
-                    "error": val["error"],
-                    "type": val["error_type"],
-                    "error_category": error_cat.value,
-                    "correction_hint": correction_hint,
-                })
-                state["validation_errors"] = state.get("validation_errors", []) + [val["error"]]
-                state["generated_sql"] = None
-                state["sql_result"] = None
-                state["sql_error"] = None
-                continue
-
-            exec_result = await self.execute_sql(generated_sql, user_scope)
-            state["sql_result"] = exec_result["sql_result"]
-            state["sql_error"] = exec_result["sql_error"]
-            state["sql_row_count"] = exec_result["sql_row_count"]
-
-            if exec_result["sql_error"]:
-                error_cat, correction_hint = classify_sql_error(exec_result["sql_error"])
-                state["error_history"].append({
-                    "attempt": attempt_num - 1,
-                    "sql": generated_sql,
-                    "error": exec_result["sql_error"],
-                    "type": "execution_error",
-                    "error_category": error_cat.value,
-                    "correction_hint": correction_hint,
-                })
-                state["generated_sql"] = None
-                state["sql_result"] = None
-                state["sql_error"] = None
-                continue
-
-            ans = await self.validate_answer(
-                question, generated_sql,
-                exec_result["sql_result"], exec_result["sql_row_count"],
-                plan_step_context,
-            )
-            state["answer_is_valid"] = ans["answer_is_valid"]
-
-            if not ans["answer_is_valid"]:
-                error_cat, correction_hint = classify_sql_error(
-                    f"Answer validation failed: {ans.get('reason', '')}"
-                )
-                state["error_history"].append({
-                    "attempt": attempt_num - 1,
-                    "sql": generated_sql,
-                    "error": f"Answer validation failed: {ans.get('reason', '')}",
-                    "type": "answer_invalid",
-                    "error_category": error_cat.value,
-                    "correction_hint": correction_hint,
-                })
-                state["generated_sql"] = None
-                state["sql_result"] = None
-                state["sql_error"] = None
-                continue
-
-            return state
-
-        state["is_aborted"] = True
-        state["abort_reason"] = "MAX_RETRIES_EXCEEDED"
-        return state
 
     async def link_schema(
         self,
@@ -278,12 +168,12 @@ class SQLTool:
         else:
             schema_str = self.schema_context
 
-        sys_prompt = SQL_GENERATOR_SYSTEM.format(
+        sys_prompt = self.system_prompt_template.format(
             schema_context=schema_str,
             domain_rules=self.domain_rules or "(none)",
             detected_entities=entities_str,
-            user_role=user_scope.role.value,
-            few_shot_examples=few_shots,
+            user_role=user_scope.role.value if user_scope else "SYSTEM",
+            few_shot_examples=few_shots
         )
 
         if attempt_count > 0 and error_history:
@@ -397,6 +287,9 @@ class SQLTool:
         if sql_result is None:
             return {"answer_is_valid": False, "reason": "SQL returned no result set"}
 
+        if sql_row_count == 1 and sql_result and all(v is None for v in sql_result[0].values()):
+            return {"answer_is_valid": False, "reason": "Query returned null values for all requested columns"}
+
         try:
             llm = get_llm("answer_validation")
             task = plan_step_context.get("task", question) if plan_step_context else question
@@ -424,6 +317,22 @@ class SQLTool:
         except Exception as e:
             logger.error("Answer validation failed: %s", e)
             return {"answer_is_valid": False, "reason": "Validation failed, defaulting to valid."}
+
+    @staticmethod
+    async def error_handler(state: SQLState, max_attempts: int=3) -> dict:
+        new_attempt = state.get("attempt_count", 0) + 1
+        if new_attempt < (max_attempts):
+            return {
+                "attempt_count": new_attempt,
+                "generated_sql": None,
+                "sql_result": None,
+                "sql_error": None,
+            }
+        return {
+            "attempt_count": new_attempt,
+            "is_aborted": True,
+            "abort_reason": "MAX_RETRIES_EXCEEDED",
+    }
 
     @staticmethod
     def _format_entities(entities: Any) -> str:

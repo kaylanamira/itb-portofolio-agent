@@ -1,0 +1,350 @@
+[
+  {
+    "id": "QR-001",
+    "description": "Query with temporal reference requires rewrite",
+    "query": "Bagaimana dengan semester lalu?",
+    "history": "User: Berapa rata-rata nilai IF2210 semester ini?\nAI: Rata-rata nilai IF2210 semester ganjil 2024 adalah 78.5",
+    "history_messages": [
+      "Berapa rata-rata nilai IF2210 semester ini?",
+      "Rata-rata nilai IF2210 semester ganjil 2024 adalah 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["temporal_reference", "anaphoric"]
+  },
+  {
+    "id": "QR-002",
+    "description": "Query with pronoun 'itu' requires rewrite",
+    "query": "Berapa mahasiswa yang lulus mata kuliah itu?",
+    "history": "User: Berapa nilai rata-rata IF2210?\nAI: Rata-rata IF2210 adalah 75.3",
+    "history_messages": [
+      "Berapa nilai rata-rata IF2210?",
+      "Rata-rata IF2210 adalah 75.3"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["pronoun", "anaphoric"]
+  },
+  {
+    "id": "QR-003",
+    "description": "Self-contained query should not be rewritten",
+    "query": "Berapa rata-rata nilai IF2210 semester ganjil 2024?",
+    "history": "",
+    "history_messages": [],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained"]
+  },
+  {
+    "id": "QR-004",
+    "description": "Query with 'nya' possessive pronoun",
+    "query": "Berapa jumlah mahasiswanya?",
+    "history": "User: Berapa nilai rata-rata IF2210?\nAI: Rata-rata IF2210 adalah 78.5",
+    "history_messages": [
+      "Berapa nilai rata-rata IF2210?",
+      "Rata-rata IF2210 adalah 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["pronoun", "possessive"]
+  },
+  {
+    "id": "QR-005",
+    "description": "Query with 'tadi' temporal reference",
+    "query": "Bagaimana dengan yang tadi?",
+    "history": "User: Berapa jumlah mahasiswa IF semester ini?\nAI: Total 245 mahasiswa",
+    "history_messages": [
+      "Berapa jumlah mahasiswa IF semester ini?",
+      "Total 245 mahasiswa"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["temporal_reference", "anaphoric"]
+  },
+  {
+    "id": "QR-006",
+    "description": "Query with 'mereka' plural pronoun",
+    "query": "Berapa rata-rata nilai mereka?",
+    "history": "User: Siapa mahasiswa IF yang IPK > 3.5?\nAI: Ada 42 mahasiswa IF dengan IPK > 3.5",
+    "history_messages": [
+      "Siapa mahasiswa IF yang IPK > 3.5?",
+      "Ada 42 mahasiswa IF dengan IPK > 3.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["pronoun", "plural"]
+  },
+  {
+    "id": "QR-007",
+    "description": "Query with 'ini' demonstrative but self-contained",
+    "query": "Berapa mahasiswa IF semester ini?",
+    "history": "",
+    "history_messages": [],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained", "demonstrative_acceptable"]
+  },
+  {
+    "id": "QR-008",
+    "description": "Query with 'tersebut' reference",
+    "query": "Berapa nilai rata-rata mata kuliah tersebut?",
+    "history": "User: Berapa mahasiswa IF2210?\nAI: Ada 120 mahasiswa mengambil IF2210",
+    "history_messages": [
+      "Berapa mahasiswa IF2210?",
+      "Ada 120 mahasiswa mengambil IF2210"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["demonstrative", "anaphoric"]
+  },
+  {
+    "id": "QR-009",
+    "description": "Follow-up with 'dia' pronoun",
+    "query": "Berapa mahasiswa yang mengambil kelas dia?",
+    "history": "User: Siapa dosen IF2210?\nAI: Dosen IF2210 adalah Dr. Budi",
+    "history_messages": [
+      "Siapa dosen IF2210?",
+      "Dosen IF2210 adalah Dr. Budi"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["pronoun", "third_person"]
+  },
+  {
+    "id": "QR-010",
+    "description": "Query with 'barusan' temporal reference",
+    "query": "Bandingkan dengan hasil barusan",
+    "history": "User: Berapa nilai rata-rata IF2210?\nAI: Rata-rata IF2210 adalah 78.5",
+    "history_messages": [
+      "Berapa nilai rata-rata IF2210?",
+      "Rata-rata IF2210 adalah 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["temporal_reference", "comparative"]
+  },
+  {
+    "id": "QR-011",
+    "description": "Complete query with full context, no rewrite needed",
+    "query": "Bandingkan nilai rata-rata IF2210 dengan IF3110",
+    "history": "User: Berapa nilai IF2210?\nAI: Rata-rata IF2210 adalah 78.5",
+    "history_messages": [
+      "Berapa nilai IF2210?",
+      "Rata-rata IF2210 adalah 78.5"
+    ],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained", "comparative"]
+  },
+  {
+    "id": "QR-012",
+    "description": "Query with 'sebelumnya' reference",
+    "query": "Bagaimana dengan semester sebelumnya?",
+    "history": "User: Berapa nilai rata-rata IF2210 semester ini?\nAI: Rata-rata IF2210 semester ganjil 2024 adalah 78.5",
+    "history_messages": [
+      "Berapa nilai rata-rata IF2210 semester ini?",
+      "Rata-rata IF2210 semester ganjil 2024 adalah 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["temporal_reference", "comparative"]
+  },
+  {
+    "id": "QR-013",
+    "description": "Clarification follow-up without anaphora",
+    "query": "Maksud saya untuk prodi Informatika",
+    "history": "User: Berapa jumlah mahasiswa?\nAI: Mohon klarifikasi, prodi mana yang dimaksud?",
+    "history_messages": [
+      "Berapa jumlah mahasiswa?",
+      "Mohon klarifikasi, prodi mana yang dimaksud?"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["clarification_response", "context_dependent"]
+  },
+  {
+    "id": "QR-014",
+    "description": "Simple greeting, no rewrite",
+    "query": "Halo",
+    "history": "",
+    "history_messages": [],
+    "expected_should_rewrite": false,
+    "tags": ["greeting", "out_of_scope"]
+  },
+  {
+    "id": "QR-015",
+    "description": "Multiple anaphoric references",
+    "query": "Bandingkan itu dengan ini",
+    "history": "User: Berapa nilai IF2210?\nAI: Rata-rata IF2210 adalah 78.5\nUser: Bagaimana dengan IF3110?\nAI: Rata-rata IF3110 adalah 82.3",
+    "history_messages": [
+      "Berapa nilai IF2210?",
+      "Rata-rata IF2210 adalah 78.5",
+      "Bagaimana dengan IF3110?",
+      "Rata-rata IF3110 adalah 82.3"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["multiple_anaphora", "complex"]
+  },
+  {
+    "id": "QR-016",
+    "description": "No history but query is complete",
+    "query": "Tampilkan distribusi nilai IF2210 semester ganjil 2024",
+    "history": "",
+    "history_messages": [],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained", "chart_request"]
+  },
+  {
+    "id": "QR-017",
+    "description": "English query with anaphora",
+    "query": "How about that course?",
+    "history": "User: What is the average grade for IF2210?\nAI: Average for IF2210 is 78.5",
+    "history_messages": [
+      "What is the average grade for IF2210?",
+      "Average for IF2210 is 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["english", "anaphoric"]
+  },
+  {
+    "id": "QR-018",
+    "description": "Query with implied comparison",
+    "query": "Gimana kalau yang lain?",
+    "history": "User: Berapa jumlah mahasiswa IF yang lulus IF2210?\nAI: 95 dari 120 mahasiswa IF lulus IF2210",
+    "history_messages": [
+      "Berapa jumlah mahasiswa IF yang lulus IF2210?",
+      "95 dari 120 mahasiswa IF lulus IF2210"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["informal", "anaphoric"]
+  },
+  {
+    "id": "QR-019",
+    "description": "Specific entity query, no rewrite",
+    "query": "Berapa mahasiswa yang mendapat A di IF2210?",
+    "history": "User: Berapa rata-rata IF3110?\nAI: Rata-rata IF3110 adalah 82.3",
+    "history_messages": [
+      "Berapa rata-rata IF3110?",
+      "Rata-rata IF3110 adalah 82.3"
+    ],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained", "different_topic"]
+  },
+  {
+    "id": "QR-020",
+    "description": "Short affirmation with context",
+    "query": "Ya, yang itu",
+    "history": "User: Apakah maksud Anda IF2210?\nAI: Konfirmasi: Anda menanyakan tentang IF2210?",
+    "history_messages": [
+      "Apakah maksud Anda IF2210?",
+      "Konfirmasi: Anda menanyakan tentang IF2210?"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["confirmation", "anaphoric"]
+  },
+  {
+    "id": "QR-021",
+    "description": "Bilingual code-switching with anaphora",
+    "query": "Compare dengan yang sebelumnya",
+    "history": "User: Berapa average IF2210?\nAI: Average IF2210 adalah 78.5",
+    "history_messages": [
+      "Berapa average IF2210?",
+      "Average IF2210 adalah 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["bilingual", "anaphoric"]
+  },
+  {
+    "id": "QR-022",
+    "description": "Long query with no anaphora",
+    "query": "Tolong tampilkan distribusi nilai lengkap untuk mata kuliah IF2210 pada semester ganjil tahun ajaran 2024/2025",
+    "history": "",
+    "history_messages": [],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained", "detailed"]
+  },
+  {
+    "id": "QR-023",
+    "description": "Query asking for more details about previous answer",
+    "query": "Bisa dijelaskan lebih detail?",
+    "history": "User: Kenapa nilai IF2210 turun?\nAI: Rata-rata IF2210 turun 5 poin dari semester lalu",
+    "history_messages": [
+      "Kenapa nilai IF2210 turun?",
+      "Rata-rata IF2210 turun 5 poin dari semester lalu"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["elaboration_request", "context_dependent"]
+  },
+  {
+    "id": "QR-024",
+    "description": "Question about same topic without anaphora",
+    "query": "Berapa persentase kelulusannya?",
+    "history": "User: Berapa mahasiswa yang mengambil IF2210?\nAI: 120 mahasiswa mengambil IF2210 semester ini",
+    "history_messages": [
+      "Berapa mahasiswa yang mengambil IF2210?",
+      "120 mahasiswa mengambil IF2210 semester ini"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["implicit_reference", "possessive"]
+  },
+  {
+    "id": "QR-025",
+    "description": "No context and no anaphora",
+    "query": "Berapa dosen di STEI?",
+    "history": "",
+    "history_messages": [],
+    "expected_should_rewrite": false,
+    "tags": ["self_contained"]
+  },
+  {
+    "id": "QR-026",
+    "description": "Chart interpretation follow-up",
+    "query": "Kenapa distribusinya seperti itu?",
+    "history": "User: Tampilkan distribusi nilai IF2210\nAI: [Chart showing grade distribution]",
+    "history_messages": [
+      "Tampilkan distribusi nilai IF2210",
+      "[Chart showing grade distribution]"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["chart_follow_up", "anaphoric"]
+  },
+  {
+    "id": "QR-027",
+    "description": "Different query direction, no rewrite",
+    "query": "Siapa dosen dengan publikasi terbanyak?",
+    "history": "User: Berapa nilai IF2210?\nAI: Rata-rata IF2210 adalah 78.5",
+    "history_messages": [
+      "Berapa nilai IF2210?",
+      "Rata-rata IF2210 adalah 78.5"
+    ],
+    "expected_should_rewrite": false,
+    "tags": ["topic_shift", "self_contained"]
+  },
+  {
+    "id": "QR-028",
+    "description": "Implicit entity with possessive",
+    "query": "Bagaimana distribusi nilainya?",
+    "history": "User: Berapa rata-rata IF2210?\nAI: Rata-rata IF2210 adalah 78.5",
+    "history_messages": [
+      "Berapa rata-rata IF2210?",
+      "Rata-rata IF2210 adalah 78.5"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["implicit_reference", "possessive"]
+  },
+  {
+    "id": "QR-029",
+    "description": "Confirmation with specific details, no rewrite",
+    "query": "Berapa mahasiswa IF dengan IPK > 3.5?",
+    "history": "User: Tampilkan statistik mahasiswa IF\nAI: Ada 245 mahasiswa IF aktif",
+    "history_messages": [
+      "Tampilkan statistik mahasiswa IF",
+      "Ada 245 mahasiswa IF aktif"
+    ],
+    "expected_should_rewrite": false,
+    "tags": ["refined_query", "self_contained"]
+  },
+  {
+    "id": "QR-030",
+    "description": "Multiple context turns with anaphora",
+    "query": "Bandingkan semua itu",
+    "history": "User: Nilai IF2210?\nAI: 78.5\nUser: IF3110?\nAI: 82.3\nUser: IF3170?\nAI: 75.8",
+    "history_messages": [
+      "Nilai IF2210?",
+      "78.5",
+      "IF3110?",
+      "82.3",
+      "IF3170?",
+      "75.8"
+    ],
+    "expected_should_rewrite": true,
+    "tags": ["complex", "multiple_context", "anaphoric"]
+  }
+]

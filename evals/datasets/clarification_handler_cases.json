@@ -1,0 +1,72 @@
+[
+  {
+    "id": "CH-CL-S-AD-001",
+    "query": "Ada berapa yang nilainya bagus?",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "simple",
+    "scope_role": "admin",
+    "scope_value": {},
+    "tags": ["ambiguous_threshold"]
+  },
+  {
+    "id": "CH-CL-S-AD-002",
+    "query": "Bandingkan mereka",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "simple",
+    "scope_role": "admin",
+    "scope_value": {},
+    "tags": ["missing_referent"]
+  },
+  {
+    "id": "CH-CL-S-AD-003",
+    "query": "Kenapa?",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "simple",
+    "scope_role": "admin",
+    "scope_value": {},
+    "tags": ["missing_context"]
+  },
+  {
+    "id": "CH-CL-S-AD-004",
+    "query": "Siapa dosen yang performanya paling jelek?",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "moderate",
+    "scope_role": "admin",
+    "scope_value": {},
+    "tags": ["ambiguous_metric"]
+  },
+  {
+    "id": "CH-CL-S-KP-001",
+    "query": "Berapa banyak mahasiswa yang lulus tepat waktu?",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "moderate",
+    "scope_role": "kaprodi",
+    "scope_value": {"kode_prodi": "135"},
+    "tags": ["missing_timeframe"]
+  },
+  {
+    "id": "CH-CL-S-AD-005",
+    "query": "Tampilkan laporan nilai",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "moderate",
+    "scope_role": "admin",
+    "scope_value": {},
+    "tags": ["too_broad", "missing_filters"]
+  },
+  {
+    "id": "CH-CL-S-DS-001",
+    "query": "Berapa rata-rata nilai kelas saya yang itu?",
+    "should_clarify": true,
+    "expected_query_type": "clarification_needed",
+    "complexity": "moderate",
+    "scope_role": "dosen",
+    "scope_value": {"nip": "123456"},
+    "tags": ["missing_referent", "ambiguous_class"]
+  }
+]

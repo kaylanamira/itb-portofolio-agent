@@ -8,9 +8,7 @@ from agent.nodes.sql_pipeline import sql_pipeline, route_after_sql_pipeline
 from agent.nodes.step_reasoner import step_reasoner
 from agent.nodes.synthesizer import synthesizer
 from agent.nodes.clarification_handler import clarification_handler
-
-async def rag_retriever(state: AgentState) -> dict:
-    return {"rag_chunks": [{"content": "Placeholder RAG result"}], "rag_query": state.get("effective_query")}
+from agent.nodes.rag_retriever import rag_retriever
 
 def route_next_step(state: AgentState) -> str:
     if state.get("query_type") == QueryType.CLARIFICATION_NEEDED:

@@ -19,7 +19,8 @@ pool = AsyncConnectionPool(
     min_size=1,
     max_size=10,
     timeout=30.0,
-    open=False, # We open it in lifespan
+    open=False,
+    kwargs={"options": "-c search_path=public,utama,analitik,evaluasi,kelas,mahasiswa,kur24,users"},
 )
 
 @asynccontextmanager

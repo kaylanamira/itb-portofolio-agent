@@ -1,0 +1,569 @@
+[
+  {
+    "id": "AV-V-001",
+    "description": "Single row aggregate lookup",
+    "question": "Berapa rata-rata IP mahasiswa IF1220 kelas 1?",
+    "generated_sql": "SELECT COALESCE(AVG(rata_ip_akhir_mahasiswa), 0) AS avg_ip FROM analitik.mv_kelas WHERE kode_mk='IF1220' AND no_kelas='1'",
+    "sql_result": [
+      {
+        "avg_ip": 3.42
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "single_row"
+    ]
+  },
+  {
+    "id": "AV-V-002",
+    "description": "Multi-row comparison",
+    "question": "Bandingkan skor evaluasi IF1220 dan IF2210",
+    "generated_sql": "SELECT kode_mk, avg_skor_overall FROM analitik.mv_kelas WHERE kode_mk IN ('IF1220','IF2210') ORDER BY kode_mk",
+    "sql_result": [
+      {
+        "kode_mk": "IF1220",
+        "avg_skor_overall": 3.2
+      },
+      {
+        "kode_mk": "IF2210",
+        "avg_skor_overall": 3.5
+      }
+    ],
+    "sql_row_count": 2,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "multi_row"
+    ]
+  },
+  {
+    "id": "AV-V-003",
+    "description": "Count query",
+    "question": "Berapa jumlah dosen di STEI?",
+    "generated_sql": "SELECT COUNT(*) AS total_dosen FROM utama.dosen d JOIN utama.kk kk ON kk.kk_id = d.kk_id JOIN utama.fakultas f ON f.kd_fak  = kk.kd_fak  WHERE f.kd_fak='STEI'",
+    "sql_result": [
+      {
+        "total_dosen": 200
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "count"
+    ]
+  },
+  {
+    "id": "AV-V-004",
+    "description": "Percentage result via CTE",
+    "question": "Berapa persen dosen STEI yang ada di KK RPL?",
+    "generated_sql": "WITH base AS (SELECT COUNT(*) AS total FROM utama.dosen d JOIN utama.kk k ON k.kk_id=d.kk_id JOIN utama.fakultas f ON f.kd_fak=k.kd_fak WHERE f.kd_fak='STEI'), rpl AS (SELECT COUNT(*) AS cnt FROM utama.dosen d JOIN utama.kk k ON k.kk_id=d.kk_id JOIN utama.fakultas f ON f.kd_fak=k.kd_fak WHERE f.kd_fak='STEI' AND k.nama->>'id' ILIKE '%rekayasa perangkat lunak%') SELECT rpl.cnt, base.total, ROUND(rpl.cnt*100.0/NULLIF(base.total,0),2) AS pct FROM base, rpl",
+    "sql_result": [
+      {
+        "cnt": 28,
+        "total": 200,
+        "pct": 14
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "percentage",
+      "cte"
+    ]
+  },
+  {
+    "id": "AV-V-005",
+    "description": "List of dosen names",
+    "question": "Siapa saja dosen yang mengajar IF3150 di 2023?",
+    "generated_sql": "SELECT DISTINCT unnest(semua_dosen_nama_gelar) AS nama_dosen FROM analitik.mv_kelas WHERE kode_mk='IF3150' AND tahun=2023",
+    "sql_result": [
+      {
+        "nama_dosen": "Tonya Navarro, S.T., M.A.B."
+      },
+      {
+        "nama_dosen": "Dr. Leah Griffith, S.T, M.T."
+      },
+      {
+        "nama_dosen": "Reginald Howard, S.T, M.T."
+      }
+    ],
+    "sql_row_count": 3,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "list"
+    ]
+  },
+  {
+    "id": "AV-V-006",
+    "description": "Grade distribution breakdown",
+    "question": "Bagaimana distribusi nilai IF3140 K2 tahun 2023?",
+    "generated_sql": "SELECT dist_jumlah_a, dist_jumlah_ab, dist_jumlah_b, dist_jumlah_bc, dist_jumlah_c, dist_jumlah_d, dist_jumlah_e FROM analitik.mv_kelas WHERE kode_mk='IF3140' AND no_kelas='2' AND semester=1 AND tahun=2023",
+    "sql_result": [
+      {
+        "dist_jumlah_a": 10,
+        "dist_jumlah_ab": 8,
+        "dist_jumlah_b": 12,
+        "dist_jumlah_bc": 5,
+        "dist_jumlah_c": 3,
+        "dist_jumlah_d": 1,
+        "dist_jumlah_e": 0
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "distribution"
+    ]
+  },
+  {
+    "id": "AV-V-007",
+    "description": "Trend data over multiple semesters",
+    "question": "Tren rata-rata skor evaluasi IF2210 dari 2022 sampai 2024",
+    "generated_sql": "SELECT tahun, semester, AVG(avg_skor_overall) AS avg_skor FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND tahun BETWEEN 2022 AND 2024 GROUP BY tahun, semester ORDER BY tahun, semester",
+    "sql_result": [
+      {
+        "tahun": 2022,
+        "semester": 1,
+        "avg_skor": 3.1
+      },
+      {
+        "tahun": 2023,
+        "semester": 1,
+        "avg_skor": 3.3
+      },
+      {
+        "tahun": 2024,
+        "semester": 1,
+        "avg_skor": 3.5
+      }
+    ],
+    "sql_row_count": 3,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "trend"
+    ]
+  },
+  {
+    "id": "AV-V-008",
+    "description": "Single name lookup",
+    "question": "Siapa dekan STEI?",
+    "generated_sql": "SELECT d.nama_gelar FROM utama.fakultas f JOIN utama.dosen d ON d.dosen_id=f.dosen_id_dekan WHERE f.kd_fak='STEI' AND f.active=true",
+    "sql_result": [
+      {
+        "nama_gelar": "Prof. Dr. Ir. Andi Kusuma, M.T."
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "lookup"
+    ]
+  },
+  {
+    "id": "AV-V-009",
+    "description": "Prodi list",
+    "question": "Apa saja prodi yang ada di STEI?",
+    "generated_sql": "SELECT kd_ps, nama->>'id' AS nama_prodi FROM utama.program_studi WHERE kd_fak='STEI' AND active=true ORDER BY kd_ps",
+    "sql_result": [
+      {
+        "kd_ps": "EL",
+        "nama_prodi": "Teknik Elektro"
+      },
+      {
+        "kd_ps": "IF",
+        "nama_prodi": "Informatika"
+      },
+      {
+        "kd_ps": "STI",
+        "nama_prodi": "Sistem dan Teknologi Informasi"
+      }
+    ],
+    "sql_row_count": 3,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "list"
+    ]
+  },
+  {
+    "id": "AV-V-010",
+    "description": "Attendance rate result",
+    "question": "Berapa rata-rata kehadiran dosen IF2210 semester ganjil 2024?",
+    "generated_sql": "SELECT AVG(pct_kehadiran_dosen) AS avg_kehadiran FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND semester=1 AND tahun=2024",
+    "sql_result": [
+      {
+        "avg_kehadiran": 96.5
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "attendance"
+    ]
+  },
+  {
+    "id": "AV-V-011",
+    "description": "Comparative prodi stats",
+    "question": "Prodi mana yang punya rata-rata nilai tertinggi di STEI semester ini?",
+    "generated_sql": "SELECT singkatan_prodi, AVG(avg_nilai) AS avg_nilai FROM analitik.mv_statistik_prodi WHERE kode_fakultas='STEI' AND semester=1 AND tahun=2025 GROUP BY singkatan_prodi ORDER BY avg_nilai DESC",
+    "sql_result": [
+      {
+        "singkatan_prodi": "IF",
+        "avg_nilai": 3.45
+      },
+      {
+        "singkatan_prodi": "STI",
+        "avg_nilai": 3.38
+      },
+      {
+        "singkatan_prodi": "EL",
+        "avg_nilai": 3.21
+      }
+    ],
+    "sql_row_count": 3,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "comparative"
+    ]
+  },
+  {
+    "id": "AV-V-012",
+    "description": "Count of KK in faculty",
+    "question": "Berapa jumlah kelompok keahlian di STEI?",
+    "generated_sql": "SELECT COUNT(*) AS total_kk FROM utama.kk k JOIN utama.fakultas f ON f.kd_fak=k.kd_fak WHERE f.kd_fak='STEI' AND k.active=true",
+    "sql_result": [
+      {
+        "total_kk": 9
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "count"
+    ]
+  },
+  {
+    "id": "AV-V-013",
+    "description": "Pass rate result",
+    "question": "Berapa persen mahasiswa lulus di IF2210 K1?",
+    "generated_sql": "SELECT dist_pct_lulus_A_C FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND no_kelas='1' AND semester=1 AND tahun=2025",
+    "sql_result": [
+      {
+        "dist_pct_lulus_A_C": 88.5
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "pass_rate"
+    ]
+  },
+  {
+    "id": "AV-V-014",
+    "description": "Dosen evaluation score",
+    "question": "Berapa skor evaluasi rata-rata saya semester ini?",
+    "generated_sql": "SELECT AVG(avg_skor_overall) AS avg_skor FROM analitik.mv_statistik_dosen WHERE semester=1 AND tahun=2025",
+    "sql_result": [
+      {
+        "avg_skor": 3.67
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "dosen_scope"
+    ]
+  },
+  {
+    "id": "AV-V-015",
+    "description": "Valid zero-row for entity existence check",
+    "question": "Apakah ada kelas IF9001 yang aktif semester ini?",
+    "generated_sql": "SELECT kode_mk, no_kelas FROM analitik.mv_kelas WHERE kode_mk='IF9001' AND semester=1 AND tahun=2025",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": true,
+    "tags": [
+      "valid",
+      "zero_row_valid",
+      "existence_check"
+    ]
+  },
+  {
+    "id": "AV-E-001",
+    "description": "Empty result for non-existent course",
+    "question": "Berapa mahasiswa IF9999?",
+    "generated_sql": "SELECT jumlah_peserta FROM analitik.mv_kelas WHERE kode_mk='IF9999'",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "empty_result"
+    ]
+  },
+  {
+    "id": "AV-E-002",
+    "description": "Empty result wrong semester filter",
+    "question": "Berapa nilai A di IF2210 semester 2 tahun 2025?",
+    "generated_sql": "SELECT dist_jumlah_a FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND semester=2 AND tahun=2025",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "empty_result",
+      "over_filtered"
+    ]
+  },
+  {
+    "id": "AV-E-003",
+    "description": "Wrong column returned",
+    "question": "Berapa kehadiran dosen IF2210?",
+    "generated_sql": "SELECT jumlah_peserta FROM analitik.mv_kelas WHERE kode_mk='IF2210'",
+    "sql_result": [
+      {
+        "jumlah_peserta": 40
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "irrelevant_column"
+    ]
+  },
+  {
+    "id": "AV-E-004",
+    "description": "SELECT 1 nonsense query",
+    "question": "Berapa kehadiran dosen?",
+    "generated_sql": "SELECT 1 FROM analitik.mv_kelas LIMIT 1",
+    "sql_result": [
+      {
+        "?column?": 1
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "nonsense_query"
+    ]
+  },
+  {
+    "id": "AV-E-005",
+    "description": "Result has no relation to question",
+    "question": "Siapa dosen IF3140?",
+    "generated_sql": "SELECT kode_mk, jumlah_peserta FROM analitik.mv_kelas WHERE semester=1 AND tahun=2025",
+    "sql_result": [
+      {
+        "kode_mk": "IF2210",
+        "jumlah_peserta": 35
+      },
+      {
+        "kode_mk": "IF3140",
+        "jumlah_peserta": 28
+      }
+    ],
+    "sql_row_count": 2,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "irrelevant_columns"
+    ]
+  },
+  {
+    "id": "AV-E-006",
+    "description": "Empty due to typo in course code filter",
+    "question": "Berapa skor evaluasi IF 2210?",
+    "generated_sql": "SELECT avg_skor_overall FROM analitik.mv_kelas WHERE kode_mk='IF 2210'",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "empty_result",
+      "typo_filter"
+    ]
+  },
+  {
+    "id": "AV-E-007",
+    "description": "Null result from overly strict filter",
+    "question": "Berapa rata-rata skor evaluasi semua kelas IF2210?",
+    "generated_sql": "SELECT avg_skor_overall FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND no_kelas='99'",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "empty_result",
+      "over_filtered"
+    ]
+  },
+  {
+    "id": "AV-E-008",
+    "description": "Returns only metadata, not answer",
+    "question": "Bagaimana performa mahasiswa di IF3140?",
+    "generated_sql": "SELECT kode_mk, semester, tahun FROM analitik.mv_kelas WHERE kode_mk='IF3140'",
+    "sql_result": [
+      {
+        "kode_mk": "IF3140",
+        "semester": 1,
+        "tahun": 2025
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "missing_metric_columns"
+    ]
+  },
+  {
+    "id": "AV-E-009",
+    "description": "Empty for dosen with no classes",
+    "question": "Berapa kelas yang diajar dosen ID 9999?",
+    "generated_sql": "SELECT COUNT(*) AS total_kelas FROM analitik.mv_kelas WHERE 9999 = ANY(semua_dosen_id)",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "empty_result"
+    ]
+  },
+  {
+    "id": "AV-E-010",
+    "description": "Irrelevant table joined, returns unrelated data",
+    "question": "Apa nilai mahasiswa terbaik di IF2210?",
+    "generated_sql": "SELECT kd_fak, nama->>'id' AS nama_fak FROM utama.fakultas WHERE {SCOPE_FILTER}",
+    "sql_result": [
+      {
+        "kd_fak": "STEI",
+        "nama_fak": "Sekolah Teknik Elektro dan Informatika"
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": false,
+    "tags": [
+      "invalid",
+      "wrong_table"
+    ]
+  },
+  {
+    "id": "AV-ED-001",
+    "description": "Edge: valid zero rows for existence check with clear negative answer",
+    "question": "Apakah ada matakuliah kode XX9999 yang pernah diajarkan?",
+    "generated_sql": "SELECT kode_mk FROM analitik.mv_kelas WHERE kode_mk='XX9999'",
+    "sql_result": [],
+    "sql_row_count": 0,
+    "expected_valid": true,
+    "tags": [
+      "edge",
+      "zero_row_valid",
+      "existence_check"
+    ]
+  },
+  {
+    "id": "AV-ED-002",
+    "description": "Edge: single column with NULL value",
+    "question": "Berapa rata-rata nilai IF2210?",
+    "generated_sql": "SELECT AVG(rata_ip_akhir_mahasiswa) AS avg_ip FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND semester=2 AND tahun=2020",
+    "sql_result": [
+      {
+        "avg_ip": null
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": false,
+    "tags": [
+      "edge",
+      "null_value"
+    ]
+  },
+  {
+    "id": "AV-ED-003",
+    "description": "Edge: result answers partially - has data but wrong granularity",
+    "question": "Berapa nilai A di IF2210 kelas 1?",
+    "generated_sql": "SELECT SUM(dist_jumlah_a) AS total_a FROM analitik.mv_kelas WHERE kode_mk='IF2210'",
+    "sql_result": [
+      {
+        "total_a": 45
+      }
+    ],
+    "sql_row_count": 1,
+    "expected_valid": true,
+    "tags": [
+      "edge",
+      "valid_but_imprecise"
+    ]
+  },
+  {
+    "id": "AV-ED-004",
+    "description": "Edge: large result set for a count question",
+    "question": "Berapa total kelas IF2210 yang pernah ada?",
+    "generated_sql": "SELECT kode_mk, no_kelas, semester, tahun FROM analitik.mv_kelas WHERE kode_mk='IF2210' ORDER BY tahun, semester",
+    "sql_result": [
+      {
+        "kode_mk": "IF2210",
+        "no_kelas": "1",
+        "semester": 1,
+        "tahun": 2022
+      },
+      {
+        "kode_mk": "IF2210",
+        "no_kelas": "2",
+        "semester": 1,
+        "tahun": 2022
+      },
+      {
+        "kode_mk": "IF2210",
+        "no_kelas": "1",
+        "semester": 1,
+        "tahun": 2023
+      }
+    ],
+    "sql_row_count": 3,
+    "expected_valid": false,
+    "tags": [
+      "edge",
+      "valid_but_imprecise"
+    ]
+  },
+  {
+    "id": "AV-ED-005",
+    "description": "Edge: valid result but with extra irrelevant columns alongside relevant ones",
+    "question": "Berapa rata-rata skor evaluasi per kelas IF2210 semester ini?",
+    "generated_sql": "SELECT kode_mk, no_kelas, avg_skor_overall FROM analitik.mv_kelas WHERE kode_mk='IF2210' AND semester=1 AND tahun=2025",
+    "sql_result": [
+      {
+        "kode_mk": "IF2210",
+        "no_kelas": "1",
+        "avg_skor_overall": 3.5
+      },
+      {
+        "kode_mk": "IF2210",
+        "no_kelas": "2",
+        "avg_skor_overall": 3.3
+      }
+    ],
+    "sql_row_count": 2,
+    "expected_valid": true,
+    "tags": [
+      "edge",
+      "extra_columns_ok"
+    ]
+  }
+]

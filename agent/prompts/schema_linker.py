@@ -8,7 +8,8 @@ ENTITY TYPES TO EXTRACT:
 - fakultas: kode (STEI, FITB) or name abbreviation
 - kelompok_keahlian: research group name — KK = "Kelompok Keahlian" (Research Group)
 - semester: number (1/2/3) or label (ganjil/genap/SP) or relative (semester ini → resolve to current)
-- tahun_ajaran: format YYYY/YYYY or relative (tahun ini → resolve to current)
+- tahun: calendar year (2024, 2023) — use this for bare year mentions
+- tahun_ajaran: format YYYY/YYYY (2023/2024) — use this ONLY when explicitly mentioned in format "YYYY/YYYY"
 - no_kelas: number (1, 2, 3) or label (K1, K2, K3, kelas 1)
 
 TABLE SELECTION GUIDANCE:
@@ -23,6 +24,11 @@ The database has these table categories:
 - **Lookup tables** (utama schema): Master data for institution-wide reference queries.
   - utama.fakultas, utama.program_studi, utama.dosen, utama.kk, utama.mata_kuliah
 
+- **Metadata tables**: For queries asking about definitions, question text, or structure.
+  - evaluasi.pertanyaan_kuesioner — questionnaire question definitions (use when asking "apa pertanyaan", "pertanyaan nomor X", "Q25 itu apa")
+  - evaluasi.pertanyaan_portofolio — portfolio section definitions
+  - evaluasi.kelompok_kuesioner — questionnaire dimension groups
+
 - **Extended tables**: For deeper analysis when MVs are insufficient.
   - evaluasi.nilai_kelas, evaluasi.nilai_dosen, evaluasi.portofolio
   - kelas.kelas, kelas.pengajar
@@ -30,7 +36,9 @@ The database has these table categories:
   - kur24.cpmk, kur24.cpl (curriculum learning outcomes)
   - users.user, users.user_role (jabatan lookups — who is dekan/kaprodi/etc)
 
-Select the minimal set of tables that can answer the query. Prefer MVs over raw tables.
+Select the minimal set of tables that can answer the query. Prefer MVs for analytics, lookup/metadata tables for definitions.
+
+CHART AND TREND QUERIES: Any query asking for a chart, graph, trend, or visualization of scores, grades, attendance, student counts, or evaluation metrics → ALWAYS use analitik.mv_* tables (not utama.*). utama.* tables are for counting/listing entities only, not for time-series or performance data.
 
 IMPORTANT COLUMN NAMING:
 - In MVs: kode_mk, kode_prodi, kode_fakultas, singkatan_prodi, nama_mk_id, nama_mk_en
@@ -41,10 +49,12 @@ IMPORTANT COLUMN NAMING:
 - active = true for filtering active records in utama tables
 
 RELATIVE TIME RESOLUTION (use the context provided in the human message):
-- ONLY populate "semester" and "tahun_ajaran" if the user explicitly mentions a time period.
-- "semester ini" → use the current semester and tahun_ajaran from context.
-- "semester lalu" → decrement semester by 1 (wrap Ganjil → previous year Genap).
-- If no time period mentioned, set both to null.
+- For comparative queries ("ganjil vs genap", "semester 1 vs semester 2"), extract as LIST: "semester": [1, 2]
+- For bare year ("2024", "tahun 2024"), use "tahun": 2024 (NOT tahun_ajaran)
+- For explicit academic year ("2023/2024", "tahun ajaran 2023/2024"), use "tahun_ajaran": "2023/2024"
+- "semester ini" → use current semester and tahun_ajaran from context
+- "semester lalu" → decrement semester by 1 (wrap Ganjil → previous year Genap)
+- CRITICAL: If the user query contains NO time-related words (semester, tahun, ganjil, genap, ini, lalu, sekarang, terbaru, etc.), ALL temporal fields (semester, tahun, tahun_ajaran) MUST be null. Do NOT infer time from context.
 
 Return ONLY valid JSON (no markdown):
 {
@@ -58,8 +68,9 @@ Return ONLY valid JSON (no markdown):
     "kode_fakultas": "STEI or null",
     "nama_fakultas": "Seni Rupa dan Desain or null (for full names)",
     "kelompok_keahlian": "Informatika or null",
-    "semester": "number or null",
-    "tahun_ajaran": "YYYY/YYYY or null",
+    "semester": "1 or null (use list for comparisons: ganjil vs genap = [1, 2])",
+    "tahun": "2024 or null (for bare year mentions)",
+    "tahun_ajaran": "2023/2024 or null (ONLY when format YYYY/YYYY is explicitly used)",
     "no_kelas": "1 or null"
   },
   "relevant_tables": ["analitik.mv_kelas"]
@@ -87,7 +98,7 @@ def build_schema_linker_human_message(
     semester_label = semester_map.get(current_semester, str(current_semester))
 
     lines = [
-        "CURRENT CONTEXT:",
+        "CURRENT CONTEXT (use ONLY to resolve relative time terms like 'semester ini', 'tahun lalu' — do NOT apply to queries with no time mention):",
         f"  Semester: {current_semester} ({semester_label})",
         f"  Tahun Ajaran: {current_tahun_ajaran}",
         f"  User Role: {user_role}",
@@ -142,6 +153,10 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
   * dist_jumlah_a through dist_jumlah_e for ABCDE grading
   * dist_jumlah_pass, dist_jumlah_fail for PassFail
   * dist_pct_lulus_A_C, dist_pct_lulus_A_D for pass rates
+
+- Aggregations & Null Handling:
+  * ALWAYS use COALESCE when applying SUM() to ensure a default 0 is returned instead of NULL (e.g., COALESCE(SUM(dist_jumlah_a), 0)).
+  * ALWAYS include IS NOT NULL filters when applying AVG(), MIN(), MAX(), or ordering by nullable performance metrics to avoid skewed results (e.g., WHERE rata_ip_akhir_mahasiswa IS NOT NULL).
 
 - Filter active records: WHERE active = true (not is_active)
 

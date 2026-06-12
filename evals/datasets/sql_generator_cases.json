@@ -1,0 +1,1172 @@
+[
+  {
+    "id": "SG-DL-S-KP-001",
+    "description": "Grade count: mahasiswa nilai A di IF1220 kelas 1 sem 1 2024",
+    "query": "Berapa jumlah mahasiswa yang mendapat nilai A di IF1220 kelas 1 semester ganjil 2024?",
+    "query_type": "data_lookup",
+    "schema_context": "mv_kelas: kode_mk varchar, no_kelas int, semester smallint, tahun smallint, dist_jumlah_a int, dist_jumlah_b int, jenis_nilai text",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "no_kelas": 1,
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "kode_mk",
+        "dist_jumlah_a",
+        "semester",
+        "tahun"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "DROP",
+        "nim",
+        "email"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT  COALESCE(SUM(dist_jumlah_a), 0) AS total_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND no_kelas = 1 AND semester = 1 AND tahun = 2024",
+    "expected_columns_used": [
+      "dist_jumlah_a"
+    ],
+    "tags": [
+      "data_lookup",
+      "grade_count"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-DL-S-KP-002",
+    "description": "Average IP mahasiswa per kelas: IF1220 sem 1 2024",
+    "query": "Berapa rata-rata IP mahasiswa di IF1220 semester ganjil 2024?",
+    "query_type": "data_lookup",
+    "schema_context": "mv_kelas: kode_mk varchar, no_kelas int, semester smallint, tahun smallint, rata_ip_akhir_mahasiswa numeric, jumlah_mahasiswa int",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "rata_ip_akhir_mahasiswa",
+        "kode_mk"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "nim"
+      ],
+      "must_be_select": true,
+      "should_have_null_guard": true
+    },
+    "ground_truth_sql": "SELECT COALESCE(AVG(rata_ip_akhir_mahasiswa), 0) FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+    "expected_columns_used": [
+      "rata_ip_akhir_mahasiswa"
+    ],
+    "tags": [
+      "data_lookup",
+      "avg_ip"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-DL-S-DS-001",
+    "description": "Dosen attendance: IF1220 kelas 2 sem 1 2024",
+    "query": "Berapa persentase kehadiran dosen di IF1220 kelas 2 semester ganjil 2024?",
+    "query_type": "data_lookup",
+    "schema_context": "mv_kelas: kode_mk varchar, no_kelas int, semester smallint, tahun smallint, pct_kehadiran_dosen numeric",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "no_kelas": 2,
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "pct_kehadiran_dosen",
+        "kode_mk",
+        "no_kelas"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT pct_kehadiran_dosen FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND no_kelas = 2 AND semester = 1 AND tahun = 2024",
+    "expected_columns_used": [
+      "pct_kehadiran_dosen"
+    ],
+    "tags": [
+      "data_lookup",
+      "attendance"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-AN-M-KP-001",
+    "description": "Top-5 courses with lowest graduation rate in prodi IF sem 1 2024",
+    "query": "5 mata kuliah dengan tingkat kelulusan terendah di prodi IF semester ganjil 2024",
+    "query_type": "analytical_numeric",
+    "schema_context": "mv_kelas: kode_mk varchar, nama_mk_id text, kode_prodi int, semester smallint, tahun smallint, dist_pct_lulus_A_C numeric",
+    "detected_entities": {
+      "singkatan_prodi": "IF",
+      "kode_prodi": 135,
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "dist_pct_lulus_A_C",
+        "kode_prodi"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim"
+      ],
+      "must_be_select": true,
+      "should_have_order_by": true,
+      "should_have_limit": true,
+      "should_have_null_guard": true
+    },
+    "ground_truth_sql": "SELECT nama_mk_id, dist_pct_lulus_A_C FROM analitik.mv_kelas WHERE kode_prodi = 135 AND semester = 1 AND tahun = 2024 AND dist_pct_lulus_A_C IS NOT NULL ORDER BY dist_pct_lulus_A_C ASC LIMIT 5",
+    "expected_columns_used": [
+      "dist_pct_lulus_A_C"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "ranking"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-CM-M-KP-001",
+    "description": "Cross-class comparison IF1220: percent_lulus per kelas",
+    "query": "Bandingkan persentase kelulusan IF1220 antar kelas semester ganjil 2024",
+    "query_type": "comparative",
+    "schema_context": "mv_kelas: kode_mk varchar, no_kelas int, semester smallint, tahun smallint, dist_pct_lulus_A_C numeric",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "no_kelas",
+        "dist_pct_lulus_A_C",
+        "kode_mk"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim"
+      ],
+      "must_be_select": true,
+      "should_have_order_by": true,
+      "should_have_null_guard": true
+    },
+    "ground_truth_sql": "SELECT no_kelas, dist_pct_lulus_A_C FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024 AND dist_pct_lulus_A_C IS NOT NULL ORDER BY no_kelas ASC",
+    "expected_columns_used": [
+      "no_kelas",
+      "dist_pct_lulus_A_C"
+    ],
+    "tags": [
+      "comparative",
+      "intra_course"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-DG-C-KP-001",
+    "description": "Diagnostic: kelas with certain graduation rate",
+    "query": "Mata kuliah apa di S1 IF kelulusannya di bawah 80%?",
+    "query_type": "diagnostic",
+    "schema_context": "mv_kelas: kode_mk varchar, nama_mk_id text, kode_prodi int, jenjang varchar, semester smallint, tahun smallint, pct_kehadiran_mahasiswa numeric, dist_pct_lulus_A_C numeric",
+    "detected_entities": {
+      "singkatan_prodi": "IF",
+      "kode_prodi": 135,
+      "jenjang": "S1",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "pct_kehadiran_mahasiswa",
+        "dist_pct_lulus_A_C",
+        "kode_prodi"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim"
+      ],
+      "must_be_select": true,
+      "should_have_null_guard": true
+    },
+    "ground_truth_sql": "SELECT nama_mk_id FROM analitik.mv_kelas WHERE kode_prodi = 135 AND jenjang = 'S1' AND semester = 1 AND tahun = 2024 AND dist_pct_lulus_A_C < 80",
+    "expected_columns_used": [
+      "pct_kehadiran_mahasiswa",
+      "dist_pct_lulus_A_C"
+    ],
+    "tags": [
+      "diagnostic",
+      "multi_condition"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-AN-M-DK-001",
+    "description": "Prodi-level avg: top prodi by avg_ip_mhs in STEI",
+    "query": "Prodi mana di STEI yang punya rata-rata nilai mahasiswa tertinggi semester ganjil 2024?",
+    "query_type": "analytical_numeric",
+    "schema_context": "mv_statistik_prodi: kode_prodi int, nama_prodi_id text, kode_fakultas varchar, semester smallint, tahun smallint, avg_ip_mhs numeric",
+    "detected_entities": {
+      "kode_fakultas": "STEI",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_statistik_prodi",
+        "avg_ip_mhs",
+        "kode_fakultas"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim",
+        "mv_kelas"
+      ],
+      "must_be_select": true,
+      "should_have_order_by": true,
+      "should_have_null_guard": true
+    },
+    "ground_truth_sql": "SELECT nama_prodi_id FROM analitik.mv_statistik_prodi WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_ip_mhs IS NOT NULL ORDER BY avg_ip_mhs DESC LIMIT 1",
+    "expected_columns_used": [
+      "avg_ip_mhs",
+      "nama_prodi_id"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "mv_statistik_prodi"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_statistik_prodi"
+    ]
+  },
+  {
+    "id": "SG-AN-M-KP-002",
+    "description": "Top dosen by skor pelaksanaan in STEI",
+    "query": "Siapa 3 dosen dengan skor kuesioner pelaksanaan tertinggi di STEI semester ganjil 2024?",
+    "query_type": "analytical_numeric",
+    "schema_context": "mv_statistik_dosen: dosen_id int, nama_dosen_gelar varchar, kode_fakultas_dosen varchar, semester smallint, tahun smallint, avg_skor_pelaksanaan numeric",
+    "detected_entities": {
+      "kode_fakultas": "STEI",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_statistik_dosen",
+        "avg_skor_pelaksanaan",
+        "kode_fakultas_dosen"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim",
+        "email",
+        "nip"
+      ],
+      "must_be_select": true,
+      "should_have_order_by": true,
+      "should_have_limit": true,
+      "should_have_null_guard": true
+    },
+    "ground_truth_sql": "SELECT nama_dosen_gelar FROM analitik.mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC LIMIT 3",
+    "expected_columns_used": [
+      "nama_dosen_gelar",
+      "avg_skor_pelaksanaan"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "mv_statistik_dosen"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_statistik_dosen"
+    ]
+  },
+  {
+    "id": "SG-DL-S-KP-003",
+    "description": "Questionnaire score Q24 (pelaksanaan class-level): IF1220 kelas 1",
+    "query": "Berapa skor pelaksanaan perkuliahan (Q24) IF1220 kelas 1 semester ganjil 2024?",
+    "query_type": "data_lookup",
+    "schema_context": "mv_kelas: kode_mk varchar, no_kelas int, semester smallint, tahun smallint, skor_q24 numeric",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "no_kelas": 1,
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mv_kelas",
+        "skor_q24",
+        "kode_mk",
+        "no_kelas"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT skor_q24 FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND no_kelas = 1 AND semester = 1 AND tahun = 2024",
+    "expected_columns_used": [
+      "skor_q24"
+    ],
+    "tags": [
+      "data_lookup",
+      "questionnaire_score"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ]
+  },
+  {
+    "id": "SG-DL-S-KP-004",
+    "description": "CPMK list for IF1220",
+    "query": "Apa saja CPMK dari matkul IF1220?",
+    "query_type": "data_lookup",
+    "schema_context": "kur24.cpmk: cpmk_id int, mata_kuliah_id int, nama jsonb, weight int, active boolean; utama.mata_kuliah: mata_kuliah_id int, kd_kuliah char(6), active boolean",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "kur24.cpmk",
+        "mata_kuliah_id",
+        "IF1220"
+      ],
+      "must_not_include": [
+        "INSERT",
+        "UPDATE",
+        "nim"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT c.nama, c.weight FROM kur24.cpmk c JOIN utama.mata_kuliah m ON c.mata_kuliah_id = m.mata_kuliah_id WHERE m.kd_kuliah = 'IF1220' AND c.active = true",
+    "expected_columns_used": [
+      "nama",
+      "weight"
+    ],
+    "tags": [
+      "data_lookup",
+      "kur24",
+      "cpmk"
+    ],
+    "complexity": "simple",
+    "expected_tables": [
+      "kur24.cpmk",
+      "utama.mata_kuliah"
+    ]
+  },
+  {
+    "id": "SG-DL-M-KP-005",
+    "description": "Historical score analysis from nilai_kelas",
+    "query": "Berapa rata-rata nilai akhir mahasiswa IF1220 kelas 1 semester ganjil 2024?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "evaluasi.nilai_kelas: nilai_kelas_id uuid, kelas_id uuid, mahasiswa_id int, nilai_akhir numeric; kelas: kelas_id uuid, kode_mk varchar, no_kelas int, semester smallint, tahun smallint",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "no_kelas": 1,
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "evaluasi.nilai_kelas",
+        "kelas",
+        "AVG"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT AVG(nk.nilai_akhir) FROM evaluasi.nilai_kelas nk JOIN kelas k ON nk.kelas_id = k.kelas_id WHERE k.kode_mk = 'IF1220' AND k.no_kelas = 1 AND k.semester = 1 AND k.tahun = 2024",
+    "expected_tables": [
+      "evaluasi.nilai_kelas",
+      "kelas"
+    ],
+    "expected_columns_used": [
+      "nilai_akhir"
+    ],
+    "tags": [
+      "data_lookup",
+      "nilai_kelas"
+    ]
+  },
+  {
+    "id": "SG-DL-M-KP-006",
+    "description": "Grade distribution from mahasiswa.kuliah",
+    "query": "Tampilkan daftar mahasiswa IF1220 semester ganjil 2024 beserta nilainya",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "mahasiswa.kuliah: mahasiswa_id int, kelas_id uuid, nilai_huruf varchar; kelas: kelas_id uuid, kode_mk varchar, semester smallint, tahun smallint; mahasiswa: mahasiswa_id int, nim varchar, nama varchar",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "mahasiswa.kuliah",
+        "kelas",
+        "mahasiswa"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT m.nim, m.nama, mk.nilai_huruf FROM mahasiswa.kuliah mk JOIN kelas k ON mk.kelas_id = k.kelas_id JOIN mahasiswa m ON mk.mahasiswa_id = m.mahasiswa_id WHERE k.kode_mk = 'IF1220' AND k.semester = 1 AND k.tahun = 2024",
+    "expected_tables": [
+      "mahasiswa.kuliah",
+      "kelas",
+      "mahasiswa"
+    ],
+    "expected_columns_used": [
+      "nim",
+      "nama",
+      "nilai_huruf"
+    ],
+    "tags": [
+      "data_lookup",
+      "mahasiswa.kuliah"
+    ]
+  },
+  {
+    "id": "SG-DL-C-KP-007",
+    "description": "Co-teaching queries",
+    "query": "Kelas apa saja yang diajar bersama oleh dosen A dan dosen B?",
+    "query_type": "data_lookup",
+    "complexity": "complex",
+    "schema_context": "pengajar_kelas: kelas_id uuid, dosen_id int; dosen: dosen_id int, nama_dosen_gelar varchar; kelas: kelas_id uuid, kode_mk varchar, semester smallint, tahun smallint",
+    "detected_entities": {
+      "nama_dosen_1": "dosen A",
+      "nama_dosen_2": "dosen B"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "pengajar_kelas",
+        "dosen",
+        "kelas"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT k.kode_mk FROM kelas k JOIN pengajar_kelas pk1 ON k.kelas_id = pk1.kelas_id JOIN dosen d1 ON pk1.dosen_id = d1.dosen_id JOIN pengajar_kelas pk2 ON k.kelas_id = pk2.kelas_id JOIN dosen d2 ON pk2.dosen_id = d2.dosen_id WHERE d1.nama_dosen_gelar ILIKE '%dosen A%' AND d2.nama_dosen_gelar ILIKE '%dosen B%'",
+    "expected_tables": [
+      "pengajar_kelas",
+      "dosen",
+      "kelas"
+    ],
+    "expected_columns_used": [
+      "kode_mk"
+    ],
+    "tags": [
+      "data_lookup",
+      "pengajar_kelas",
+      "co-teaching"
+    ]
+  },
+  {
+    "id": "SG-DL-S-KP-008",
+    "description": "Portfolio completeness check",
+    "query": "Kelas IF1220 mana saja yang portofolionya sudah diisi?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "evaluasi.portofolio: kelas_id uuid, is_submitted boolean; kelas: kelas_id uuid, kode_mk varchar, no_kelas int, semester smallint, tahun smallint",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "evaluasi.portofolio",
+        "kelas",
+        "is_submitted"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT k.no_kelas FROM kelas k JOIN evaluasi.portofolio p ON k.kelas_id = p.kelas_id WHERE k.kode_mk = 'IF1220' AND p.is_submitted = true",
+    "expected_tables": [
+      "evaluasi.portofolio",
+      "kelas"
+    ],
+    "expected_columns_used": [
+      "no_kelas",
+      "is_submitted"
+    ],
+    "tags": [
+      "data_lookup",
+      "portofolio"
+    ]
+  },
+  {
+    "id": "SG-AN-M-KP-009",
+    "description": "Comment aggregation before RAG",
+    "query": "Berapa banyak komentar mahasiswa untuk IF1220 semester ganjil 2024?",
+    "query_type": "analytical_numeric",
+    "complexity": "simple",
+    "schema_context": "analitik.mv_komentar_mahasiswa: komentar_id uuid, kode_mk varchar, semester smallint, tahun smallint, komentar_text text",
+    "detected_entities": {
+      "kode_mk": "IF1220",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "analitik.mv_komentar_mahasiswa",
+        "COUNT"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT COUNT(*) FROM analitik.mv_komentar_mahasiswa WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+    "expected_tables": [
+      "analitik.mv_komentar_mahasiswa"
+    ],
+    "expected_columns_used": [
+      "komentar_text"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "komentar"
+    ]
+  },
+  {
+    "id": "SG-DL-M-KP-010",
+    "description": "Active curriculum analysis / Pass Fail discovery",
+    "query": "Apa saja mata kuliah aktif di IF?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "utama.mata_kuliah: mata_kuliah_id int, kd_kuliah varchar, nama jsonb, active boolean, is_pass_fail boolean, program_studi_id int; utama.program_studi: program_studi_id int, kd_ps varchar",
+    "detected_entities": {
+      "singkatan_prodi": "IF"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "utama.mata_kuliah",
+        "utama.program_studi",
+        "active"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT mk.kd_kuliah, mk.nama FROM utama.mata_kuliah mk JOIN utama.program_studi ps ON mk.program_studi_id = ps.program_studi_id WHERE ps.kd_ps = 'IF' AND mk.active = true",
+    "expected_tables": [
+      "utama.mata_kuliah",
+      "utama.program_studi"
+    ],
+    "expected_columns_used": [
+      "kd_kuliah",
+      "nama"
+    ],
+    "tags": [
+      "data_lookup",
+      "curriculum"
+    ]
+  },
+  {
+    "id": "SG-DL-M-KP-011",
+    "description": "CPMK mapping",
+    "query": "Tampilkan CPMK mata kuliah IF1220",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "kur24.cpmk: cpmk_id int, mata_kuliah_id int, nama jsonb, weight int; utama.mata_kuliah: mata_kuliah_id int, kd_kuliah varchar",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "kur24.cpmk",
+        "utama.mata_kuliah"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT c.nama, c.weight FROM kur24.cpmk c JOIN utama.mata_kuliah m ON c.mata_kuliah_id = m.mata_kuliah_id WHERE m.kd_kuliah = 'IF1220'",
+    "expected_tables": [
+      "kur24.cpmk",
+      "utama.mata_kuliah"
+    ],
+    "expected_columns_used": [
+      "nama",
+      "weight"
+    ],
+    "tags": [
+      "data_lookup",
+      "cpmk"
+    ]
+  },
+  {
+    "id": "SG-DL-C-KP-012",
+    "description": "Prerequisite chains",
+    "query": "Apa prasyarat dari mata kuliah IF1220?",
+    "query_type": "data_lookup",
+    "complexity": "complex",
+    "schema_context": "kur24.relasi_mk: source_id int, target_id int, type varchar; utama.mata_kuliah: mata_kuliah_id int, kd_kuliah varchar, nama jsonb",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "kur24.relasi_mk",
+        "utama.mata_kuliah"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT m_prereq.kd_kuliah, m_prereq.nama FROM kur24.relasi_mk r JOIN utama.mata_kuliah m_target ON r.target_id = m_target.mata_kuliah_id JOIN utama.mata_kuliah m_prereq ON r.source_id = m_prereq.mata_kuliah_id WHERE m_target.kd_kuliah = 'IF1220' AND r.type = 'PREREQUISITE'",
+    "expected_tables": [
+      "kur24.relasi_mk",
+      "utama.mata_kuliah"
+    ],
+    "expected_columns_used": [
+      "kd_kuliah",
+      "nama"
+    ],
+    "tags": [
+      "data_lookup",
+      "prerequisite"
+    ]
+  },
+  {
+    "id": "SG-DL-M-KP-013",
+    "description": "Program package analysis",
+    "query": "Mata kuliah apa saja yang masuk paket jalur AI?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "kur24.paket: paket_id int, nama_paket varchar; kur24.paket_mata_kuliah: paket_id int, mata_kuliah_id int; utama.mata_kuliah: mata_kuliah_id int, kd_kuliah varchar",
+    "detected_entities": {
+      "nama_paket": "AI"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "kur24.paket",
+        "kur24.paket_mata_kuliah",
+        "utama.mata_kuliah"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT m.kd_kuliah FROM kur24.paket p JOIN kur24.paket_mata_kuliah pm ON p.paket_id = pm.paket_id JOIN utama.mata_kuliah m ON pm.mata_kuliah_id = m.mata_kuliah_id WHERE p.nama_paket ILIKE '%AI%'",
+    "expected_tables": [
+      "kur24.paket",
+      "kur24.paket_mata_kuliah",
+      "utama.mata_kuliah"
+    ],
+    "expected_columns_used": [
+      "kd_kuliah"
+    ],
+    "tags": [
+      "data_lookup",
+      "paket"
+    ]
+  },
+  {
+    "id": "SG-AN-C-KP-014",
+    "description": "Pass rate trend",
+    "query": "Bagaimana tren persentase kelulusan IF1220 dari tahun ke tahun?",
+    "query_type": "analytical_numeric",
+    "complexity": "complex",
+    "schema_context": "analitik.mv_kelas: kode_mk varchar, semester smallint, tahun smallint, dist_pct_lulus_A_C numeric",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "tahun",
+        "AVG",
+        "GROUP BY",
+        "ORDER BY"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT tahun, AVG(dist_pct_lulus_A_C) AS avg_lulus FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' GROUP BY tahun ORDER BY tahun",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ],
+    "expected_columns_used": [
+      "tahun",
+      "dist_pct_lulus_A_C"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "trend"
+    ]
+  },
+  {
+    "id": "SG-AN-C-KP-015",
+    "description": "Attendance trend",
+    "query": "Bagaimana tren kehadiran mahasiswa prodi IF dari semester ke semester?",
+    "query_type": "analytical_numeric",
+    "complexity": "complex",
+    "schema_context": "analitik.mv_statistik_prodi: kode_prodi int, semester smallint, tahun smallint, pct_kehadiran_mhs numeric",
+    "detected_entities": {
+      "kode_prodi": 135
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "tahun",
+        "semester",
+        "AVG",
+        "GROUP BY",
+        "ORDER BY"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT tahun, semester, AVG(pct_kehadiran_mhs) AS avg_kehadiran FROM analitik.mv_statistik_prodi WHERE kode_prodi = 135 GROUP BY tahun, semester ORDER BY tahun, semester",
+    "expected_tables": [
+      "analitik.mv_statistik_prodi"
+    ],
+    "expected_columns_used": [
+      "tahun",
+      "semester",
+      "pct_kehadiran_mhs"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "trend"
+    ]
+  },
+  {
+    "id": "SG-AN-S-DS-016",
+    "description": "Scope Dosen: My average teaching performance",
+    "query": "Berapa rata-rata skor pelaksanaan perkuliahan saya semester ini?",
+    "query_type": "analytical_numeric",
+    "complexity": "simple",
+    "schema_context": "analitik.mv_statistik_dosen: dosen_id int, semester smallint, tahun smallint, avg_skor_pelaksanaan numeric",
+    "detected_entities": {
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "{SCOPE_FILTER}"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT avg_skor_pelaksanaan FROM analitik.mv_statistik_dosen WHERE dosen_id = {SCOPE_FILTER} AND semester = 1 AND tahun = 2024",
+    "expected_tables": [
+      "analitik.mv_statistik_dosen"
+    ],
+    "expected_columns_used": [
+      "avg_skor_pelaksanaan"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "scope_dosen"
+    ]
+  },
+  {
+    "id": "SG-CM-M-DK-017",
+    "description": "Scope Dekan: Compare prodi within fakultas",
+    "query": "Bandingkan rata-rata nilai mahasiswa tiap prodi di fakultas saya semester ini",
+    "query_type": "comparative",
+    "complexity": "medium",
+    "schema_context": "analitik.mv_statistik_prodi: kode_fakultas varchar, nama_prodi_id text, semester smallint, tahun smallint, avg_ip_mhs numeric",
+    "detected_entities": {
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "{SCOPE_FILTER}",
+        "nama_prodi_id",
+        "avg_ip_mhs"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT nama_prodi_id, avg_ip_mhs FROM analitik.mv_statistik_prodi WHERE kode_fakultas = {SCOPE_FILTER} AND semester = 1 AND tahun = 2024",
+    "expected_tables": [
+      "analitik.mv_statistik_prodi"
+    ],
+    "expected_columns_used": [
+      "nama_prodi_id",
+      "avg_ip_mhs"
+    ],
+    "tags": [
+      "comparative",
+      "scope_dekan"
+    ]
+  },
+  {
+    "id": "SG-DL-S-KP-018",
+    "query": "Berapa jumlah mahasiswa aktif di IF semester ini?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "schema_context": "analitik.mv_statistik_prodi: kode_prodi int, semester smallint, tahun smallint, total_mahasiswa_aktif int",
+    "detected_entities": {
+      "kode_prodi": 135,
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "total_mahasiswa_aktif"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT total_mahasiswa_aktif FROM analitik.mv_statistik_prodi WHERE kode_prodi = 135 AND semester = 1 AND tahun = 2024",
+    "expected_tables": [
+      "analitik.mv_statistik_prodi"
+    ],
+    "expected_columns_used": [
+      "total_mahasiswa_aktif"
+    ],
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "SG-AN-M-KP-019",
+    "query": "Dosen siapa saja yang mengajar IF1220?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "pengajar_kelas: kelas_id uuid, dosen_id int; dosen: dosen_id int, nama_dosen_gelar varchar; kelas: kelas_id uuid, kode_mk varchar",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "dosen",
+        "pengajar_kelas",
+        "kelas"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT DISTINCT d.nama_dosen_gelar FROM dosen d JOIN pengajar_kelas pk ON d.dosen_id = pk.dosen_id JOIN kelas k ON pk.kelas_id = k.kelas_id WHERE k.kode_mk = 'IF1220'",
+    "expected_tables": [
+      "dosen",
+      "pengajar_kelas",
+      "kelas"
+    ],
+    "expected_columns_used": [
+      "nama_dosen_gelar"
+    ],
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "SG-DG-C-KP-020",
+    "query": "Tampilkan daftar kelas IF dengan kelulusan di bawah 50% dan kehadiran dosen di bawah 80%",
+    "query_type": "diagnostic",
+    "complexity": "complex",
+    "schema_context": "analitik.mv_kelas: kode_prodi int, kode_mk varchar, no_kelas int, dist_pct_lulus_A_C numeric, pct_kehadiran_dosen numeric",
+    "detected_entities": {
+      "kode_prodi": 135
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "dist_pct_lulus_A_C",
+        "pct_kehadiran_dosen"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT kode_mk, no_kelas FROM analitik.mv_kelas WHERE kode_prodi = 135 AND dist_pct_lulus_A_C < 50 AND pct_kehadiran_dosen < 80",
+    "expected_tables": [
+      "analitik.mv_kelas"
+    ],
+    "expected_columns_used": [
+      "kode_mk",
+      "no_kelas"
+    ],
+    "tags": [
+      "diagnostic"
+    ]
+  },
+  {
+    "id": "SG-CM-C-DK-021",
+    "query": "Bandingkan skor pelaksanaan perkuliahan antar prodi di fakultas saya",
+    "query_type": "comparative",
+    "complexity": "complex",
+    "schema_context": "analitik.mv_statistik_prodi: kode_fakultas varchar, nama_prodi_id text, avg_skor_pelaksanaan numeric",
+    "detected_entities": {},
+    "gold_sql_checks": {
+      "must_include": [
+        "{SCOPE_FILTER}"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT nama_prodi_id, avg_skor_pelaksanaan FROM analitik.mv_statistik_prodi WHERE kode_fakultas = {SCOPE_FILTER}",
+    "expected_tables": [
+      "analitik.mv_statistik_prodi"
+    ],
+    "expected_columns_used": [
+      "nama_prodi_id",
+      "avg_skor_pelaksanaan"
+    ],
+    "tags": [
+      "comparative",
+      "scope_dekan"
+    ]
+  },
+  {
+    "id": "SG-DL-S-DS-022",
+    "query": "Berapa banyak kelas yang saya ajar?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "schema_context": "analitik.mv_statistik_dosen: dosen_id int, total_kelas_diajar int",
+    "detected_entities": {},
+    "gold_sql_checks": {
+      "must_include": [
+        "{SCOPE_FILTER}",
+        "total_kelas_diajar"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT total_kelas_diajar FROM analitik.mv_statistik_dosen WHERE dosen_id = {SCOPE_FILTER}",
+    "expected_tables": [
+      "analitik.mv_statistik_dosen"
+    ],
+    "expected_columns_used": [
+      "total_kelas_diajar"
+    ],
+    "tags": [
+      "data_lookup",
+      "scope_dosen"
+    ]
+  },
+  {
+    "id": "SG-DL-M-DS-023",
+    "query": "Siapa dosen yang sering mengajar bersamaku?",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "pengajar_kelas: kelas_id uuid, dosen_id int; dosen: dosen_id int, nama_dosen_gelar varchar",
+    "detected_entities": {},
+    "gold_sql_checks": {
+      "must_include": [
+        "{SCOPE_FILTER}",
+        "pengajar_kelas",
+        "dosen"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT d.nama_dosen_gelar, COUNT(*) as co_teaching_count FROM pengajar_kelas pk1 JOIN pengajar_kelas pk2 ON pk1.kelas_id = pk2.kelas_id JOIN dosen d ON pk2.dosen_id = d.dosen_id WHERE pk1.dosen_id = {SCOPE_FILTER} AND pk2.dosen_id != {SCOPE_FILTER} GROUP BY d.nama_dosen_gelar ORDER BY co_teaching_count DESC",
+    "expected_tables": [
+      "pengajar_kelas",
+      "dosen"
+    ],
+    "expected_columns_used": [
+      "nama_dosen_gelar"
+    ],
+    "tags": [
+      "data_lookup",
+      "scope_dosen",
+      "co-teaching"
+    ]
+  },
+  {
+    "id": "SG-AN-M-KP-024",
+    "query": "Berapa rata-rata jam kerja dosen di IF semester ini?",
+    "query_type": "analytical_numeric",
+    "complexity": "medium",
+    "schema_context": "analitik.mv_statistik_dosen: kode_fakultas_dosen varchar, semester smallint, tahun smallint, avg_sks_beban int",
+    "detected_entities": {
+      "kode_fakultas": "STEI",
+      "semester": 1,
+      "tahun_ajaran": "2024/2025"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "avg_sks_beban"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT AVG(avg_sks_beban) FROM analitik.mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024",
+    "expected_tables": [
+      "analitik.mv_statistik_dosen"
+    ],
+    "expected_columns_used": [
+      "avg_sks_beban"
+    ],
+    "tags": [
+      "analytical_numeric"
+    ]
+  },
+  {
+    "id": "SG-DL-M-KP-025",
+    "query": "Tampilkan daftar kelas IF1220 beserta prodi penyelenggaranya",
+    "query_type": "data_lookup",
+    "complexity": "medium",
+    "schema_context": "kelas: kode_mk varchar, program_studi_id int; utama.program_studi: program_studi_id int, nama jsonb",
+    "detected_entities": {
+      "kode_mk": "IF1220"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "kelas",
+        "utama.program_studi"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT k.kode_mk, ps.nama FROM kelas k JOIN utama.program_studi ps ON k.program_studi_id = ps.program_studi_id WHERE k.kode_mk = 'IF1220'",
+    "expected_tables": [
+      "kelas",
+      "utama.program_studi"
+    ],
+    "expected_columns_used": [
+      "nama"
+    ],
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "SG-DL-S-KP-026",
+    "query": "Apa saja program studi di STEI?",
+    "query_type": "data_lookup",
+    "complexity": "simple",
+    "schema_context": "utama.program_studi: kd_fak varchar, nama jsonb",
+    "detected_entities": {
+      "kode_fakultas": "STEI"
+    },
+    "gold_sql_checks": {
+      "must_include": [
+        "utama.program_studi"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT nama FROM utama.program_studi WHERE kd_fak = 'STEI'",
+    "expected_tables": [
+      "utama.program_studi"
+    ],
+    "expected_columns_used": [
+      "nama"
+    ],
+    "tags": [
+      "data_lookup"
+    ]
+  },
+  {
+    "id": "SG-AN-C-DK-027",
+    "query": "Fakultas mana yang memiliki tingkat kelulusan tertinggi rata-rata?",
+    "query_type": "analytical_numeric",
+    "complexity": "complex",
+    "schema_context": "analitik.mv_statistik_prodi: kode_fakultas varchar, dist_pct_lulus_A_C numeric",
+    "detected_entities": {},
+    "gold_sql_checks": {
+      "must_include": [
+        "kode_fakultas",
+        "AVG"
+      ],
+      "must_not_include": [
+        "UPDATE"
+      ],
+      "must_be_select": true
+    },
+    "ground_truth_sql": "SELECT kode_fakultas, AVG(dist_pct_lulus_A_C) AS avg_lulus FROM analitik.mv_statistik_prodi GROUP BY kode_fakultas ORDER BY avg_lulus DESC LIMIT 1",
+    "expected_tables": [
+      "analitik.mv_statistik_prodi"
+    ],
+    "expected_columns_used": [
+      "kode_fakultas"
+    ],
+    "tags": [
+      "analytical_numeric",
+      "ranking"
+    ]
+  }
+]
