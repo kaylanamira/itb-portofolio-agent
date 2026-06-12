@@ -155,10 +155,8 @@ terlebih dahulu (`jsonb_each`, `->>`, dll), tidak bisa `AVG()` langsung.
 ### 5.3 `periode_ijazah_id` vs `periode_ijazah_id_final`
 (`v_wisudawan_jawaban_responden`, view wisudawan lainnya)
 
-- `periode_ijazah_id`: nilai ASLI dari data sumber, **66% NULL** (bukan
-  anomali — by design).
-- `periode_ijazah_id_final`: versi siap-pakai (asli jika ada, diimputasi
-  dari `submit_date` jika NULL).
+- `periode_ijazah_id`: nilai ASLI dari data sumber, **66% NULL**.
+- `periode_ijazah_id_final`: versi siap-pakai hasil imputasi.
 - **Selalu gunakan `periode_ijazah_id_final`** untuk filtering/grouping per
   periode. `periode_ijazah_id` mentah hampir tidak pernah relevan untuk
   agen kecuali secara eksplisit ditanya soal data sumber/data quality.
@@ -167,9 +165,7 @@ terlebih dahulu (`jsonb_each`, `->>`, dll), tidak bisa `AVG()` langsung.
 
 Saat ini **SELURUH data seremoni wisuda adalah data dummy/placeholder**
 (`is_seremoni_asumtif = TRUE` untuk semua baris) — data seremoni riil belum
-tersedia. Jika user bertanya soal "seremoni wisuda" secara spesifik (bukan
-sekadar "wisuda" secara umum), agen sebaiknya menyebutkan bahwa data
-seremoni masih bersifat sementara/asumtif. Kolom ini ada di
+tersedia. Kolom ini ada di
 `v_info_umum_wisuda`, `v_wisudawan_distribusi_jawaban`,
 `v_wisudawan_statistik_pertanyaan`, `v_wisudawan_jawaban_responden`.
 
