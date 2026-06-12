@@ -51,13 +51,13 @@ async def schema_linker(state: AgentState) -> dict:
     try:
         content = extract_json_from_llm(response.content)
         entities_dict = content.get("detected_entities") or {}
-        relevant_tables = content.get("relevant_tables") or ["analitik.mv_kelas"]
+        relevant_tables = content.get("relevant_tables") or ["analitik.v_akademik_kelas"]
         valid_fields = DetectedEntities.model_fields.keys()
         filtered = {k: v for k, v in entities_dict.items() if k in valid_fields and v is not None}
         entities = DetectedEntities(**filtered)
     except Exception:
         entities = DetectedEntities()
-        relevant_tables = ["analitik.mv_kelas"]
+        relevant_tables = ["analitik.v_akademik_kelas"]
 
     resolved_entities = await fuzzy_resolve_entities(entities)
     schema_context = await describe_tables(relevant_tables)
