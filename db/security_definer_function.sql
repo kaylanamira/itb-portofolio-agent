@@ -2,13 +2,13 @@
 -- IMPLEMENTASI SECURITY LAYER
 -- Schema: analitik (access layer) ← analitik_mv (raw data)
 --
--- Session variables yang di-set backend sebelum setiap query:
---   app.current_role       → 'ADMIN'|'DIREKTORAT'|'DEKAN'|
---                            'JAJARAN_DEKANAT'|'KAPRODI'|
---                            'JAJARAN_PRODI'|'DOSEN'
---   app.current_dosen_id   → integer (kosong string jika bukan DOSEN)
---   app.current_no_prodi   → integer (kosong string jika tidak relevan)
---   app.current_kd_fak     → varchar (kosong string jika tidak relevan)
+-- Session variables yang di-set backend sebelum setiap query (via scope.py get_rls_vars()):
+--   app.role      → 'admin'|'direktorat'|'dekan'|'jajaran_dekanat'|'kaprodi'|'jajaran_prodi'|'dosen'
+--   app.dosen_id  → integer (kosong string jika bukan dosen)
+--   app.no_ps     → integer, no_ps prodi scope (kosong string jika tidak relevan)
+--   app.kd_fak    → varchar, kd_fak scope (kosong string jika tidak relevan)
+--   app.kk_id     → integer (tidak dipakai di fungsi ini)
+--   app.user_id   → integer (tidak dipakai di fungsi ini)
 --
 -- Tidak ada tabel app_context — semua scope dari session variable
 -- yang di-set backend dari session Redis (ScopeEntry.model_dump()).
@@ -27,10 +27,10 @@ CREATE SCHEMA IF NOT EXISTS analitik;
 --     v_no_prodi integer;
 --     v_kd_fak   character varying;
 -- BEGIN
---     v_role     := NULLIF(current_setting('app.current_role',     true), '');
---     v_dosen_id := NULLIF(current_setting('app.current_dosen_id', true), '')::integer;
---     v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
---     v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+--     v_role     := NULLIF(current_setting('app.role',     true), '');
+--     v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
+--     v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+--     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
 --     IF v_role IS NULL THEN RETURN; END IF;
 -- ================================================================
 
@@ -239,10 +239,10 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_dosen_id := NULLIF(current_setting('app.current_dosen_id', true), '')::integer;
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -324,10 +324,10 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
     v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -360,9 +360,9 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -395,9 +395,9 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -482,10 +482,10 @@ DECLARE
     -- Shorthand: apakah baris ini milik dosen sendiri?
     -- Dievaluasi per baris di SELECT via ekspresi inline
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_dosen_id := NULLIF(current_setting('app.current_dosen_id', true), '')::integer;
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -568,9 +568,9 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -601,9 +601,9 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
@@ -635,9 +635,9 @@ DECLARE
     v_no_prodi integer;
     v_kd_fak   character varying;
 BEGIN
-    v_role     := NULLIF(current_setting('app.current_role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.current_no_prodi', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.current_kd_fak',   true), '');
+    v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
