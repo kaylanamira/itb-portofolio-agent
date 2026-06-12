@@ -1,7 +1,7 @@
 """
 api/routers/auth.py
 
-HTTP layer untuk autentikasi Microsoft SSO.
+HTTP layer untuk autentikasi Microsoft SSO dan manajemen session/role.
 
 Tanggung jawab:
     - Definisi endpoint dan HTTP contract-nya
@@ -12,13 +12,14 @@ Tanggung jawab:
 Tidak boleh berisi:
     - Logic MSAL langsung (→ auth/microsoft.py)
     - Logic Redis langsung (→ auth/session.py)
-    - Logic DB / role mapping (→ auth/role_mapper.py, hari 4)
+    - Logic DB / role mapping (→ auth/role_mapper.py)
 """
 
 import logging
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 
 from auth.microsoft import build_login_flow, exchange_code_for_claims
 from auth.role_mapper import AuthError, get_auth_user
@@ -28,6 +29,7 @@ from auth.session import (
     get_session,
     pop_oauth_flow,
     store_oauth_flow,
+    switch_active_role,
 )
 
 from core.config import settings
@@ -36,11 +38,20 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-# Helper
+
+# ─── Request / Response Models ────────────────────────────────────────────────
+
+class SwitchRoleRequest(BaseModel):
+    """Body untuk endpoint PATCH /role."""
+    user_role_id: int
+
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
 def _set_session_cookie(response: RedirectResponse | JSONResponse, session_id: str) -> None:
     """
     Set cookie session pada response.
- 
+
     Flag yang dipakai:
         httponly=True  → JS di browser tidak bisa baca cookie ini (cegah XSS)
         samesite="lax" → cookie dikirim saat navigasi top-level (redirect)
@@ -57,8 +68,8 @@ def _set_session_cookie(response: RedirectResponse | JSONResponse, session_id: s
         max_age=settings.SESSION_TTL_SECONDS,
         path="/",
     )
- 
- 
+
+
 def _clear_session_cookie(response: JSONResponse) -> None:
     """Hapus cookie session dari browser."""
     response.delete_cookie(
@@ -67,7 +78,9 @@ def _clear_session_cookie(response: JSONResponse) -> None:
         samesite="lax",
     )
 
-# Endpoint
+
+# ─── Endpoints ────────────────────────────────────────────────────────────────
+
 @router.get("/login")
 async def login():
     """
@@ -99,18 +112,6 @@ async def microsoft_callback(request: Request):
         session_state → opsional, metadata session dari Microsoft
         error         → ada jika login gagal di sisi Microsoft
         error_description → penjelasan error
-
-    Flow saat ini (Hari 2 — verifikasi):
-        1. Cek error dari Microsoft
-        2. Ambil + hapus flow dict dari Redis berdasarkan state
-        3. Tukar code → id_token_claims via MSAL
-        4. Return JSON dengan oid untuk verifikasi manual
-
-    TODO Hari 5: ganti step 4 dengan:
-        - Lookup user di DB by oid (auth/role_mapper.py)
-        - Buat session di Redis (auth/session.py)
-        - Set cookie sid pada response
-        - Redirect ke frontend (http://localhost:5173/dashboard)
     """
     params = dict(request.query_params)
 
@@ -133,7 +134,7 @@ async def microsoft_callback(request: Request):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Parameter 'state' tidak ditemukan pada callback.",
         )
- 
+
     stored_flow = await pop_oauth_flow(state)
     if stored_flow is None:
         raise HTTPException(
@@ -146,7 +147,7 @@ async def microsoft_callback(request: Request):
         claims = await exchange_code_for_claims(stored_flow, params)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
- 
+
     oid: str | None = claims.get("oid")
     if not oid:
         raise HTTPException(
@@ -154,43 +155,48 @@ async def microsoft_callback(request: Request):
             detail="ID token tidak mengandung 'oid'. Hubungi administrator.",
         )
 
-     # ── 4. Lookup user di DB → AuthUser (user_id + nama + UserScope) ──────────
+    # ── 4. Lookup user di DB → AuthUser (user_id + nama + UserScope) ──────────
     try:
         auth_user = await get_auth_user(oid)
     except AuthError as e:
-        # AuthError adalah kondisi bisnis normal (user tidak aktif, tidak punya akses)
-        # http_status sudah di-set di AuthError (403)
         raise HTTPException(status_code=e.http_status, detail=e.reason)
- 
+
     # ── 5. Buat session di Redis ───────────────────────────────────────────────
     session_id = await create_session(auth_user.user_scope, auth_user.nama)
- 
+
     # ── 6 & 7. Set cookie + redirect ke frontend ──────────────────────────────
     response = RedirectResponse(
         url=settings.FRONTEND_URL,
         status_code=status.HTTP_302_FOUND,
     )
     _set_session_cookie(response, session_id)
- 
+
     logger.info(
         "Login sukses | user_id=%s | nama=%s | role=%s → redirect ke %s",
         auth_user.user_id,
         auth_user.nama,
-        auth_user.user_scope.role.value,
+        auth_user.user_scope.active_role.role.value,
         settings.FRONTEND_URL,
     )
     return response
+
 
 @router.get("/me", summary="Info user yang sedang login")
 async def me(request: Request):
     """
     Dipakai frontend untuk cek apakah user sudah login dan ambil info dasarnya.
- 
+
     Biasanya dipanggil saat:
         - Halaman pertama kali dimuat (untuk cek auth state)
         - Setelah redirect dari callback (untuk dapat nama + role)
- 
+
     Returns 401 jika tidak ada session aktif.
+
+    Response:
+        user_id         : int
+        nama            : str
+        active_role     : dict  (role, user_role_id, scope info)
+        available_roles : list[dict]
     """
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if not session_id:
@@ -198,33 +204,97 @@ async def me(request: Request):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Tidak ada session aktif. Silakan login.",
         )
- 
+
     data = await get_session(session_id)
     if data is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session expired. Silakan login ulang.",
         )
- 
+
     return {
         "user_id": data["user_id"],
         "nama": data["nama"],
-        "role": data["active_role"]["role"],
-        "available_roles": [r["role"] for r in data["available_roles"]],
+        "active_role": {
+            "role": data["active_role"]["role"],
+            "user_role_id": data["active_role"]["user_role_id"],
+        },
+        "available_roles": [
+            {
+                "role": r["role"],
+                "user_role_id": r["user_role_id"],
+                "is_prime": r["is_prime"],
+            }
+            for r in data["available_roles"]
+        ],
     }
+
+
+@router.patch("/role", summary="Ganti role aktif untuk session ini")
+async def switch_role(request: Request, body: SwitchRoleRequest):
+    """
+    Ganti active_role ke salah satu role yang dimiliki user.
+
+    Body: { "user_role_id": <int> }
+
+    Syarat:
+        - Session harus aktif
+        - user_role_id harus ada di available_roles session ini
+          (validasi dilakukan server-side, tidak percaya input frontend)
+
+    Gunakan GET /me sebelumnya untuk dapat daftar available_roles + user_role_id-nya.
+
+    Response:
+        active_role  : dict  { role, user_role_id }
+        available_roles: list (sama seperti /me)
+
+    Returns 401 jika session tidak aktif.
+    Returns 403 jika user_role_id tidak ada di available_roles user ini.
+    """
+    session_id = request.cookies.get(settings.SESSION_COOKIE_NAME)
+    if not session_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Tidak ada session aktif. Silakan login.",
+        )
+
+    ok = await switch_active_role(session_id, body.user_role_id)
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Role tidak valid atau tidak dimiliki akun ini.",
+        )
+
+    # Return state terbaru (session sudah diperbarui di switch_active_role)
+    data = await get_session(session_id)
+    return {
+        "active_role": {
+            "role": data["active_role"]["role"],
+            "user_role_id": data["active_role"]["user_role_id"],
+        },
+        "available_roles": [
+            {
+                "role": r["role"],
+                "user_role_id": r["user_role_id"],
+                "is_prime": r["is_prime"],
+            }
+            for r in data["available_roles"]
+        ],
+    }
+
 
 @router.post("/logout", summary="Logout — hapus session dan clear cookie")
 async def logout(request: Request):
     """
     Hapus session dari Redis dan instruksikan browser untuk menghapus cookie.
- 
+
     Silent jika tidak ada session (sudah expired sebelumnya) — tidak perlu error.
     """
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME)
- 
+
     if session_id:
         await delete_session(session_id)
- 
+
     response = JSONResponse({"status": "logged_out"})
     _clear_session_cookie(response)
     return response
