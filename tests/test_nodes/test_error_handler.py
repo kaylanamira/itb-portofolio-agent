@@ -28,7 +28,7 @@ async def test_error_handler_node(case: ErrorHandlerCase, node_results):
         entity_resolver=AsyncMock(return_value=None),
         few_shot_examples=lambda _: "",
         schema_context="mock schema",
-        default_table="mv_kelas",
+        default_table="v_akademik_kelas",
         executor=MagicMock(),
         max_attempts=case.max_attempts,
     )

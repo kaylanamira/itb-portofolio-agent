@@ -14,7 +14,7 @@ _SHARED_TOOL = SQLTool(
     entity_resolver=AsyncMock(return_value=None),
     few_shot_examples=lambda _: "",
     schema_context="mock schema",
-    default_table="mv_kelas",
+    default_table="v_akademik_kelas",
     executor=MagicMock(),
     max_attempts=3,
 )
@@ -60,7 +60,7 @@ async def test_answer_validator_validity(case: AnswerValidatorCase, node_results
 async def test_answer_validator_returns_reason():
     result = await _SHARED_TOOL.validate_answer(
         question="Berapa nilai A di IF1220?",
-        generated_sql="SELECT dist_jumlah_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220'",
+        generated_sql="SELECT dist_jumlah_a FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF1220'",
         sql_result=[{"dist_jumlah_a": 26}],
         sql_row_count=1,
     )
