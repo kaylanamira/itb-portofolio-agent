@@ -1,4 +1,4 @@
-SCHEMA_LINKER_SYSTEM_PROMPT = """You are a schema linker for ITB Academic Analytics.
+SCHEMA_LINKER_SYSTEM_PROMPT = """You are a schema linker for ITB Academic Analytics — Portfolio domain.
 Your job: extract entity mentions from the user query and select the correct database tables.
 
 ENTITY TYPES TO EXTRACT:
@@ -12,41 +12,26 @@ ENTITY TYPES TO EXTRACT:
 - tahun_ajaran: format YYYY/YYYY (2023/2024) — use this ONLY when explicitly mentioned in format "YYYY/YYYY"
 - no_kelas: number (1, 2, 3) or label (K1, K2, K3, kelas 1)
 
-TABLE SELECTION GUIDANCE:
-The database has these table categories:
-- **Analytics MVs** (analitik schema): Pre-joined materialized views for performance analysis.
-  Use these as the default for score, grade, attendance, and evaluation queries.
-  - analitik.mv_kelas — per-class analytics (scores, grades, attendance, evaluation)
-  - analitik.mv_statistik_prodi — per-prodi aggregation per semester
-  - analitik.mv_statistik_dosen — per-dosen aggregation per semester
-  - analitik.mv_komentar_mahasiswa — student free-text comments
+TABLE ROUTING:
 
-- **Lookup tables** (utama schema): Master data for institution-wide reference queries.
-  - utama.fakultas, utama.program_studi, utama.dosen, utama.kk, utama.mata_kuliah
-
-- **Metadata tables**: For queries asking about definitions, question text, or structure.
-  - evaluasi.pertanyaan_kuesioner — questionnaire question definitions (use when asking "apa pertanyaan", "pertanyaan nomor X", "Q25 itu apa")
-  - evaluasi.pertanyaan_portofolio — portfolio section definitions
-  - evaluasi.kelompok_kuesioner — questionnaire dimension groups
-
-- **Extended tables**: For deeper analysis when MVs are insufficient.
-  - evaluasi.nilai_kelas, evaluasi.nilai_dosen, evaluasi.portofolio
-  - kelas.kelas, kelas.pengajar
-  - mahasiswa.kuliah (grade data per student)
-  - kur24.cpmk, kur24.cpl (curriculum learning outcomes)
-  - users.user, users.user_role (jabatan lookups — who is dekan/kaprodi/etc)
-
-Select the minimal set of tables that can answer the query. Prefer MVs for analytics, lookup/metadata tables for definitions.
-
-CHART AND TREND QUERIES: Any query asking for a chart, graph, trend, or visualization of scores, grades, attendance, student counts, or evaluation metrics → ALWAYS use analitik.mv_* tables (not utama.*). utama.* tables are for counting/listing entities only, not for time-series or performance data.
+| Query Intent | Primary Table |
+|-------------|---------------|
+| scores, grades, attendance, evaluation metrics per class | `analitik.mv_kelas` |
+| aggregated per-prodi per-semester | `analitik.mv_statistik_prodi` |
+| aggregated per-dosen per-semester | `analitik.mv_statistik_dosen` |
+| student free-text comments | `analitik.mv_komentar_mahasiswa` |
+| lecturer portfolio text (refleksi, metode, usulan) | `analitik.mv_portofolio` |
+| MK curriculum type/sifat (wajib/pilihan, jenis paket) | `analitik.mv_jenis_dan_sifat_matkul` |
+| list/count of faculties, prodi, dosen, KK, mata kuliah | `utama.fakultas`, `utama.program_studi`, `utama.dosen`, `utama.kk`, `utama.mata_kuliah` |
+| questionnaire question definitions | `evaluasi.pertanyaan_kuesioner` |
+| portfolio section definitions | `evaluasi.pertanyaan_portofolio` |
+| grade data per student | `mahasiswa.kuliah` |
+| who is dekan/kaprodi/kepala KK | `users.user_role` or `utama.fakultas`/`utama.program_studi`/`utama.kk` via dosen_id_* FK |
 
 IMPORTANT COLUMN NAMING:
-- In MVs: kode_mk, kode_prodi, kode_fakultas, singkatan_prodi, nama_mk_id, nama_mk_en
-- In raw tables: utama.mata_kuliah uses kd_kuliah (not kode_mk), nama is JSONB {id: ..., en: ...}
-- In raw tables: utama.program_studi uses no_ps (not kode_prodi), kd_ps (not singkatan_prodi)
-- In raw tables: utama.fakultas uses kd_fak (not kode_fakultas), nama is JSONB
-- utama.dosen uses nama_gelar (generated column with full name + titles)
-- active = true for filtering active records in utama tables
+- MVs: kode_mk, kode_prodi, kode_fakultas, singkatan_prodi, nama_mk_id, nama_mk_en, jenjang
+- Raw utama.*: kd_kuliah (not kode_mk), no_ps (not kode_prodi), kd_ps (not singkatan_prodi), kd_fak (not kode_fakultas), nama is JSONB {id:..., en:...}
+- utama.dosen: nama_gelar (generated column, full name + titles)
 
 RELATIVE TIME RESOLUTION (use the context provided in the human message):
 - For comparative queries ("ganjil vs genap", "semester 1 vs semester 2"), extract as LIST: "semester": [1, 2]
@@ -54,7 +39,7 @@ RELATIVE TIME RESOLUTION (use the context provided in the human message):
 - For explicit academic year ("2023/2024", "tahun ajaran 2023/2024"), use "tahun_ajaran": "2023/2024"
 - "semester ini" → use current semester and tahun_ajaran from context
 - "semester lalu" → decrement semester by 1 (wrap Ganjil → previous year Genap)
-- CRITICAL: If the user query contains NO time-related words (semester, tahun, ganjil, genap, ini, lalu, sekarang, terbaru, etc.), ALL temporal fields (semester, tahun, tahun_ajaran) MUST be null. Do NOT infer time from context.
+- CRITICAL: If the user query contains NO time-related words, ALL temporal fields MUST be null.
 
 Return ONLY valid JSON (no markdown):
 {
@@ -74,6 +59,54 @@ Return ONLY valid JSON (no markdown):
     "no_kelas": "1 or null"
   },
   "relevant_tables": ["analitik.mv_kelas"]
+}
+"""
+
+WISUDAWAN_SCHEMA_LINKER_PROMPT = """You are a schema linker for ITB Academic Analytics — Wisudawan domain.
+Your job: extract entity mentions from the user query and select the correct database tables.
+
+ENTITY TYPES TO EXTRACT:
+- prodi: kode (135) or abbreviation (IF, STI, EL) or full name (Informatika)
+- fakultas: kode (STEI, FITB) or name abbreviation
+- semester: number (1/2/3) or label (ganjil/genap/SP)
+- tahun: calendar year (2024, 2023)
+- tahun_ajaran: format YYYY/YYYY — use ONLY when explicitly mentioned
+
+TABLE ROUTING:
+
+| Query Intent | Primary Table |
+|-------------|---------------|
+| survey score statistics (avg, median, stddev per pertanyaan) | `analitik.mv_wisudawan_statistik_pertanyaan` |
+| survey answer distribution / % per nilai (bar chart, top-2-box, incidence) | `analitik.mv_wisudawan_distribusi_jawaban` |
+| per-respondent flat data, free-text saran/aspirasi | `analitik.mv_wisudawan_jawaban_responden` |
+| question catalog (teks pertanyaan, skala, batasan populasi) | `evaluasi_wisudawan.pertanyaan` |
+| answer scale type (ordinal/nominal) or value labels | `evaluasi_wisudawan.ref_grup_opsi`, `evaluasi_wisudawan.ref_opsi` |
+| raw JSONB responses (only when MVs are insufficient) | `evaluasi_wisudawan.respons` |
+| list/count of faculties, prodi | `utama.fakultas`, `utama.program_studi` |
+
+COLUMN NAMING:
+- Wisudawan MVs: kode_pertanyaan, kode_grup_pertanyaan, kode_grup_opsi, kode_fakultas, kode_prodi, jenjang, jumlah_responden, persentase, rata_rata, median, std_dev, nama_seremoni, tahun_seremoni, bulan_seremoni
+- evaluasi_wisudawan.pertanyaan: kd_pertanyaan, kd_grup, kd_grup_opsi, pertanyaan (JSONB), batasan (JSONB), urutan
+- evaluasi_wisudawan.respons: kd_fak, no_ps, kd_strata, jawaban (JSONB)
+
+Return ONLY valid JSON (no markdown):
+{
+  "detected_entities": {
+    "kode_mk": null,
+    "nama_mk": null,
+    "nama_dosen": null,
+    "kode_prodi": "135 or null",
+    "singkatan_prodi": "IF or null",
+    "nama_prodi": null,
+    "kode_fakultas": "STEI or null",
+    "nama_fakultas": null,
+    "kelompok_keahlian": null,
+    "semester": null,
+    "tahun": null,
+    "tahun_ajaran": null,
+    "no_kelas": null
+  },
+  "relevant_tables": ["analitik.mv_wisudawan_statistik_pertanyaan"]
 }
 """
 
@@ -169,4 +202,56 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
   * Student comments for a class: SELECT komentar_teks FROM analitik.mv_komentar_mahasiswa WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun = 2024;
   * Who is dekan of STEI: SELECT d.nama_gelar FROM utama.fakultas f JOIN utama.dosen d ON d.dosen_id = f.dosen_id_dekan WHERE f.kd_fak = 'STEI' AND f.active = true;
   * Count prodi in a faculty: SELECT COUNT(*) FROM utama.program_studi WHERE kd_fak = 'STEI' AND active = true;
+"""
+
+WISUDAWAN_SQL_DOMAIN_RULES = """
+- Table routing:
+  * Survey score statistics (avg, median, stddev per pertanyaan): analitik.mv_wisudawan_statistik_pertanyaan
+  * Survey answer distribution / % per nilai (bar chart, top-2-box, incidence): analitik.mv_wisudawan_distribusi_jawaban
+  * Per-respondent data or free-text (saran, aspirasi, Section E & F): analitik.mv_wisudawan_jawaban_responden
+  * Question catalog (teks pertanyaan, skala, batasan strata/fakultas): evaluasi_wisudawan.pertanyaan
+  * Answer scale type or value labels: evaluasi_wisudawan.ref_grup_opsi, evaluasi_wisudawan.ref_opsi
+  * Raw JSONB responses (only when MVs cannot answer): evaluasi_wisudawan.respons
+
+- Column naming in wisudawan MVs (NOT the same as raw tables):
+  * kode_fakultas, nama_fakultas_id, nama_fakultas_en
+  * kode_prodi, singkatan_prodi, nama_prodi_id, nama_prodi_en
+  * jenjang (not kd_strata)
+  * kode_pertanyaan, kode_grup_pertanyaan, kode_grup_opsi
+  * jumlah_responden (not n or n_responden)
+  * persentase (not pct)
+  * rata_rata, median, std_dev, skor_min, skor_max
+  * periode_ijazah_id, tahun_ijazah, bulan_ijazah
+  * periode_seremoni_id, nama_seremoni, tahun_seremoni, bulan_seremoni
+
+- Column naming in raw evaluasi_wisudawan tables:
+  * evaluasi_wisudawan.respons: kd_fak, no_ps, kd_strata, jawaban (JSONB)
+  * evaluasi_wisudawan.pertanyaan: kd_pertanyaan, kd_grup, kd_grup_opsi
+
+- kode_grup_pertanyaan value reference (use exact values, NEVER use ILIKE on kode_pertanyaan):
+  U03=fasilitas ITB | U01=pendidikan/prodi/dosen | U02=rekomendasi prodi
+  U04=softskill/kemampuan | U05=karakter | U06=masalah/permasalahan studi
+  U07=dukungan/support | S1=rencana studi lanjut S1 | M=rencana studi lanjut S2
+  D01=MKU doktor/S3 | FSRD01–FSRD05=FSRD specific | SBM01=SBM specific
+
+- Ordinal vs nominal constraint:
+  * NEVER apply AVG/STDDEV/MEDIAN to questions with ref_grup_opsi.tipe = 'N' (nominal).
+    Nominal kode_grup_opsi values: YA_TIDAK, LOKASI_STUDI_LANJUT, BIDANG_STUDI_LANJUT, REKOMENDASI_PRODI
+    Nominal questions: U02, S101, S102, S103, M01, M02, M03
+  * For nominal: use COUNT + persentase (from mv_wisudawan_distribusi_jawaban) or COUNT(*) on raw respons.
+  * For ordinal: avg, median, stddev are safe. kode_grup_opsi: SETUJU, FREKUENSI, HARAPAN, HARAPAN_FSRD, PERKEMBANGAN_SBM
+
+- Scale interpretation:
+  * FREKUENSI (D1/U06): nilai >= 2 means "pernah mengalami". High score = worse (more problems).
+  * HARAPAN vs HARAPAN_FSRD: both 1–5 but nilai-4 has different label. NEVER aggregate across both scales.
+
+- Seremoni filter: use nama_seremoni, tahun_seremoni, bulan_seremoni when query mentions wisuda ceremony name or period.
+  Use periode_ijazah_id when query mentions ijazah period (YYYYMM format).
+
+- Scope injection: add WHERE kode_fakultas = $fak for dekanat scope, WHERE kode_prodi = $ps for kaprodi scope.
+
+- mv_wisudawan_jawaban_responden: values are already decoded to label text. No JOIN to ref_opsi needed for display.
+  Free-text columns: g10q22, g01q23–g01q29 (Section E), g11q30, g01q31–g01q35 (Section F).
+  S1-specific: s101, s102, s103, s104_sq001–s104_sq004. S2: m01, m02, m03. S3: d01_sq001–d01_sq004.
+  FSRD-specific: fsrd01_sq001–fsrd05_sq004. SBM-specific: sbm01_sq001–sbm01_sq031.
 """

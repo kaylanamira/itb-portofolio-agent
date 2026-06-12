@@ -1,6 +1,6 @@
 # Database Reference — ITB Academic Portfolio Analytics
 **Database:** `dev_six` (PostgreSQL, accessed via SSH tunnel)
-**Last updated from:** `dev_six_schema.sql` + `mv_dokumentasi.md` + `schema_mv_portofolio_kuesioner.sql`
+**Last updated from:** `dev_six_schema.sql` + `mv_dokumentasi.md` + `schema_mv_portofolio_kuesioner.sql` + `schema_ulasan_wisudawan.sql` + `schema_mv_ulasan_wisudawan.sql` (2026-06-12)
 **Scope:** This document covers every schema in `dev_six`. Schemas are classified by relevance to the portfolio analytics system.
 
 ---
@@ -21,7 +21,7 @@
 | `kemahasiswaan` | **NO** | Student/dosen activities, competitions, achievements |
 | `jadwal` | **NO** | db is empty |
 | `presensi` | **NO** | Granular per-meeting attendance with timestamps |
-| `wisuda` | **NO** | Graduation data — out of scope per PRD |
+| `wisuda` | **PARTIAL YES** | Graduation data — `periode_ijazah` and `periode_seremoni` are used by `evaluasi_wisudawan` MV for seremoni mapping. Direct queries out of scope per PRD. |
 | `keuangan` | **NO** | Tuition billing, payment, UKT |
 | `bpp` | **NO** | BPP tuition components |
 | `pmb` | **NO** | Admissions (new student intake) |
@@ -893,6 +893,89 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 
 ---
 
+### `mv_portofolio` (under `analitik` schema)
+
+> **✅ Status:** Fully queryable. Ini adalah **primary surface untuk semua query portfolio dosen** — query langsung ke `evaluasi.portofolio` (JSONB raw) tidak lagi diperlukan untuk analytics maupun RAG. Semua dimensi kelas dari `mv_kelas` sudah ter-join, dan semua teks sudah clean dari HTML via `analitik.strip_html()`. Full column docs: `db/mv_portofolio.md`.
+
+> **Refresh:** `REFRESH MATERIALIZED VIEW CONCURRENTLY analitik.mv_portofolio` — jalankan setelah `analitik.mv_kelas` selesai refresh.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `kelas_id` | `integer` | PK component |
+| `kode_matkul` | `varchar` | Course code (e.g., `"IF2210"`) |
+| `nama_matkul_id` | `text` | Indonesian course name |
+| `nama_matkul_en` | `text` | English course name |
+| `sks` | `integer` | Course credit weight |
+| `no_kelas` | `integer` | Class number |
+| `semester` | `smallint` | Semester code |
+| `tahun` | `smallint` | Year |
+| `tahun_ajaran` | `text` | e.g. `"2024/2025"` |
+| `tahun_kurikulum` | `integer` | e.g. `2024` |
+| `jenis_nilai` | `text` | e.g. `"ABCDE"` |
+| `kode_prodi` | `integer` | Prodi identifier |
+| `singkatan_prodi` | `varchar` | Prodi code abbreviation (e.g., `"IF"`) |
+| `nama_prodi_id` | `text` | Prodi name |
+| `jenjang` | `varchar` | Degree level (e.g., `"S1"`) |
+| `kode_fakultas` | `varchar` | Faculty abbreviation (e.g., `"STEI"`) |
+| `nama_fakultas_id` | `text` | Faculty name |
+| `semua_dosen_id` | `integer[]` | Array of dosen IDs teaching the class |
+| `semua_dosen_nama_gelar` | `text[]` | Array of teaching dosen names with titles |
+| `metode_perkuliahan` | `text` |  |
+| `komponen_penilaian` | `text` |  |
+| `statistik_nilai_kelas` | `text` |  |
+| `analisis_ketercapaian_outcomes` | `text` |  |
+| `tanggapan_kuesioner_mahasiswa` | `text` |  |
+| `refleksi_perkuliahan` | `text` |  |
+| `usulan_perbaikan_dosen` | `text` |  |
+| `rekomendasi_ke_itb` | `text` |  |
+| `lama_metode_perkuliahan` | `text` |  |
+| `lama_statistik_kelas` | `text` |  |
+| `lama_outcomes_matakuliah` | `text` |  |
+| `lama_sistem_penilaian` | `text` |  |
+| `lama_analisis_statistik_ketercapaian` | `text` |  |
+| `lama_uraian_kuesioner_statistik` | `text` |  |
+| `lama_komentar_kuesioner_mahasiswa` | `text` |  |
+| `lama_refleksi_perkuliahan` | `text` |  |
+| `lama_rencana_tindak_lanjut` | `text` |  |
+| `lama_rekomendasi_perbaikan_dosen` | `text` |  |
+| `lama_rekomendasi_itb` | `text` |  |
+| `komentar_penyelenggaraan` | `text` |  |
+| `komentar_ketercapaian` | `text` |  |
+| `komentar_refleksi` | `text` |  |
+| `komentar_rekomendasi` | `text` |  |
+| `lama_komentar_pencapaian_outcomes` | `text` |  |
+| `lama_komentar_pelaksanaan_kuliah` | `text` |  |
+| `lama_komentar_refleksi` | `text` |  |
+| `lama_komentar_rencana_tindak_lanjut` | `text` |  |
+| `lama_komentar_rekomendasi` | `text` |  |
+
+### `mv_jenis_dan_sifat_matkul` (under `analitik` schema)
+
+> **⚠️ Routing note:** `kd_jenis_matkul` (jenis/sifat MK dalam kurikulum: Major Wajib, TPB, Spesialisasi, Minor, dll.) **tidak ada di `mv_kelas`**. Untuk informasi jenis dan sifat MK dalam struktur kurikulum, selalu join ke `analitik.mv_jenis_dan_sifat_matkul` via `mata_kuliah_id` dan `kode_prodi`.
+
+Jenis dan sifat MK dalam struktur kurikulum. Grain: 1 baris = 1 (mata_kuliah_id, no_ps, paket/struktur). Satu MK bisa >1 baris jika masuk ke >1 paket dalam prodi yang sama. Sumber: kur24.* (kode_sifat C=Wajib/E=Pilihan) UNION kurikulum.* (W=C, P=E). Kolom filter: jenjang, kode_prodi, kode_fakultas, tahun_kurikulum. nama_prodi_id/en dan nama_fakultas_id/en tersedia untuk display/label.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `mata_kuliah_id` | `integer` | PK component |
+| `kode_prodi` | `integer` | Prodi identifier |
+| `singkatan_prodi` | `varchar` | Prodi code abbreviation |
+| `jenjang` | `varchar` | Degree level |
+| `nama_prodi_id` | `text` | Prodi name |
+| `nama_prodi_en` | `text` | Prodi name |
+| `kode_fakultas` | `varchar` | Faculty code |
+| `nama_fakultas_id` | `text` | Faculty name |
+| `nama_fakultas_en` | `text` | Faculty name |
+| `tahun_kurikulum` | `integer` | Curriculum year |
+| `sumber` | `varchar` | Source |
+| `paket_id` | `integer` | PK component |
+| `struktur_id` | `integer` | PK component |
+| `kode_jenis` | `varchar` | PK component |
+| `nama_jenis` | `text` | PK component |
+| `nama_paket` | `text` | PK component |
+| `kode_sifat` | `varchar` | PK component |
+| `is_wajib_itb` | `boolean` | PK component |
+
 ## Schema: `referensi` — Lookup / Reference Data
 
 **Relevance: MAYBE (context enrichment)**
@@ -1205,7 +1288,7 @@ The prior `SCHEMA_REFERENCE.md` used a custom schema design. The actual SIX tabl
 
 **Gaps and limitations:**
 
-1. **Portfolio free-text not in MVs.** `evaluasi.portofolio.isian` and `komentar` (JSONB) are not surfaced in `mv_kelas`. The agent must query analitik.mv_komentar_mahasiswa.
+1. **Portfolio free-text now in `analitik.mv_portofolio`.** `evaluasi.portofolio.isian` is the raw source. `analitik.mv_portofolio` is the recommended query surface — all text is HTML-stripped and all class dimensions are pre-joined. Use `analitik.mv_komentar_mahasiswa` for student comments specifically.
 
 3. **Q25/Q26/Q27 NULL for older semesters.** Data before the new questionnaire system contains `{}` in `evaluasi.nilai_dosen.kuesioner`. All dosen-specific Q scores will be NULL in `mv_statistik_dosen` for historical data. Queries comparing trends must handle this.
 
@@ -1216,3 +1299,1205 @@ The prior `SCHEMA_REFERENCE.md` used a custom schema design. The actual SIX tabl
 7. **MV scope injection must be in WHERE, not RLS.** The MVs have no RLS. All scope filtering (by `kode_prodi`, `kode_fakultas`, or `semua_dosen_id`) must be injected by the SQL executor before running queries.
 
 8. **Multi-role user scope resolution.** A user may hold valid roles at multiple scopes simultaneously (e.g., dekan at two faculties). The application must resolve which scope is active for a given request, or handle returning union results across all valid scopes.
+
+# Schema Tabel: `evaluasi_wisudawan`
+
+## Gambaran Umum
+
+Schema ini menyimpan **data mentah hasil survey kepuasan wisudawan ITB** dalam bentuk yang dinormalisasi. Terdiri dari 4 tabel: 2 tabel referensi, 1 katalog pertanyaan, dan 1 tabel respons utama.
+
+```
+ref_grup_opsi ──┐
+               ├──► ref_opsi
+               └──► pertanyaan ──► respons
+                                      │
+                         FK ke: referensi.strata
+                                 utama.fakultas
+                                 utama.program_studi
+                                 wisuda.periode_ijazah
+```
+
+### Keputusan Desain Penting
+
+| # | Keputusan | Alasan |
+|---|-----------|--------|
+| 1 | Tidak `INHERITS (template.entry)` | Menunggu konfirmasi DSI ITB |
+| 2 | Tidak ada FK ke `utama.mahasiswa` | Survey anonim |
+| 3 | Surrogate PK `response_id SERIAL` | LimeSurvey ID bisa overlap antar export batch |
+| 4 | `periode_ijazah_id` NULLABLE | 66.6% NULL di data aktual, tidak bisa diimputasi |
+| 5 | Semua jawaban di satu kolom `jawaban JSONB` | Struktur pertanyaan sparse & conditional per strata/fakultas |
+| 6 | Nilai jawaban disimpan sebagai INTEGER | Ordinal (Likert) dan nominal (kategoris) — kecuali free-text yang disimpan sebagai TEXT |
+
+---
+
+## Helper Tables: Pemetaan Periode Seremoni (Dummy / Sementara)
+
+Tiga tabel berikut berfungsi sebagai **dummy mapping** untuk keperluan join periode wisuda ke seremoni. Ini adalah tabel sementara yang seharusnya digantikan oleh data asli dari schema `wisuda.*` setelah tersedia.
+
+> **⚠️ Catatan Sementara:** Ketika data asli sudah tersedia di `wisuda.*`, ganti referensi tabel-tabel ini dengan:
+> - `periode_ijazah_sementara` → `wisuda.periode_ijazah`
+> - `periode_seremoni_sementara` → `wisuda.periode_seremoni`
+> - `ijazah_to_seremoni` → `mahasiswa.wisuda` (tabel mapping wisuda asli)
+
+### `evaluasi_wisudawan.periode_ijazah_sementara`
+
+Menyimpan master periode ijazah (identik struktur dengan `wisuda.periode_ijazah`).
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `periode_ijazah_id` | `INTEGER` PK | Format YYYYMM, misal `202502` |
+| `tahun` | `INTEGER` | Tahun ijazah |
+| `bulan` | `INTEGER` | Bulan ijazah |
+
+### `evaluasi_wisudawan.periode_seremoni_sementara`
+
+Menyimpan master periode seremoni wisuda.
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `periode_seremoni_id` | `INTEGER` PK | ID unik seremoni |
+| `nama_seremoni` | `TEXT` | Nama resmi seremoni wisuda |
+| `tahun` | `INTEGER` | Tahun seremoni |
+| `bulan` | `INTEGER` | Bulan seremoni |
+
+### `evaluasi_wisudawan.ijazah_to_seremoni`
+
+Tabel mapping: 1 periode_ijazah dapat dipetakan ke 1 periode_seremoni.
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `periode_ijazah_id` | `INTEGER` FK | → `periode_ijazah_sementara.periode_ijazah_id` |
+| `periode_seremoni_id` | `INTEGER` FK | → `periode_seremoni_sementara.periode_seremoni_id` |
+
+PK: `(periode_ijazah_id, periode_seremoni_id)`
+
+Digunakan oleh ketiga MV wisudawan untuk menambahkan kolom seremoni (`periode_seremoni_id`, `nama_seremoni`, `tahun_seremoni`, `bulan_seremoni`) ke setiap baris.
+
+---
+
+## Tabel 1: `ref_grup_opsi`
+
+**Tujuan:** Mendefinisikan *jenis* skala jawaban — apakah ordinal (bisa di-AVG) atau nominal (tidak boleh di-AVG).
+
+### Atribut
+
+| Kolom | Tipe | Nullable | Keterangan |
+|-------|------|----------|------------|
+| `kd_grup_opsi` | `VARCHAR(30)` | NOT NULL | **Primary Key.** Kode unik set opsi. |
+| `nama` | `JSONB` | NOT NULL | Nama set dalam dua bahasa: `{"id": "...", "en": "..."}`. |
+| `tipe` | `CHAR(1)` | NOT NULL | `'O'` = Ordinal (boleh AVG/STDDEV). `'N'` = Nominal (hanya frekuensi/distribusi). |
+| `active` | `BOOLEAN` | NOT NULL | Default `true`. Set ke `false` jika skala tidak lagi digunakan. |
+| `ts_entry` | `TIMESTAMPTZ` | NOT NULL | Timestamp insert, default `now()`. |
+| `user_id_entry` | `INTEGER` | NOT NULL | ID user yang menginsert (referensi ke `users.user`, belum ada FK eksplisit). |
+
+### Data yang Tersedia 
+
+| `kd_grup_opsi` | `nama` | `tipe` |
+|------------|----------|------------|
+| `SETUJU` | {"en": "4-point Agreement", "id": "Persetujuan 4-poin"} | O |
+| `FREKUENSI` | {"en": "4-point Frequency", "id": "Frekuensi 4-poin"} | O |
+| `HARAPAN` | {"en": "5-point Expectation Fulfillment", "id": "Pemenuhan Harapan 5-poin"} | O |
+| `HARAPAN_FSRD` | {"en": "5-point Expectation Fulfillment (FSRD)", "id": "Pemenuhan Harapan 5-poin (FSRD)"} | O |
+| `PERKEMBANGAN_SBM` | {"en": "5-point Level of Development (SBM)", "id": "Tingkat Perkembangan 5-poin (SBM)"} | O |
+| `YA_TIDAK` | {"en": "Yes/No", "id": "Ya/Tidak"} | N |
+| `LOKASI_STUDI_LANJUT` | {"en": "Further Study Location", "id": "Lokasi Studi Lanjut"} | N |
+| `BIDANG_STUDI_LANJUT` | {"en": "Field of Study Continuation", "id": "Kelanjutan Bidang Studi"} | N |
+| `REKOMENDASI_PRODI` | {"en": "Study Program Recommendation", "id": "Rekomendasi Prodi"} | N |
+
+> ⚠️ **Penting untuk Text-to-SQL & analitik:** Hanya set dengan `tipe = 'O'` yang boleh di-AVG atau di-STDDEV. Set `tipe = 'N'` hanya boleh dihitung frekuensinya (COUNT/distribusi).
+
+---
+
+## Tabel 2: `ref_opsi`
+
+**Tujuan:** Menyimpan label teks untuk setiap nilai jawaban per grup opsi jawaban.
+
+### Atribut
+
+| Kolom | Tipe | Nullable | Keterangan |
+|-------|------|----------|------------|
+| `kd_grup_opsi` | `VARCHAR(30)` | NOT NULL | **Part of PK.** FK ke `ref_grup_opsi(kd_grup_opsi)`. |
+| `nilai` | `SMALLINT` | NOT NULL | **Part of PK.** Angka jawaban yang tersimpan di `respons.jawaban`. |
+| `label` | `JSONB` | NOT NULL | Teks opsi dalam dua bahasa: `{"id": "...", "en": "..."}`. |
+| `ts_entry` | `TIMESTAMPTZ` | NOT NULL | Timestamp insert. |
+| `user_id_entry` | `INTEGER` | NOT NULL | ID user yang menginsert. |
+
+**Primary Key:** `(kd_grup_opsi, nilai)`
+
+### Referensi Nilai per Set Opsi
+
+#### `SETUJU` — 4-poin Persetujuan
+| Nilai | Label (ID) | Label (EN) |
+|-------|-----------|-----------|
+| 1 | Tidak Setuju | Disagree |
+| 2 | Cenderung Tidak Setuju | Somewhat Disagree |
+| 3 | Cenderung Setuju | Somewhat Agree |
+| 4 | Setuju | Agree |
+
+#### `FREKUENSI` — 4-poin Frekuensi
+| Nilai | Label (ID) | Label (EN) |
+|-------|-----------|-----------|
+| 1 | Tidak pernah atau sama sekali tidak | Never |
+| 2 | Jarang atau kecil | Rarely |
+| 3 | Sering atau cukup | Often |
+| 4 | Selalu atau besar | Always |
+
+#### `HARAPAN` — 5-poin Pemenuhan Harapan (D2/U07)
+| Nilai | Label (ID) | Label (EN) |
+|-------|-----------|-----------|
+| 1 | Tidak sesuai harapan | Does not meet expectations |
+| 2 | Ada yang memenuhi harapan | Partially meets expectations |
+| 3 | Sebagian besar memenuhi harapan | Mostly meets expectations |
+| 4 | Sepenuhnya memenuhi harapan | Fully meets expectations |
+| 5 | Melampaui harapan | Exceeds expectations |
+
+#### `HARAPAN_FSRD` — 5-poin Pemenuhan Harapan (Section J/FSRD)
+| Nilai | Label (ID) | Label (EN) |
+|-------|-----------|-----------|
+| 1 | Tidak sesuai harapan | Does not meet expectations |
+| 2 | Ada yang memenuhi harapan | Partially meets expectations |
+| 3 | Sebagian besar memenuhi harapan | Mostly meets expectations |
+| 4 | Memenuhi harapan | Meets expectations |
+| 5 | Melampaui harapan | Exceeds expectations |
+
+> ⚠️ **FSRD vs D2:** Nilai-4 berbeda label antara `HARAPAN` dan `HARAPAN_FSRD`. Jangan gabungkan skor kedua skala ini dalam satu agregasi tanpa normalisasi terlebih dahulu.
+
+#### `PERKEMBANGAN_SBM` — 5-poin Tingkat Perkembangan (Section K/SBM)
+| Nilai | Label (ID) | Label (EN) |
+|-------|-----------|-----------|
+| 1 | Undeveloped – Tidak berkembang | Undeveloped |
+| 2 | Slightly Developed – Sedikit berkembang | Slightly Developed |
+| 3 | Moderately Developed – Cukup berkembang | Moderately Developed |
+| 4 | Substantially Developed – Berkembang secara substansial | Substantially Developed |
+| 5 | Highly Developed – Berkembang dengan sangat tinggi | Highly Developed |
+
+#### `YA_TIDAK`
+| Nilai | Label |
+|-------|-------|
+| 1 | Ya / Yes |
+| 2 | Tidak / No |
+
+#### `LOKASI_STUDI_LANJUT`
+| Nilai | Label (ID) |
+|-------|-----------|
+| 1 | ITB |
+| 2 | Perguruan tinggi dalam negeri selain ITB |
+| 3 | Di luar negeri |
+| 4 | Tidak ada rencana studi lanjut |
+
+#### `BIDANG_STUDI_LANJUT`
+| Nilai | Label (ID) Ringkas |
+|-------|-------------------|
+| 1 | Ya, kelanjutan bidang studi ITB |
+| 2 | Tidak, tapi masih serumpun |
+| 3 | Tidak, tapi masih butuh pengetahuan ITB |
+| 4 | Tidak, sangat berbeda |
+| 5 | Tidak ada rencana studi lanjut |
+
+#### `OPT_U02` — Rekomendasi Prodi
+| Nilai | Label (ID) |
+|-------|-----------|
+| 1 | Kualitas dosen |
+| 2 | Suasana akademik |
+| 3 | Jejaring alumni |
+| 4 | Lapangan pekerjaan |
+| 5 | Fasilitas akademik |
+| 6 | Tidak merekomendasikan |
+| 7 | Other (teks bebas di key `U02_other`) |
+
+### Cara Query Label dari Jawaban
+
+```sql
+-- Decode jawaban nominal/ordinal ke teks
+SELECT
+    r.response_id,
+    p.pertanyaan->>'id'  AS pertanyaan,
+    o.label->>'id'       AS jawaban_teks,
+    (r.jawaban ->> p.kd_pertanyaan)::SMALLINT AS jawaban_nilai
+FROM evaluasi_wisudawan.respons r
+JOIN evaluasi_wisudawan.pertanyaan p ON r.jawaban ? p.kd_pertanyaan
+JOIN evaluasi_wisudawan.ref_opsi o
+    ON o.kd_grup_opsi = p.kd_grup_opsi
+   AND o.nilai = (r.jawaban ->> p.kd_pertanyaan)::SMALLINT
+WHERE p.kd_pertanyaan = 'U03_SQ001';
+```
+
+---
+
+## Tabel 3: `pertanyaan`
+
+**Tujuan:** Katalog lengkap 137 pertanyaan valid — metadata tiap butir kuesioner, termasuk skala yang digunakan dan batasan populasi (strata/fakultas mana yang menjawab pertanyaan ini).
+
+### Atribut
+
+| Kolom | Tipe | Nullable | Keterangan |
+|-------|------|----------|------------|
+| `kd_pertanyaan` | `VARCHAR(20)` | NOT NULL | **Primary Key.** Kode pertanyaan, contoh: `'U03_SQ001'`, `'G01Q23'`, `'S101'`. |
+| `header_csv_raw` | `VARCHAR(500)` | NULL | Header pertanyaan dari CSV LimeSurvey |
+| `kd_grup_pertanyaan` | `VARCHAR(15)` | NOT NULL | Prefix grup LimeSurvey, contoh: `'U03'`, `'FSRD01'`, `'SBM01'`. Bukan FK. |
+| `pertanyaan` | `JSONB` | NOT NULL | Teks pertanyaan bilingual: `{"id": "...", "en": "..."}`. |
+| `kd_grup_opsi` | `VARCHAR(30)` | NULL | FK ke `ref_grup_opsi(kd_grup_opsi)`. `NULL` = pertanyaan free-text. |
+| `batasan` | `JSONB` | NULL | `NULL` = universal. Lihat tabel batasan di bawah. |
+| `urutan` | `SMALLINT` | NULL | Urutan tampil dalam grup. |
+| `active` | `BOOLEAN` | NOT NULL | Default `true`. |
+| `ts_entry` | `TIMESTAMPTZ` | NOT NULL | Timestamp insert. |
+| `user_id_entry` | `INTEGER` | NOT NULL | ID user yang menginsert. |
+
+to get answer type : null (free text), not null (see kd_grup_opsi)
+### Makna Kolom `batasan`
+
+| Nilai `batasan` | Berlaku untuk |
+|-----------------|---------------|
+| `NULL` | Semua strata & semua fakultas (universal) |
+| `{"strata": ["S1"]}` | Hanya strata S1 (Section G) |
+| `{"strata": ["S2"]}` | Hanya strata S2 (Section H) |
+| `{"strata": ["S3"]}` | Hanya strata S3 (Section I) |
+| `{"fakultas": ["FSRD"]}` | Hanya fakultas FSRD (Section J) |
+| `{"fakultas": ["SBM"]}` | Hanya fakultas SBM (Section K) |
+
+> Strata PR tidak memiliki `batasan` khusus, namun PR hanya mengisi Section A–D (tidak ada section khusus PR di kuesioner).
+
+### Breakdown 137 Pertanyaan per Section
+
+| Section | Grup | Topik | Jml | Tipe | Populasi |
+|---------|------|-------|-----|------|---------|
+| **A** | U03 | Fasilitas & Kepuasan ITB | 12 | Likert SETUJU | Universal |
+| **B** | U01 | Pendidikan di Program Studi | 12 | Likert SETUJU | Universal |
+| **B** | U02 | Rekomendasi Prodi | 1 | Nominal OPT_U02 | Universal |
+| **C1** | U04 | Kemampuan Softskills | 9 | Likert SETUJU | Universal |
+| **C2** | U05 | Pengembangan Karakter | 7 | Likert SETUJU | Universal |
+| **D1** | U06 | Permasalahan Selama Studi | 9 | Likert FREKUENSI | Universal |
+| **D2** | U07 | Ketersediaan Dukungan | 4 | Likert HARAPAN | Universal |
+| **E** | G10, G01 | Free-text Pengalaman Studi | 8 | Free-text | Universal |
+| **F** | G11, G01 | Free-text Saran & Aspirasi | 6 | Free-text | Universal |
+| **G** | S1 | Rencana Studi Lanjut + MKU | 7 | 3 Nominal + 4 Likert | Hanya S1 |
+| **H** | M | Rencana Studi Lanjut S2 | 3 | Nominal | Hanya S2 |
+| **I** | D01 | MKU untuk Doktor | 4 | Likert SETUJU | Hanya S3 |
+| **J** | FSRD01–FSRD05 | Evaluasi Spesifik FSRD | 24 | Likert HARAPAN_FSRD | Hanya FSRD |
+| **K** | SBM01 | Outcomes Program SBM | 31 | Likert PERKEMBANGAN_SBM | Hanya SBM |
+| | | **Total** | **137** | | |
+
+### Detail Pertanyaan per Section
+
+#### Section A — Fasilitas & Kepuasan ITB (U03, 12 item)
+Skala: `SETUJU` (1–4)
+
+| `kd_pertanyaan` | Pertanyaan |
+|-----------------|-----------|
+| U03_SQ001 | Tersedia cukup ruang kelas |
+| U03_SQ002 | Ruang kelas kondusif untuk pembelajaran |
+| U03_SQ003 | Laboratorium kondusif untuk pembelajaran |
+| U03_SQ004 | Akses internet memadai |
+| U03_SQ005 | Fasilitas keprofesian memadai |
+| U03_SQ006 | Akses perpustakaan memadai |
+| U03_SQ007 | Perangkat pembelajaran up-to-date |
+| U03_SQ008 | Fasilitas toilet memadai |
+| U03_SQ009 | Fasilitas kantin memadai |
+| U03_SQ010 | Fasilitas rekreasi/olahraga memadai |
+| U03_SQ011 | Fasilitas kesehatan memadai |
+| U03_SQ012 | Secara keseluruhan saya puas dengan fasilitas ITB |
+
+#### Section B — Pendidikan di Program Studi (U01 + U02)
+Skala: `SETUJU` untuk U01; `OPT_U02` (nominal) untuk U02
+
+| `kd_pertanyaan` | Pertanyaan |
+|-----------------|-----------|
+| U01_SQ001 | Wali akademik selalu tersedia saat dibutuhkan |
+| U01_SQ002 | Wali akademik membantu memenuhi persyaratan akademik |
+| U01_SQ003 | Dosen berinteraksi secara informal dengan mahasiswa |
+| U01_SQ004 | Dosen memperhatikan proses pembelajaran mahasiswa |
+| U01_SQ005 | Dosen memiliki kemampuan profesional yang baik |
+| U01_SQ006 | Matakuliah wajib memberikan dasar yang baik |
+| U01_SQ007 | Matakuliah pilihan memberikan keleluasaan eksplorasi |
+| U01_SQ008 | Praktikum sejalan dengan teori di kelas |
+| U01_SQ009 | Sarana program studi memadai |
+| U01_SQ010 | Program studi memberikan gambaran dunia kerja |
+| U01_SQ011 | Saya menikmati bidang studi saya |
+| U01_SQ012 | Saya akan memilih program studi yang sama lagi |
+| U02 | Aspek yang paling ditonjolkan saat merekomendasikan prodi (nominal) |
+
+#### Section C1 — Kemampuan Softskills (U04, 9 item)
+Skala: `SETUJU`
+
+`U04_SQ001` Komunikasi lisan · `U04_SQ002` Komunikasi tertulis · `U04_SQ003` Bahasa asing · `U04_SQ004` Penyelesaian masalah · `U04_SQ005` Berpikir kritis · `U04_SQ006` Introspeksi diri · `U04_SQ007` Menyampaikan pendapat · `U04_SQ008` Kerja tim · `U04_SQ009` Kerja mandiri
+
+#### Section C2 — Pengembangan Karakter (U05, 7 item)
+Skala: `SETUJU`
+
+`U05_SQ001` Kejujuran · `U05_SQ002` Komitmen · `U05_SQ003` Kecerdasan emosi · `U05_SQ004` Kepedulian terhadap sesama · `U05_SQ005` Objektivitas · `U05_SQ006` Ketidakmudahan menyerah · `U05_SQ007` Kepatuhan terhadap aturan
+
+#### Section D1 — Permasalahan Selama Studi (U06, 9 item)
+Skala: `FREKUENSI` — nilai ≥ 2 berarti *pernah mengalami*
+
+`U06_SQ001` Permasalahan akademis · `U06_SQ002` Keuangan · `U06_SQ003` Pengaruh keuangan ke akademis · `U06_SQ004` Psikologis · `U06_SQ005` Pengaruh psikologis ke studi · `U06_SQ006` Sosial budaya · `U06_SQ007` Pengaruh sosial budaya ke studi · `U06_SQ008` Kesehatan · `U06_SQ009` Pengaruh kesehatan ke studi
+
+#### Section D2 — Ketersediaan Dukungan (U07, 4 item)
+Skala: `HARAPAN` — hanya diisi oleh yang pernah mengalami masalah
+
+`U07_SQ001` Ketersediaan beasiswa/pinjaman · `U07_SQ002` Bimbingan konseling · `U07_SQ003` Nasehat dari wali akademik · `U07_SQ004` Nasehat dari dosen matakuliah
+
+#### Section E — Free-text Pengalaman Studi (8 item, universal)
+
+| `kd_pertanyaan` | Topik |
+|-----------------|-------|
+| G10Q22 | Kebiasaan belajar |
+| G01Q23 | Kesan dan prestasi dalam belajar |
+| G01Q24 | Pengalaman lain yang sangat berkesan |
+| G01Q25 | Aktivitas kemahasiswaan |
+| G01Q26 | Cita-cita dalam karier |
+| G01Q27 | Cita-cita dalam hidup |
+| G01Q28 | Motto untuk sukses studi di ITB |
+| G01Q29 | Sifat khas diri sendiri |
+
+#### Section F — Free-text Saran & Aspirasi (6 item, universal)
+
+| `kd_pertanyaan` | Topik |
+|-----------------|-------|
+| G11Q30 | Suka duka menempuh studi di ITB |
+| G01Q31 | Segi positif studi di ITB |
+| G01Q32 | Segi negatif studi di ITB |
+| G01Q33 | Saran untuk perbaikan proses dan sarana pendidikan di ITB |
+| G01Q34 | Saran untuk mahasiswa lain dalam menempuh studi di ITB |
+| G01Q35 | Catatan atau komentar lain |
+
+> Section E & F adalah sumber utama data RAG (Retrieval-Augmented Generation) untuk chatbot berbasis teks.
+
+#### Section G — Rencana Studi Lanjut + MKU, khusus S1 (7 item)
+
+| `kd_pertanyaan` | Topik | Skala |
+|-----------------|-------|-------|
+| S101 | Rencana melanjutkan ke pendidikan lebih tinggi | YA_TIDAK |
+| S102 | Lokasi rencana studi lanjut | LOKASI_STUDI_LANJUT |
+| S103 | Kelanjutan bidang studi | BIDANG_STUDI_LANJUT |
+| S104_SQ001 | MKU ITB membekali softskill | SETUJU |
+| S104_SQ002 | MKU ITB membekali hardskill | SETUJU |
+| S104_SQ003 | MKU ITB membangun karakter | SETUJU |
+| S104_SQ004 | MKU ITB memperluas wawasan | SETUJU |
+
+#### Section H — Rencana Studi Lanjut, khusus S2 (3 item)
+
+`M01` Rencana studi lanjut (YA_TIDAK) · `M02` Lokasi (LOKASI_STUDI_LANJUT) · `M03` Kelanjutan bidang (BIDANG_STUDI_LANJUT)
+
+#### Section I — MKU untuk Doktor, khusus S3 (4 item, SETUJU)
+
+`D01_SQ001` MKU membekali softskill · `D01_SQ002` MKU membekali hardskill · `D01_SQ003` MKU membangun karakter · `D01_SQ004` MKU memperluas wawasan
+
+#### Section J — Evaluasi Spesifik FSRD (24 item, HARAPAN_FSRD, hanya FSRD)
+
+| Grup | Topik | Jml |
+|------|-------|-----|
+| FSRD01 | Tahap Persiapan Bersama (TPB) | 5 |
+| FSRD02 | Sistem Perwalian | 3 |
+| FSRD03 | Mata Kuliah Teori | 6 |
+| FSRD04 | Mata Kuliah Praktika/Studio | 6 |
+| FSRD05 | Tugas Akhir | 4 |
+
+#### Section K — Outcomes Program SBM (31 item, PERKEMBANGAN_SBM, hanya SBM)
+
+31 kompetensi SBM01_SQ001–SQ031, mencakup: komunikasi, pengetahuan bisnis (marketing, operasi, HRM, keuangan, kewirausahaan), analisis data, riset bisnis, jejaring, kepemimpinan, tanggung jawab profesional & etis, pembelajaran seumur hidup.
+
+---
+
+## Tabel 4: `respons`
+
+**Tujuan:** Tabel utama yang menyimpan satu baris per responden. Semua jawaban tersimpan dalam satu kolom `jawaban JSONB`.
+
+### Atribut
+
+| Kolom | Tipe | Nullable | Keterangan |
+|-------|------|----------|------------|
+| `response_id` | `SERIAL` | NOT NULL | **Primary Key.** Surrogate key internal. Auto-increment. |
+| `survey_platform_response_id` | `INTEGER` | NULL | ID asli dari LimeSurvey. Bisa NULL jika tidak tercatat. UNIQUE jika NOT NULL (partial unique index). |
+| `submit_date` | `TIMESTAMPTZ` | NULL | Waktu responden submit kuesioner. |
+| `start_date` | `TIMESTAMPTZ` | NULL | Waktu responden mulai mengisi kuesioner. |
+| `last_page` | `SMALLINT` | NULL | Halaman terakhir yang diisi. `11` = respons complete. |
+| `kd_strata` | `CHAR(2)` | NOT NULL | Jenjang studi. FK ke `referensi.strata`. Nilai: `'S1'`, `'S2'`, `'S3'`, `'PR'`. |
+| `kd_fak` | `VARCHAR` | NOT NULL | Kode fakultas. FK ke `utama.fakultas`. Contoh: `'STEI'`, `'SBM'`, `'FSRD'`. |
+| `no_ps` | `INTEGER` | NOT NULL | Kode program studi. FK ke `utama.program_studi`. Contoh: `135` = Teknik Informatika S1. |
+| `periode_ijazah_id` | `INTEGER` | **NULL** | FK ke `wisuda.periode_ijazah`. Format integer YYYYMM. **66.6% NULL** di data aktual. |
+| `jawaban` | `JSONB` | NULL | Payload seluruh jawaban. Key = `kd_pertanyaan`. Lihat struktur di bawah. |
+| `ts_entry` | `TIMESTAMPTZ` | NOT NULL | Timestamp insert ke database, default `now()`. |
+| `user_id_entry` | `INTEGER` | NOT NULL | ID user yang melakukan import. |
+
+### Sumber Nilai Setiap Atribut
+
+| Kolom | Sumber Nilai |
+|-------|-------------|
+| `kd_strata` | `referensi.strata(kd_strata)` — nilai: S1, S2, S3, PR |
+| `kd_fak` | `utama.fakultas(kd_fak)` — 14 fakultas/sekolah |
+| `no_ps` | `utama.program_studi(no_ps)` — kode numerik 3 digit |
+| `periode_ijazah_id` | `wisuda.periode_ijazah(periode_ijazah_id)` — nilai non-NULL aktual: 202502, 202504, 202507, 202509, 202602, 202604 |
+| `jawaban` (nilai integer) | `ref_opsi(kd_grup_opsi, nilai)` — di-resolve saat query |
+| `jawaban` (free-text) | Input langsung dari responden, disimpan as-is |
+
+### Struktur `jawaban` JSONB
+
+```jsonc
+// Contoh respons S1 dari STEI:
+{
+  // Section A: Fasilitas ITB (Likert 1–4)
+  "U03_SQ001": 4,
+  "U03_SQ002": 3,
+
+  // Section D1: Permasalahan (Likert 1–4)
+  "U06_SQ004": 2,
+
+  // Section D2: Dukungan (Likert 1–5)
+  "U07_SQ001": 3,
+
+  // Section B: Rekomendasi prodi (nominal)
+  "U02": 1,               // 1 = "Kualitas dosen"
+
+  // Section B: Free-text jika U02 = 7 (Other)
+  "U02_other": "Lingkungan riset yang aktif",
+
+  // Section E: Free-text
+  "G01Q23": "Senang bisa belajar di ITB...",
+
+  // Section G: S1-spesifik (nominal)
+  "S101": 1,              // 1 = "Ya" (rencana studi lanjut)
+  "S102": 1,              // 1 = "ITB"
+  "S103": 1,              // 1 = "Kelanjutan bidang ITB"
+  "S104_SQ001": 4         // Likert 1–4
+}
+```
+
+**Aturan penting `jawaban`:**
+- Hanya key yang **dijawab** yang ada dalam JSONB (sparse — tidak ada key dengan nilai NULL).
+- Nilai ordinal & nominal disimpan sebagai **INTEGER**.
+- Nilai free-text disimpan sebagai **TEXT string**.
+- Key `U02_other` hanya muncul ketika `U02 = 7`.
+- Responden strata PR hanya punya key dari Section A–D (tidak ada G/H/I/J/K).
+- Responden FSRD punya key Section J (`FSRD01_SQ001` dst.), bukan Section K.
+- Responden SBM punya key Section K (`SBM01_SQ001` dst.), bukan Section J.
+
+### Index pada Tabel `respons`
+
+| Index | Tipe | Kolom | Tujuan |
+|-------|------|-------|--------|
+| Primary Key | B-tree | `response_id` | Lookup individual row |
+| Unique (partial) | B-tree | `survey_platform_response_id` WHERE NOT NULL | Cegah duplikasi import |
+| B-tree | — | `kd_strata` | Filter dashboard strata |
+| B-tree | — | `kd_fak` | Filter dashboard fakultas |
+| B-tree | — | `no_ps` | Filter dashboard prodi |
+| B-tree | — | `periode_ijazah_id` | Filter dashboard periode |
+| B-tree | — | `(kd_strata, kd_fak)` | Filter komposit |
+| B-tree | — | `(kd_strata, periode_ijazah_id)` | Filter komposit |
+| GIN | — | `jawaban` | Query key/value dalam JSONB |
+
+---
+
+## Panduan Penggunaan per Use Case
+
+### 1. Dashboard Agregasi (Rata-rata Skor per Pertanyaan)
+
+Gunakan **Materialized View** `mv_wisudawan_statistik_pertanyaan` (lihat dokumen MV), bukan query langsung ke `respons`. Tabel `respons` adalah sumber data mentah.
+
+Filter yang tersedia di `respons`: `kd_fak`, `no_ps`, `kd_strata`, `periode_ijazah_id`.
+
+**Hierarki akses filter dashboard:**
+
+| Level Pengguna | Filter Tersedia |
+|----------------|-----------------|
+| Admin / Institusi | Semua filter: fakultas, prodi, strata, tahun/periode wisuda |
+| Dekanat & jajaran | Tanpa filter fakultas — scope dikunci ke `kd_fak` dekan |
+| Kaprodi & jajaran | Tanpa filter prodi — scope dikunci ke `no_ps` kaprodi |
+
+Implementasi di SQL: tambah `WHERE kd_fak = $fak` untuk dekanat, `WHERE no_ps = $ps` untuk kaprodi.
+
+### 2. Agen Text-to-SQL — Contoh Query Tipikal
+
+```sql
+-- Rata-rata kepuasan fasilitas per fakultas (hanya S1)
+SELECT
+    kd_fak,
+    ROUND(AVG((jawaban->>'U03_SQ012')::NUMERIC), 2) AS avg_kepuasan_fasilitas
+FROM evaluasi_wisudawan.respons
+WHERE kd_strata = 'S1'
+  AND jawaban ? 'U03_SQ012'
+GROUP BY kd_fak
+ORDER BY avg_kepuasan_fasilitas DESC;
+
+-- Distribusi rencana studi lanjut lulusan S1
+SELECT
+    (jawaban->>'S101')::SMALLINT AS nilai,
+    o.label->>'id'               AS rencana,
+    COUNT(*)                     AS n
+FROM evaluasi_wisudawan.respons r
+JOIN evaluasi_wisudawan.ref_opsi o
+    ON o.kd_grup_opsi = 'YA_TIDAK'
+   AND o.nilai = (r.jawaban->>'S101')::SMALLINT
+WHERE r.kd_strata = 'S1'
+  AND r.jawaban ? 'S101'
+GROUP BY 1, 2
+ORDER BY 1;
+
+-- Persentase pernah alami masalah psikologis (U06_SQ004 >= 2)
+SELECT
+    kd_fak,
+    ROUND(
+        SUM(CASE WHEN (jawaban->>'U06_SQ004')::SMALLINT >= 2 THEN 1 ELSE 0 END)
+        * 100.0 / COUNT(*), 1
+    ) AS pct_pernah_masalah_psikologis
+FROM evaluasi_wisudawan.respons
+WHERE jawaban ? 'U06_SQ004'
+GROUP BY kd_fak;
+```
+
+### 3. Agen RAG — Akses Free-text
+
+Free-text dari Section E & F adalah sumber utama untuk chatbot berbasis RAG.
+
+```sql
+-- Ambil semua saran untuk ITB dari responden FTSL S1
+SELECT
+    response_id,
+    kd_fak,
+    kd_strata,
+    jawaban->>'G01Q33' AS saran_perbaikan,
+    jawaban->>'G01Q34' AS saran_untuk_mahasiswa
+FROM evaluasi_wisudawan.respons
+WHERE kd_fak = 'FTSL'
+  AND kd_strata = 'S1'
+  AND (jawaban ? 'G01Q33' OR jawaban ? 'G01Q34');
+```
+
+Untuk RAG, **index full-text atau embedding vector** sebaiknya dibangun di atas konten free-text dari kolom `jawaban` (key G-series). Gunakan `mv_wisudawan_jawaban_responden` yang sudah memisahkan kolom free-text untuk kemudahan akses.
+
+### 4. Query Katalog Pertanyaan (untuk System Prompt Agen)
+
+```sql
+-- Daftar semua pertanyaan dengan tipe skala dan populasi
+SELECT
+    p.kd_pertanyaan,
+    p.kd_grup,
+    p.pertanyaan->>'id'    AS pertanyaan_id,
+    p.kd_grup_opsi,
+    s.tipe                 AS tipe_opsi,
+    p.batasan
+FROM evaluasi_wisudawan.pertanyaan p
+LEFT JOIN evaluasi_wisudawan.ref_grup_opsi s ON s.kd_grup_opsi = p.kd_grup_opsi
+WHERE p.active = true
+ORDER BY p.kd_grup, p.urutan;
+```
+
+---
+
+## Catatan Penting untuk Developer
+
+### ETL dari CSV LimeSurvey
+
+1. **Ordinal Likert:** konversi teks label → integer via `ref_opsi.label` (kd_grup_opsi ordinal).
+2. **Nominal:** konversi teks label → integer via `ref_opsi.label` (kd_grup_opsi nominal).
+3. **Free-text:** simpan as-is sebagai TEXT string di JSONB.
+4. **U02 = "Other":** simpan `{"U02": 7, "U02_other": "<teks bebas>"}`.
+5. **Strata PR:** hanya isi Section A–D; key Section G/H/I/J/K tidak ada di JSONB-nya.
+
+### Hal yang Tidak Boleh Dilakukan
+
+- ❌ Jangan AVG kolom nominal (`tipe = 'N'`): `U02`, `S101`, `S102`, `S103`, `M01`, `M02`, `M03`.
+- ❌ Jangan gabungkan skor D2 (`U07`, `HARAPAN`) dan Section J FSRD (`HARAPAN_FSRD`) dalam satu AVG — nilai-4 berbeda secara semantik.
+- ❌ Jangan anggap `periode_ijazah_id = NULL` sebagai data hilang — 66.6% memang NULL dan tidak bisa diimputasi.
+- ❌ Jangan filter `last_page = 11` sebagai satu-satunya filter "complete" — mayoritas data sudah complete.
+# Schema Materialized View: `evaluasi_wisudawan`
+
+> **Untuk:** Developer agen RAG, agen Text-to-SQL, dan dashboard Data Ulasan Wisudawan ITB  
+> **File SQL:** `schema_mv_ulasan_wisudawan.sql`  
+> **Prasyarat:** `schema_ulasan_wisudawan.sql` sudah dieksekusi terlebih dahulu  
+> **Database:** `dev_six` (cloud DB ITB, schema `evaluasi_wisudawan`)
+
+---
+
+## Gambaran Umum
+
+Tiga Materialized View (MV) ini adalah **lapisan analitik** di atas tabel `respons`. Masing-masing memiliki granularitas berbeda, dirancang untuk use case yang berbeda, dan tidak saling menggantikan.
+
+```
+respons (raw) ──────────────────────────────────────────────────────┐
+                                                                    │
+                     ┌──────────────────────────────────────────────┘
+                     ▼
+        ┌────────────────────────────────┐
+        │   mv_wisudawan_distribusi_jawaban        │  ← Distribusi & persentase
+        │   1 baris per:                 │    per (periode, strata,
+        │   (periode, strata, fak,       │    fak, pertanyaan, nilai)
+        │    no_ps, pertanyaan, nilai)   │
+        └────────────────────────────────┘
+
+        ┌────────────────────────────────┐
+        │   mv_wisudawan_statistik_pertanyaan           │  ← Rata-rata skor ordinal
+        │   1 baris per:                 │    per (periode, strata,
+        │   (periode, strata, fak,       │    fak, no_ps, pertanyaan)
+        │    no_ps, pertanyaan)          │
+        └────────────────────────────────┘
+
+        ┌────────────────────────────────┐
+        │   mv_wisudawan_jawaban_responden              │  ← Flat table per responden
+        │   1 baris per responden        │    untuk RAG & Text-to-SQL
+        │   Semua jawaban = kolom flat   │    individual
+        └────────────────────────────────┘
+```
+
+### Kapan Menggunakan MV Mana?
+
+| Kebutuhan | Gunakan MV |
+|-----------|-----------|
+| Grafik distribusi jawaban (bar chart), top-2-box, % setuju | `mv_wisudawan_distribusi_jawaban` |
+| Grafik rata-rata skor, ranking pertanyaan, trend per periode | `mv_wisudawan_statistik_pertanyaan` |
+| Query per responden, analisis individual, chatbot RAG, Text-to-SQL natural | `mv_wisudawan_jawaban_responden` |
+| AVG/STDDEV langsung dari data mentah | Query ke `respons` langsung |
+
+---
+
+## Strategi Refresh
+
+> ⚠️ **Catatan kritis:** `mv_wisudawan_distribusi_jawaban` dan `mv_wisudawan_statistik_pertanyaan` menggunakan `REFRESH` **tanpa** `CONCURRENTLY`. Hal ini karena kolom `periode_ijazah_id` nullable (66.6% NULL di data aktual) — UNIQUE INDEX PostgreSQL memperlakukan NULL ≠ NULL, sehingga `REFRESH CONCURRENTLY` berisiko gagal meng-match baris lama vs baru untuk row dengan periode NULL. Karena data survey diimport secara batch (bukan real-time), downtime singkat saat refresh tidak berdampak ke operasional.
+
+```sql
+-- Jalankan setelah setiap batch import CSV:
+
+-- 1. Distribusi jawaban (TANPA CONCURRENTLY)
+REFRESH MATERIALIZED VIEW analitik.mv_wisudawan_distribusi_jawaban;
+
+-- 2. Skor rata-rata (TANPA CONCURRENTLY)
+REFRESH MATERIALIZED VIEW analitik.mv_wisudawan_statistik_pertanyaan;
+
+-- 3. Wide respons (CONCURRENTLY aman — unique index hanya pada response_id SERIAL)
+REFRESH MATERIALIZED VIEW CONCURRENTLY analitik.mv_wisudawan_jawaban_responden;
+```
+
+---
+
+## MV 1: `mv_wisudawan_distribusi_jawaban`
+
+**Tujuan:** Sumber tunggal untuk semua kebutuhan **distribusi & persentase jawaban** — bar chart, top-2-box, incidence rate. Mencakup pertanyaan ordinal (Likert) dan nominal (kategoris). Free-text otomatis dikecualikan.
+
+**Granularitas:** 1 baris per kombinasi `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan, nilai)`.
+
+### Kolom
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `periode_ijazah_id` | `INTEGER` | Periode wisuda (YYYYMM). NULL = tanpa info periode. |
+| `tahun_ijazah` | `INTEGER` | |
+| `bulan_ijazah` | `INTEGER` | |
+| `periode_seremoni_id` | `INTEGER` | |
+| `tahun_seremoni` | `INTEGER` | |
+| `bulan_seremoni` | `INTEGER` | |
+| `nama_seremoni` | `TEXT` | |
+| `kode_fakultas` | `VARCHAR` | Kode fakultas. |
+| `nama_fakultas_id` | `TEXT` | Nama fakultas. |
+| `nama_fakultas_en` | `TEXT` | Nama fakultas. |
+| `kode_prodi` | `INTEGER` | Kode program studi. |
+| `singkatan_prodi` | `VARCHAR(2)` | Singkatan program studi. |
+| `nama_prodi_id` | `TEXT` | Nama program studi. |
+| `nama_prodi_en` | `TEXT` | Nama program studi. |
+| `jenjang` | `CHAR(2)` | Jenjang studi. |
+| `kode_pertanyaan` | `VARCHAR(20)` | Kode pertanyaan (hanya ordinal). |
+| `kode_grup_pertanyaan` | `VARCHAR(15)` | Grup pertanyaan. |
+| `kode_grup_opsi` | `VARCHAR(30)` | Set opsi (`SETUJU`, `FREKUENSI`, `HARAPAN`, `HARAPAN_FSRD`, `PERKEMBANGAN_SBM`). |
+| `jumlah_responden` | `BIGINT` |Jumlah responden yang memilih nilai ini pada kombinasi dimensi tersebut. |
+| `tipe_opsi` | `CHAR(1)` | `'O'` = Ordinal, `'N'` = Nominal. Dari `ref_grup_opsi.tipe`. |
+| `nilai` | `SMALLINT` | Nilai jawaban (1–4 atau 1–5 untuk ordinal; 1–N untuk nominal). |
+| `persentase` | `NUMERIC` | Persentase `n` terhadap total responden untuk pertanyaan yang sama pada dimensi yang sama. Dibulatkan 2 desimal. |
+
+### Logika `persentase`
+
+`persentase` dihitung sebagai window function dengan partisi `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan)`. Artinya:
+- `persentase` adalah **persentase dalam grup dimensi yang sama**, bukan persentase keseluruhan.
+- Row dengan `periode_ijazah_id = NULL` membentuk partisi sendiri — persentasenya dihitung di antara sesama responden "no-period".
+
+### Index
+
+| Index | Kolom | Tujuan |
+|-------|-------|--------|
+| UNIQUE | `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan, nilai)` | Identifikasi unik baris |
+| B-tree | `(kode_grup_opsi, nilai)` | Filter per skala dan nilai tertentu |
+| B-tree | `kode_grup_pertanyaan` | Filter per section/grup pertanyaan |
+| B-tree | `tipe_opsi` | Filter ordinal vs nominal |
+| B-tree | `(kd_strata, kd_fak)` | Filter komposit dashboard |
+| B-tree | `no_ps` | Filter per prodi |
+| B-tree | `(kd_strata, kd_fak, no_ps)` | Filter komposit tiga dimensi |
+
+### Contoh Query
+
+#### Top-2-Box: % Setuju (nilai ≥ 3) untuk Section A per Fakultas
+```sql
+SELECT
+    kode_fakultas ,
+    kode_pertanyaan ,
+    SUM(jumlah_responden) FILTER (WHERE nilai >= 3) * 100.0 / SUM(jumlah_responden) AS pct_setuju
+FROM analitik.mv_wisudawan_distribusi_jawaban
+WHERE kode_grup_opsi  = 'SETUJU'
+  AND kode_grup_pertanyaan  = 'U03'
+GROUP BY kode_fakultas, kode_pertanyaan
+ORDER BY kode_fakultas, kode_pertanyaan;
+```
+
+#### Incidence Rate: % Pernah Mengalami Masalah (Section D1)
+```sql
+-- nilai >= 2 berarti "pernah" (Jarang/Sering/Selalu)
+SELECT
+    p.pertanyaan->'en' as pertanyaan,
+    SUM(mv.jumlah_responden) FILTER (WHERE nilai >= 2) * 100.0 / SUM(mv.jumlah_responden) AS pct_pernah_alami
+FROM analitik.mv_wisudawan_distribusi_jawaban mv join evaluasi_wisudawan.pertanyaan p 
+on p.kd_pertanyaan = mv.kode_pertanyaan 
+WHERE kode_grup_opsi = 'FREKUENSI'
+GROUP BY p.pertanyaan
+ORDER BY pct_pernah_alami DESC;
+```
+
+#### Distribusi Pilihan Rekomendasi Prodi (U02, nominal)
+```sql
+SELECT
+    d.kode_fakultas,
+    o.label->>'id' AS pilihan,
+    d.jumlah_responden,
+    d.persentase
+FROM analitik.mv_wisudawan_distribusi_jawaban d
+JOIN evaluasi_wisudawan.ref_opsi o
+    ON o.kd_grup_opsi = d.kode_grup_opsi AND o.nilai = d.nilai
+WHERE d.kode_pertanyaan = 'U02'
+ORDER BY d.kode_fakultas, d.nilai;
+ORDER BY d.kd_fak, d.nilai;
+```
+
+#### Dashboard Dekanat: Distribusi per Prodi (scope STEI)
+```sql
+SELECT
+    periode_ijazah_id,
+    kode_prodi ,
+    kode_pertanyaan ,
+    nilai,
+    jumlah_responden ,
+    persentase 
+FROM analitik.mv_wisudawan_distribusi_jawaban
+WHERE kode_fakultas  = 'STEI'          -- dikunci oleh scope dekanat
+  AND kode_grup_pertanyaan  = 'U01'
+  AND jenjang  = 'S1'
+ORDER BY kode_prodi, kode_pertanyaan, nilai;
+```
+
+#### Dashboard Kaprodi: Distribusi per Periode untuk Satu Prodi
+```sql
+SELECT
+    periode_ijazah_id,
+    kode_pertanyaan,
+    nilai,
+    jumlah_responden,
+    persentase 
+FROM analitik.mv_wisudawan_distribusi_jawaban
+WHERE kode_prodi = 135              -- dikunci oleh scope kaprodi
+  AND kode_grup_opsi = 'SETUJU'
+  AND periode_ijazah_id IS NOT NULL  -- hanya yang ada info periode
+ORDER BY periode_ijazah_id, kode_pertanyaan, nilai;
+```
+
+---
+
+## MV 2: `mv_wisudawan_statistik_pertanyaan`
+
+**Tujuan:** Sumber untuk **grafik rata-rata skor**, ranking pertanyaan, dan perbandingan antar dimensi. Hanya mencakup pertanyaan **ordinal** (`tipe = 'O'`) — nominal tidak boleh di-AVG.
+
+**Alasan dibuat MV (bukan VIEW biasa):** Dashboard memerlukan respons cepat untuk query berulang dengan pola sama dari banyak user. Pre-computed lebih efisien daripada on-the-fly aggregation atas 7.500+ baris dengan JSONB.
+
+**Granularitas:** 1 baris per kombinasi `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan)`.
+
+### Kolom
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `periode_ijazah_id` | `INTEGER` | Periode wisuda (YYYYMM). NULL = tanpa info periode. |
+| `tahun_ijazah` | `INTEGER` | |
+| `bulan_ijazah` | `INTEGER` | |
+| `periode_seremoni_id` | `INTEGER` | |
+| `tahun_seremoni` | `INTEGER` | |
+| `bulan_seremoni` | `INTEGER` | |
+| `nama_seremoni` | `TEXT` | |
+| `kode_fakultas` | `VARCHAR` | Kode fakultas. |
+| `nama_fakultas_id` | `TEXT` | Nama fakultas. |
+| `nama_fakultas_en` | `TEXT` | Nama fakultas. |
+| `kode_prodi` | `INTEGER` | Kode program studi. |
+| `singkatan_prodi` | `VARCHAR(2)` | Singkatan program studi. |
+| `nama_prodi_id` | `TEXT` | Nama program studi. |
+| `nama_prodi_en` | `TEXT` | Nama program studi. |
+| `jenjang` | `CHAR(2)` | Jenjang studi. |
+| `kode_pertanyaan` | `VARCHAR(20)` | Kode pertanyaan (hanya ordinal). |
+| `kode_grup_pertanyaan` | `VARCHAR(15)` | Grup pertanyaan. |
+| `kode_grup_opsi` | `VARCHAR(30)` | Set opsi (`SETUJU`, `FREKUENSI`, `HARAPAN`, `HARAPAN_FSRD`, `PERKEMBANGAN_SBM`). |
+| `jumlah_responden` | `BIGINT` | Jumlah responden yang menjawab pertanyaan ini. |
+| `rata_rata` | `NUMERIC` | Rata-rata skor. Dibulatkan 4 desimal. |
+| `median` | `NUMERIC` | Median skor. Dibulatkan 4 desimal. |
+| `std_dev` | `NUMERIC` | Standar deviasi skor. Dibulatkan 4 desimal. |
+| `skor_min` | `NUMERIC` | Skor minimum yang diberikan. |
+| `skor_max` | `NUMERIC` | Skor maksimum yang diberikan. |
+
+### Catatan Interpretasi Skor per Skala
+
+| `kode_grup_opsi` | Range | Makna Skor Tinggi |
+|---------------|-------|-------------------|
+| `SETUJU` | 1–4 | Tingkat persetujuan tinggi |
+| `FREKUENSI` | 1–4 | Frekuensi masalah tinggi (skor tinggi = lebih buruk) |
+| `HARAPAN` | 1–5 | Harapan terpenuhi / terlampaui |
+| `HARAPAN_FSRD` | 1–5 | Harapan terpenuhi (versi FSRD — nilai-4 berbeda dari HARAPAN) |
+| `PERKEMBANGAN_SBM` | 1–5 | Tingkat perkembangan kompetensi tinggi |
+
+> ⚠️ **Jangan bandingkan** `rata_rata` antara `HARAPAN` dan `HARAPAN_FSRD` secara langsung — nilai-4 berbeda secara semantik.  
+> ⚠️ **`FREKUENSI`:** skor tinggi bermakna negatif (sering mengalami masalah). Perlu perhatian khusus saat memvisualisasikan.
+
+### Sumber Data Tiap Kolom
+
+| Kolom MV | Sumber |
+|----------|--------|
+| Dimensi (periode, strata, fak, no_ps, pertanyaan, grup, set_opsi) | Join `respons` × `pertanyaan` × `ref_grup_opsi` |
+| `n_responden` | `COUNT(*)` |
+| `rata_rata` | `AVG((respons.jawaban ->> kd_pertanyaan)::NUMERIC)` |
+| `std_dev` | `STDDEV(...)` |
+| `skor_min` / `skor_max` | `MIN(...)` / `MAX(...)` |
+
+### Index
+
+| Index | Kolom | Tujuan |
+|-------|-------|--------|
+| UNIQUE | `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan)` | Identifikasi unik baris |
+| B-tree | `kode_grup_pertanyaan` | Filter per section |
+| B-tree | `(kd_strata, kd_fak)` | Filter komposit dashboard |
+
+### Contoh Query
+
+#### Rata-rata Skor Section A per Fakultas (S1 saja)
+```sql
+SELECT
+    kode_fakultas,
+    kode_pertanyaan,
+    rata_rata,
+    std_dev,
+    jumlah_responden
+FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE jenjang = 'S1'
+  AND kode_grup_pertanyaan = 'U03'
+ORDER BY kode_fakultas, rata_rata DESC;
+```
+
+#### Ranking Pertanyaan Softskills per Prodi
+```sql
+SELECT
+    kode_pertanyaan,
+    rata_rata,
+    jumlah_responden,
+    RANK() OVER (PARTITION BY kode_prodi ORDER BY rata_rata DESC) AS ranking
+FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE kode_prodi = 135
+  AND kode_grup_pertanyaan = 'U04'
+ORDER BY ranking;
+```
+
+#### Trend Rata-rata Skor Fasilitas per Periode (non-NULL)
+```sql
+SELECT
+    periode_ijazah_id,
+    kode_pertanyaan,
+    rata_rata,
+    jumlah_responden
+FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE kode_pertanyaan = 'U03_SQ012'   -- overall satisfaction ITB
+  AND periode_ijazah_id IS NOT NULL
+ORDER BY periode_ijazah_id;
+```
+
+#### Perbandingan Rata-rata Seluruh Section B antar Fakultas
+```sql
+SELECT
+    kode_fakultas,
+    ROUND(AVG(rata_rata), 3) AS rata_rata_section_b
+FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE kode_grup_pertanyaan = 'U01'
+  AND jenjang = 'S1'
+GROUP BY kode_fakultas
+ORDER BY rata_rata_section_b DESC;
+```
+
+#### Dashboard Kaprodi: Skor vs Rata-rata Institusi
+```sql
+-- Bandingkan prodi dengan rata-rata seluruh ITB per pertanyaan
+SELECT
+    m.kode_pertanyaan,
+    m.rata_rata          AS skor_prodi,
+    avg_itb.rata_rata    AS skor_itb,
+    m.rata_rata - avg_itb.rata_rata AS selisih
+FROM analitik.mv_wisudawan_statistik_pertanyaan m
+JOIN (
+    SELECT kode_pertanyaan, AVG(rata_rata) AS rata_rata
+    FROM analitik.mv_wisudawan_statistik_pertanyaan
+    WHERE jenjang = 'S1' AND kode_grup_pertanyaan = 'U01'
+    GROUP BY kode_pertanyaan
+) avg_itb USING (kode_pertanyaan)
+WHERE m.kode_prodi = 135              -- dikunci scope kaprodi
+  AND m.jenjang = 'S1'
+  AND m.kode_grup_pertanyaan = 'U01'
+ORDER BY selisih;
+```
+
+---
+
+## MV 3: `mv_wisudawan_jawaban_responden`
+
+**Tujuan:** Tabel **flat per responden** — setiap kolom merepresentasikan satu pertanyaan. Digunakan untuk analisis individual, chatbot RAG, dan agen Text-to-SQL yang membutuhkan akses per baris (bukan agregasi).
+
+**Granularitas:** 1 baris per responden (1:1 dengan `respons`).
+
+**Catatan NULL:** Kolom section-spesifik akan `NULL` untuk responden yang tidak mengisi section tersebut — bukan berarti data hilang, tapi memang tidak berlaku (contoh: kolom `s101` akan NULL untuk responden S2/S3).
+
+### Kolom Identitas
+
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `response_id` | `INTEGER` | Surrogate PK dari `respons`. Unique index. |
+| `survey_platform_response_id` | `INTEGER` | ID asli LimeSurvey. Bisa NULL. |
+| `tahun_ijazah` | `INTEGER` | |
+| `bulan_ijazah` | `INTEGER` | |
+| `periode_seremoni_id` | `INTEGER` | |
+| `tahun_seremoni` | `INTEGER` | |
+| `bulan_seremoni` | `INTEGER` | |
+| `nama_seremoni` | `TEXT` | |
+| `kode_fakultas` | `VARCHAR` | Kode fakultas. |
+| `nama_fakultas_id` | `TEXT` | Nama fakultas. |
+| `nama_fakultas_en` | `TEXT` | Nama fakultas. |
+| `kode_prodi` | `INTEGER` | Kode program studi. |
+| `singkatan_prodi` | `VARCHAR(2)` | Singkatan program studi. |
+| `nama_prodi_id` | `TEXT` | Nama program studi. |
+| `nama_prodi_en` | `TEXT` | Nama program studi. |
+| `jenjang` | `CHAR(2)` | Jenjang studi. |
+| `submit_date` | `TIMESTAMPTZ` | Waktu submit kuesioner. |
+| `u03_sq001` | `TEXT` | Nama program studi. |
+...flatten all response
+
+### Kolom Jawaban — Section A: Fasilitas ITB (U03)
+
+Semua SMALLINT, skala `SETUJU` (1–4). Populasi: semua.
+
+| Kolom | Pertanyaan |
+|-------|-----------|
+| `u03_sq001` | Tersedia cukup ruang kelas |
+| `u03_sq002` | Ruang kelas kondusif untuk pembelajaran |
+| `u03_sq003` | Laboratorium kondusif untuk pembelajaran |
+| `u03_sq004` | Akses internet memadai |
+| `u03_sq005` | Fasilitas keprofesian memadai |
+| `u03_sq006` | Akses perpustakaan memadai |
+| `u03_sq007` | Perangkat pembelajaran up-to-date |
+| `u03_sq008` | Fasilitas toilet memadai |
+| `u03_sq009` | Fasilitas kantin memadai |
+| `u03_sq010` | Fasilitas rekreasi/olahraga memadai |
+| `u03_sq011` | Fasilitas kesehatan memadai |
+| `u03_sq012` | **Secara keseluruhan puas dengan fasilitas ITB** |
+
+### Kolom Jawaban — Section B: Pendidikan di Prodi (U01 + U02)
+
+Skala `SETUJU` (1–4) untuk U01. `u02` nominal (1–7). `u02_other` TEXT. Populasi: semua.
+
+| Kolom | Pertanyaan |
+|-------|-----------|
+| `u01_sq001` | Wali akademik selalu tersedia saat dibutuhkan |
+| `u01_sq002` | Wali akademik membantu memenuhi persyaratan akademik |
+| `u01_sq003` | Dosen berinteraksi secara informal dengan mahasiswa |
+| `u01_sq004` | Dosen memperhatikan proses pembelajaran mahasiswa |
+| `u01_sq005` | Dosen memiliki kemampuan profesional yang baik |
+| `u01_sq006` | Matakuliah wajib memberikan dasar yang baik |
+| `u01_sq007` | Matakuliah pilihan memberikan keleluasaan eksplorasi |
+| `u01_sq008` | Praktikum sejalan dengan teori di kelas |
+| `u01_sq009` | Sarana program studi memadai |
+| `u01_sq010` | Program studi memberikan gambaran dunia kerja |
+| `u01_sq011` | Saya menikmati bidang studi saya |
+| `u01_sq012` | **Saya akan memilih program studi yang sama lagi** |
+| `u02` | Aspek rekomendasi prodi (nominal: 1=Kualitas dosen … 7=Other) |
+| `u02_other` | Teks bebas jika `u02 = 7` |
+
+### Kolom Jawaban — Section C1: Softskills (U04)
+
+Skala `SETUJU` (1–4). Populasi: semua.
+
+`u04_sq001` Komunikasi lisan · `u04_sq002` Komunikasi tertulis · `u04_sq003` Bahasa asing · `u04_sq004` Penyelesaian masalah · `u04_sq005` Berpikir kritis · `u04_sq006` Introspeksi diri · `u04_sq007` Menyampaikan pendapat · `u04_sq008` Kerja tim · `u04_sq009` Kerja mandiri
+
+### Kolom Jawaban — Section C2: Karakter (U05)
+
+Skala `SETUJU` (1–4). Populasi: semua.
+
+`u05_sq001` Kejujuran · `u05_sq002` Komitmen · `u05_sq003` Kecerdasan emosi · `u05_sq004` Kepedulian terhadap sesama · `u05_sq005` Objektivitas · `u05_sq006` Ketidakmudahan menyerah · `u05_sq007` Kepatuhan terhadap aturan
+
+### Kolom Jawaban — Section D1: Permasalahan Studi (U06)
+
+Skala `FREKUENSI` (1–4). Nilai ≥ 2 = pernah mengalami. Populasi: semua.
+
+`u06_sq001` Permasalahan akademis · `u06_sq002` Keuangan · `u06_sq003` Pengaruh keuangan ke akademis · `u06_sq004` Psikologis · `u06_sq005` Pengaruh psikologis ke studi · `u06_sq006` Sosial budaya · `u06_sq007` Pengaruh sosial budaya ke studi · `u06_sq008` Kesehatan · `u06_sq009` Pengaruh kesehatan ke studi
+
+### Kolom Jawaban — Section D2: Ketersediaan Dukungan (U07)
+
+Skala `HARAPAN` (1–5). Hanya diisi responden yang pernah mengalami masalah. Populasi: semua.
+
+`u07_sq001` Beasiswa/pinjaman · `u07_sq002` Bimbingan konseling · `u07_sq003` Nasehat wali akademik · `u07_sq004` Nasehat dosen matakuliah
+
+### Kolom Jawaban — Section E & F: Free-text (universal)
+
+Tipe: `TEXT`. `NULL` jika responden tidak mengisi. Ini adalah **sumber utama RAG**.
+
+| Kolom | Topik |
+|-------|-------|
+| `g10q22` | Kebiasaan belajar |
+| `g01q23` | Kesan dan prestasi dalam belajar |
+| `g01q24` | Pengalaman lain yang sangat berkesan |
+| `g01q25` | Aktivitas kemahasiswaan |
+| `g01q26` | Cita-cita dalam karier |
+| `g01q27` | Cita-cita dalam hidup |
+| `g01q28` | Motto untuk sukses studi di ITB |
+| `g01q29` | Sifat khas diri sendiri |
+| `g11q30` | Suka duka menempuh studi di ITB |
+| `g01q31` | Segi positif studi di ITB |
+| `g01q32` | Segi negatif studi di ITB |
+| `g01q33` | **Saran perbaikan proses & sarana pendidikan ITB** |
+| `g01q34` | **Saran untuk mahasiswa lain** |
+| `g01q35` | Catatan atau komentar lain |
+
+### Kolom Jawaban — Section G: Rencana Studi Lanjut + MKU (khusus S1)
+
+`NULL` untuk strata S2, S3, PR.
+
+| Kolom | Pertanyaan | Skala |
+|-------|-----------|-------|
+| `s101` | Rencana studi lanjut | YA_TIDAK (1=Ya, 2=Tidak) |
+| `s102` | Lokasi studi lanjut | LOKASI_STUDI_LANJUT (1–4) |
+| `s103` | Kelanjutan bidang studi | BIDANG_STUDI_LANJUT (1–5) |
+| `s104_sq001` | MKU membekali softskill | SETUJU (1–4) |
+| `s104_sq002` | MKU membekali hardskill | SETUJU (1–4) |
+| `s104_sq003` | MKU membangun karakter | SETUJU (1–4) |
+| `s104_sq004` | MKU memperluas wawasan | SETUJU (1–4) |
+
+### Kolom Jawaban — Section H: Rencana Studi Lanjut (khusus S2)
+
+`NULL` untuk strata S1, S3, PR.
+
+| Kolom | Pertanyaan | Skala |
+|-------|-----------|-------|
+| `m01` | Rencana studi lanjut | YA_TIDAK |
+| `m02` | Lokasi studi lanjut | LOKASI_STUDI_LANJUT |
+| `m03` | Kelanjutan bidang studi | BIDANG_STUDI_LANJUT |
+
+### Kolom Jawaban — Section I: MKU (khusus S3)
+
+`NULL` untuk strata S1, S2, PR.
+
+| Kolom | Pertanyaan |
+|-------|-----------|
+| `d01_sq001` | MKU membekali softskill |
+| `d01_sq002` | MKU membekali hardskill |
+| `d01_sq003` | MKU membangun karakter |
+| `d01_sq004` | MKU memperluas wawasan |
+
+### Kolom Jawaban — Section J: FSRD Spesifik (24 kolom)
+
+`NULL` untuk semua fakultas selain FSRD. Skala `HARAPAN_FSRD` (1–5).
+
+| Grup | Kolom | Topik |
+|------|-------|-------|
+| FSRD01 | `fsrd01_sq001` – `fsrd01_sq005` | Tahap Persiapan Bersama (TPB) |
+| FSRD02 | `fsrd02_sq001` – `fsrd02_sq003` | Sistem Perwalian |
+| FSRD03 | `fsrd03_sq001` – `fsrd03_sq006` | Mata Kuliah Teori |
+| FSRD04 | `fsrd04_sq001` – `fsrd04_sq006` | Mata Kuliah Praktika/Studio |
+| FSRD05 | `fsrd05_sq001` – `fsrd05_sq004` | Tugas Akhir |
+
+### Kolom Jawaban — Section K: SBM Spesifik (31 kolom)
+
+`NULL` untuk semua fakultas selain SBM. Skala `PERKEMBANGAN_SBM` (1–5).
+
+`sbm01_sq001` – `sbm01_sq031` — 31 kompetensi outcomes program SBM (komunikasi, pengetahuan bisnis, analisis data, riset, jejaring, tanggung jawab profesional & etis, dll).
+
+### Index
+
+| Index | Kolom | Tujuan |
+|-------|-------|--------|
+| UNIQUE | `response_id` | Identifikasi unik baris (wajib untuk REFRESH CONCURRENTLY) |
+| B-tree | `jenjang` | Filter per jenjang |
+| B-tree | `kode_fakultas` | Filter per fakultas |
+| B-tree | `periode_ijazah_id` | Filter per periode |
+| B-tree | `(jenjang, kode_fakultas)` | Filter komposit |
+
+### Contoh Query
+
+#### RAG — Ambil Semua Free-text Saran dari Satu Prodi
+```sql
+SELECT
+    response_id,
+    jenjang,
+    g01q31 AS segi_positif,
+    g01q32 AS segi_negatif,
+    g01q33 AS saran_perbaikan,
+    g01q34 AS saran_mahasiswa
+FROM analitik.mv_wisudawan_jawaban_responden
+WHERE kode_prodi  = 135
+  AND (g01q31 IS NOT NULL OR g01q32 IS NOT NULL
+       OR g01q33 IS NOT NULL OR g01q34 IS NOT NULL);
+```
+
+#### Dashboard — Data Individual Mahasiswa per Prodi (kaprodi scope)
+```sql
+SELECT
+    response_id,
+    submit_date,
+    u03_sq012  AS kepuasan_fasilitas_itb,
+    u01_sq012  AS pilih_prodi_lagi,
+    u02        AS rekomendasi_prodi
+FROM analitik.mv_wisudawan_jawaban_responden
+WHERE kode_prodi = 135        -- dikunci scope kaprodi
+  AND jenjang = 'S1'
+ORDER BY submit_date DESC;
+```
+
+---
+
+## Hierarki Filter Dashboard
+
+Implementasi akses berjenjang pada semua MV menggunakan **filter WHERE statis** berdasarkan scope pengguna, bukan row-level security terpisah (karena mv tak support).
+
+| Level | Constraint SQL | Keterangan |
+|-------|---------------|-----------|
+| **Admin / Institusi** | *(tidak ada constraint tambahan)* | Akses seluruh data: semua filter tersedia (fakultas, prodi, strata, periode) |
+| **Dekanat** | `WHERE kode_fakultas = '<kode_fakultas_dekan>'` | Scope dikunci ke satu fakultas. Filter prodi, strata, periode tetap tersedia. |
+| **Kaprodi** | `WHERE kode_prodi = <kode_prodi_kaprodi>` | Scope dikunci ke satu prodi. Filter strata dan periode tetap tersedia. |
+
+### Contoh Implementasi Filter Berjenjang
+
+```sql
+-- Fungsi helper: tambah WHERE clause sesuai scope user
+-- (diimplementasikan di layer aplikasi/API)
+
+-- Admin: query bebas
+SELECT * FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE jenjang = $strata_filter
+  AND periode_ijazah_id = $periode_filter;
+
+-- Dekanat STEI: tambah kd_fak
+SELECT * FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE kode_fakultas = 'STEI'              -- injected dari session user
+  AND jenjang = $strata_filter
+  AND periode_ijazah_id = $periode_filter;
+
+-- Kaprodi IF (no_ps=135): tambah no_ps
+SELECT * FROM analitik.mv_wisudawan_statistik_pertanyaan
+WHERE kode_prodi = 135                  -- injected dari session user
+  AND jenjang = $strata_filter
+  AND periode_ijazah_id = $periode_filter;
+```
+
+---
+
+## Ringkasan Perbandingan Ketiga MV
+
+| Aspek | `mv_wisudawan_distribusi_jawaban` | `mv_wisudawan_statistik_pertanyaan` | `mv_wisudawan_jawaban_responden` |
+|-------|------------------------|---------------------|-------------------|
+| **Granularitas** | Per (dimensi, pertanyaan, **nilai**) | Per (dimensi, pertanyaan) | Per **responden** |
+| **Baris perkiraan** | ~300K–500K (banyak) | ~50K–100K | 7.535 |
+| **Mencakup nominal** | ✅ Ya | ❌ Tidak (hanya ordinal) | ✅ Ya |
+| **Mencakup free-text** | ❌ Tidak | ❌ Tidak | ✅ Ya |
+| **Kolom utama** | `n`, `pct` | `rata_rata`, `std_dev` | Semua jawaban flat |
+| **Cocok untuk** | Bar chart distribusi, top-2-box, incidence | Line/rank chart, benchmark | RAG, Text-to-SQL individual |
+| **REFRESH mode** | Tanpa CONCURRENTLY | Tanpa CONCURRENTLY | **CONCURRENTLY** |
+| **UNIQUE INDEX** | `(periode, strata, fak, no_ps, pertanyaan, nilai)` | `(periode, strata, fak, no_ps, pertanyaan)` | `response_id` |

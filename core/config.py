@@ -12,20 +12,20 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     
     # Microsoft SSO
-    MS365_CLIENT_ID: str = os.getenv("MS365_CLIENT_ID")
-    MS365_CLIENT_SECRET: str = os.getenv("MS365_CLIENT_SECRET")
-    MS365_TENANT_ID: str = os.getenv("MS365_TENANT_ID")
-    MS365_REDIRECT_URI: str = os.getenv("MS365_REDIRECT_URI")
+    MS365_CLIENT_ID: str | None = os.getenv("MS365_CLIENT_ID")
+    MS365_CLIENT_SECRET: str | None = os.getenv("MS365_CLIENT_SECRET")
+    MS365_TENANT_ID: str | None = os.getenv("MS365_TENANT_ID")
+    MS365_REDIRECT_URI: str | None = os.getenv("MS365_REDIRECT_URI")
     MS365_SCOPES: list[str] = ["User.Read"]
 
     # Session
-    SESSION_COOKIE_NAME: str = os.getenv("SESSION_COOKIE_NAME")
-    SESSION_TTL_SECONDS: int = int(os.getenv("SESSION_TTL_SECONDS"))
-    OAUTH_FLOW_TTL_SECONDS: int = int(os.getenv("OAUTH_FLOW_TTL_SECONDS"))
-    SESSION_COOKIE_SECURE: bool = os.getenv("SESSION_COOKIE_SECURE").lower() == "true"
+    SESSION_COOKIE_NAME: str = os.getenv("SESSION_COOKIE_NAME", "itb_session")
+    SESSION_TTL_SECONDS: int = int(os.getenv("SESSION_TTL_SECONDS", "86400"))
+    OAUTH_FLOW_TTL_SECONDS: int = int(os.getenv("OAUTH_FLOW_TTL_SECONDS", "300"))
+    SESSION_COOKIE_SECURE: bool = os.getenv("SESSION_COOKIE_SECURE", "False").lower() == "true"
 
     # Frontend 
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # LLM — Groq by default; set LLM_PROVIDER=google to use Gemini.
     # LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "google")
