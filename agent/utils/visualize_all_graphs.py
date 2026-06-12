@@ -18,7 +18,7 @@ def main():
         entity_resolver=_portfolio_entity_resolver,
         few_shot_examples=_portfolio_few_shot_examples,
         schema_context=load_schema_context(),
-        default_table="mv_kelas",
+        default_table="v_akademik_kelas",
         max_attempts=settings.MAX_SQL_ATTEMPTS,
     )
 
