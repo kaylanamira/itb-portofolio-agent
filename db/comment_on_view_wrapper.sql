@@ -883,12 +883,12 @@ COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.periode_seremoni_id IS 
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.tahun_seremoni IS 'Tahun pelaksanaan seremoni wisuda, diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.bulan_seremoni IS 'Bulan pelaksanaan seremoni wisuda (1–12), diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_seremoni IS 'Nama seremoni wisuda dalam Bahasa Indonesia dari periode_seremoni_sementara.nama->>''id''. NULL jika mapping belum ada';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kd_strata IS 'Jenjang pendidikan kode: S1=Sarjana, S2=Magister, S3=Doktor, PR=Profesi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kd_fak IS 'Kode fakultas/sekolah singkat, contoh: STEI, SBM, FSRD. FK ke utama.fakultas';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.no_ps IS 'Kode numerik program studi, contoh: 135=Teknik Informatika S1. FK ke utama.program_studi';
+COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.jenjang IS 'Jenjang pendidikan kode: S1=Sarjana, S2=Magister, S3=Doktor, PR=Profesi';
+COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_fakultas IS 'Kode fakultas/sekolah singkat, contoh: STEI, SBM, FSRD. FK ke utama.fakultas';
+COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.no_prodi IS 'Kode numerik program studi, contoh: 135=Teknik Informatika S1. FK ke utama.program_studi';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.submit_date IS 'Timestamp pengisian kuesioner oleh wisudawan';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_prodi IS 'no_ps dari utama.program_studi (identik dengan no_ps, disediakan untuk konsistensi penamaan lintas MV)';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.singkatan_prodi IS 'Kode singkat program studi, contoh: IF, EL, MA. Dari utama.program_studi.kd_ps';
+COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_prodi IS 'Kode singkat program studi, contoh: IF, EL, MA. Dari utama.program_studi.kd_ps';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_prodi_id IS 'Nama lengkap program studi dalam Bahasa Indonesia. Dari utama.program_studi.nama->>id';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_prodi_en IS 'Nama lengkap program studi dalam Bahasa Inggris. Dari utama.program_studi.nama->>en';
 COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.jenjang IS 'Jenjang program studi: S1, S2, S3, PR. Dari utama.program_studi.kd_strata';
@@ -1062,42 +1062,17 @@ COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq031 IS 'Section
 
 
 -- COMMENT ON VIEW analitik.v_akademik_portofolio IS  ← sudah ada di atas, skip duplikat
-    'Wide table portofolio dosen — grain: 1 baris = 1 kelas. '
-    'Sumber: evaluasi.portofolio JOIN analitik.mv_kelas. '
-    'Era baru (skema_pertanyaan=''baru''): kd_pertanyaan 12-19, [20181,∞), ~54K baris. '
-    'Era lama (skema_pertanyaan=''lama''): kd_pertanyaan 1-11, ~27K baris. '
-    'Semua teks sudah distrip HTML via analitik.strip_html(). '
-    'Refresh setelah analitik.mv_kelas. '
--- ================================================================
--- COMMENT ON MATERIALIZED VIEW
--- ================================================================
--- COMMENT ON VIEW analitik.v_akademik_portofolio IS  ← sudah ada di atas, skip duplikat
-    'Wide table portofolio dosen — grain: 1 baris = 1 kelas. '
-    'Sumber: evaluasi.portofolio JOIN analitik_mv.mv_kelas. '
-    'Era baru (skema_pertanyaan=''baru''): kd_pertanyaan 12-19, [20181,∞), ~54K baris. '
-    'Era lama (skema_pertanyaan=''lama''): kd_pertanyaan 1-11, ~27K baris. '
-    'Semua teks sudah distrip HTML via analitik.strip_html(). '
-    'Refresh setelah analitik.mv_kelas. '
-    '--- '
-    'CATATAN HISTORIS — Phased rollout skema evaluasi: '
-    'Kuesioner mahasiswa beralih ke q21-q37 mulai 2016/semester-1, '
-    'sedangkan portofolio dosen baru beralih ke q12-19 mulai 2018/semester-1. '
-    'Akibatnya ~11.618 kelas (2016/1, 2016/2, 2017/1, 2017/2) '
-    'memiliki skema_pertanyaan=''lama'' meski kuesioner mahasiswanya sudah era baru. '
-    'Untuk kelas-kelas ini, respons dosen terhadap kuesioner mahasiswa '
-    'ada di kolom lama_uraian_kuesioner_statistik (kd_pertanyaan=4) '
-    'dan lama_komentar_kuesioner_mahasiswa (kd_pertanyaan=9).';
 
 -- ================================================================
 -- COMMENT ON COLUMN — DIMENSI KELAS
 -- ================================================================
 COMMENT ON COLUMN analitik.v_akademik_portofolio.kelas_id
     IS 'PK MV. Identitas kelas (FK ke kelas.kelas).';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_mk
+COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_matkul
     IS 'Kode mata kuliah (6 karakter), contoh: MA1101.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_mk_id
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_matkul_id
     IS 'Nama mata kuliah Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_mk_en
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_matkul_en
     IS 'Nama mata kuliah Bahasa Inggris.';
 COMMENT ON COLUMN analitik.v_akademik_portofolio.sks
     IS 'Jumlah SKS mata kuliah.';
@@ -1113,10 +1088,9 @@ COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun_kurikulum
     IS 'Tahun kurikulum yang berlaku untuk mata kuliah ini.';
 COMMENT ON COLUMN analitik.v_akademik_portofolio.jenis_nilai
     IS 'ABCDE atau PassFail.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_prodi
-    IS 'no_ps program studi penyelenggara.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.singkatan_prodi
-    IS 'Singkatan prodi (2 karakter).';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.no_prodi
+    IS 'ID numerik program studi penyelenggara (no_ps).';
+-- [singkatan_prodi tidak ada di view baru — digantikan kode_prodi]
 COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_prodi_id
     IS 'Nama program studi Bahasa Indonesia.';
 COMMENT ON COLUMN analitik.v_akademik_portofolio.jenjang
