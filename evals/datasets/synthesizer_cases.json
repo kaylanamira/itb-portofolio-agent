@@ -8,7 +8,7 @@
         "step_number": 1,
         "thought": "Hitung jumlah mahasiswa dengan nilai A",
         "action": "sql",
-        "query": "SELECT COALESCE(SUM(dist_jumlah_a), 0) AS total_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+        "query": "SELECT COALESCE(SUM(dist_jumlah_a), 0) AS total_a FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF1220' AND semester = 1 AND tahun = 2024",
         "result": [
           {
             "total_a": 47
@@ -32,7 +32,7 @@
         "step_number": 1,
         "thought": "Ambil 3 dosen dengan avg_skor_pelaksanaan tertinggi di STEI",
         "action": "sql",
-        "query": "SELECT nama_dosen_gelar, COALESCE(avg_skor_pelaksanaan, 0) FROM mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC NULLS LAST LIMIT 3",
+        "query": "SELECT nama_dosen_gelar, COALESCE(avg_skor_pelaksanaan, 0) FROM v_akademik_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC NULLS LAST LIMIT 3",
         "result": [
           {
             "nama_dosen_gelar": "Joseph Estes, S.T, M.T, Ph.D.",
@@ -92,19 +92,19 @@
         "step_number": 1,
         "thought": "Ambil rata-rata IP per kelas IF1220",
         "action": "sql",
-        "query": "SELECT no_kelas, rata_ip_akhir_mahasiswa FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024 AND rata_ip_akhir_mahasiswa IS NOT NULL ORDER BY no_kelas",
+        "query": "SELECT no_kelas, avg_ip_akhir_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF1220' AND semester = 1 AND tahun = 2024 AND avg_ip_akhir_mahasiswa IS NOT NULL ORDER BY no_kelas",
         "result": [
           {
             "no_kelas": 1,
-            "rata_ip_akhir_mahasiswa": 3.42
+            "avg_ip_akhir_mahasiswa": 3.42
           },
           {
             "no_kelas": 2,
-            "rata_ip_akhir_mahasiswa": 3.16
+            "avg_ip_akhir_mahasiswa": 3.16
           },
           {
             "no_kelas": 3,
-            "rata_ip_akhir_mahasiswa": 2.30
+            "avg_ip_akhir_mahasiswa": 2.3
           }
         ],
         "observation": "Kelas 1 memiliki rata-rata IP tertinggi (3.42), diikuti kelas 2 (3.16), dan kelas 3 terendah (2.30)."
