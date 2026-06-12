@@ -1,48 +1,48 @@
 [
   {
     "id": "SV-DL-S-AD-001",
-    "description": "Valid: SELECT from mv_kelas (public schema, no prefix)",
-    "sql": "SELECT dist_jumlah_a, dist_jumlah_b FROM mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+    "description": "Valid: SELECT from v_akademik_kelas (public schema, no prefix)",
+    "sql": "SELECT dist_jumlah_a, dist_jumlah_b FROM v_akademik_kelas WHERE kode_matkul = 'IF1220' AND semester = 1 AND tahun = 2024",
     "expected_valid": true,
     "expected_error_type": null,
-    "tags": ["valid", "mv_kelas"]
+    "tags": ["valid", "v_akademik_kelas"]
   },
   {
     "id": "SV-DL-S-AD-002",
-    "description": "Valid: SELECT with aggregation and COALESCE from mv_kelas",
-    "sql": "SELECT COALESCE(AVG(rata_ip_akhir_mahasiswa), 0) AS avg_ip FROM mv_kelas WHERE kode_prodi = 135 AND semester = 1 AND tahun = 2024 AND rata_ip_akhir_mahasiswa IS NOT NULL",
+    "description": "Valid: SELECT with aggregation and COALESCE from v_akademik_kelas",
+    "sql": "SELECT COALESCE(AVG(avg_ip_akhir_mahasiswa), 0) AS avg_ip FROM v_akademik_kelas WHERE no_prodi = 135 AND semester = 1 AND tahun = 2024 AND avg_ip_akhir_mahasiswa IS NOT NULL",
     "expected_valid": true,
     "expected_error_type": null,
-    "tags": ["valid", "aggregation", "mv_kelas"]
+    "tags": ["valid", "aggregation", "v_akademik_kelas"]
   },
   {
     "id": "SV-DL-S-AD-003",
-    "description": "Valid: SELECT from mv_statistik_prodi",
-    "sql": "SELECT nama_prodi_id, COALESCE(avg_ip_mhs, 0) FROM mv_statistik_prodi WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_ip_mhs IS NOT NULL ORDER BY avg_ip_mhs DESC NULLS LAST",
+    "description": "Valid: SELECT from v_akademik_statistik_prodi",
+    "sql": "SELECT nama_prodi_id, COALESCE(avg_ip_akhir_mahasiswa, 0) FROM v_akademik_statistik_prodi WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_ip_akhir_mahasiswa IS NOT NULL ORDER BY avg_ip_akhir_mahasiswa DESC NULLS LAST",
     "expected_valid": true,
     "expected_error_type": null,
-    "tags": ["valid", "mv_statistik_prodi"]
+    "tags": ["valid", "v_akademik_statistik_prodi"]
   },
   {
     "id": "SV-DL-S-AD-004",
-    "description": "Valid: SELECT from mv_statistik_dosen",
-    "sql": "SELECT nama_dosen_gelar, COALESCE(avg_skor_pelaksanaan, 0) FROM mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC NULLS LAST LIMIT 3",
+    "description": "Valid: SELECT from v_akademik_statistik_dosen",
+    "sql": "SELECT nama_dosen_gelar, COALESCE(avg_skor_pelaksanaan, 0) FROM v_akademik_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' AND semester = 1 AND tahun = 2024 AND avg_skor_pelaksanaan IS NOT NULL ORDER BY avg_skor_pelaksanaan DESC NULLS LAST LIMIT 3",
     "expected_valid": true,
     "expected_error_type": null,
-    "tags": ["valid", "mv_statistik_dosen"]
+    "tags": ["valid", "v_akademik_statistik_dosen"]
   },
   {
     "id": "SV-DL-S-AD-005",
-    "description": "Valid: CTE with mv_kelas",
-    "sql": "WITH top_mk AS (SELECT kode_mk, AVG(rata_ip_akhir_mahasiswa) AS avg_ip FROM mv_kelas WHERE kode_prodi = 135 AND rata_ip_akhir_mahasiswa IS NOT NULL GROUP BY kode_mk) SELECT kode_mk, avg_ip FROM top_mk ORDER BY avg_ip DESC NULLS LAST LIMIT 5",
+    "description": "Valid: CTE with v_akademik_kelas",
+    "sql": "WITH top_mk AS (SELECT kode_matkul, AVG(avg_ip_akhir_mahasiswa) AS avg_ip FROM v_akademik_kelas WHERE no_prodi = 135 AND avg_ip_akhir_mahasiswa IS NOT NULL GROUP BY kode_matkul) SELECT kode_matkul, avg_ip FROM top_mk ORDER BY avg_ip DESC NULLS LAST LIMIT 5",
     "expected_valid": true,
     "expected_error_type": null,
     "tags": ["valid", "cte"]
   },
   {
     "id": "SV-DL-S-AD-006",
-    "description": "Valid: JOIN mv_kelas with evaluasi.portofolio (allowed schema)",
-    "sql": "SELECT m.kelas_id, p.nilai FROM mv_kelas m JOIN evaluasi.portofolio p ON m.kelas_id = p.kelas_id WHERE m.kode_mk = 'IF1220' AND m.semester = 1 AND m.tahun = 2024",
+    "description": "Valid: JOIN v_akademik_kelas with evaluasi.portofolio (allowed schema)",
+    "sql": "SELECT m.kelas_id, p.nilai FROM v_akademik_kelas m JOIN evaluasi.portofolio p ON m.kelas_id = p.kelas_id WHERE m.kode_matkul = 'IF1220' AND m.semester = 1 AND m.tahun = 2024",
     "expected_valid": true,
     "expected_error_type": null,
     "tags": ["valid", "join", "evaluasi"]
@@ -65,8 +65,8 @@
   },
   {
     "id": "SV-DL-S-AD-009",
-    "description": "Valid: analitik schema (mv_komentar_mahasiswa)",
-    "sql": "SELECT komentar_teks FROM analitik.mv_komentar_mahasiswa WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
+    "description": "Valid: analitik schema (v_akademik_komentar_mahasiswa)",
+    "sql": "SELECT komentar_teks FROM analitik.v_akademik_komentar_mahasiswa WHERE kode_matkul = 'IF1220' AND semester = 1 AND tahun = 2024",
     "expected_valid": true,
     "expected_error_type": null,
     "tags": ["valid", "analitik"]
@@ -74,7 +74,7 @@
   {
     "id": "SV-OS-S-AD-001",
     "description": "Forbidden: INSERT statement",
-    "sql": "INSERT INTO mv_kelas (kode_mk) VALUES ('IF9999')",
+    "sql": "INSERT INTO v_akademik_kelas (kode_matkul) VALUES ('IF9999')",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["forbidden_write", "insert"]
@@ -82,7 +82,7 @@
   {
     "id": "SV-OS-S-AD-002",
     "description": "Forbidden: UPDATE statement",
-    "sql": "UPDATE mv_kelas SET rata_ip_akhir_mahasiswa = 4.0 WHERE kode_mk = 'IF1220'",
+    "sql": "UPDATE v_akademik_kelas SET avg_ip_akhir_mahasiswa = 4.0 WHERE kode_matkul = 'IF1220'",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["forbidden_write", "update"]
@@ -90,7 +90,7 @@
   {
     "id": "SV-OS-S-AD-003",
     "description": "Forbidden: DELETE statement",
-    "sql": "DELETE FROM mv_kelas WHERE kode_mk = 'IF1220'",
+    "sql": "DELETE FROM v_akademik_kelas WHERE kode_matkul = 'IF1220'",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["forbidden_write", "delete"]
@@ -98,7 +98,7 @@
   {
     "id": "SV-OS-S-AD-004",
     "description": "Forbidden: DROP TABLE",
-    "sql": "DROP TABLE mv_kelas",
+    "sql": "DROP TABLE v_akademik_kelas",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["forbidden_write", "drop"]
@@ -106,7 +106,7 @@
   {
     "id": "SV-OS-S-AD-005",
     "description": "Forbidden: TRUNCATE",
-    "sql": "TRUNCATE mv_kelas",
+    "sql": "TRUNCATE v_akademik_kelas",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["forbidden_write", "truncate"]
@@ -162,7 +162,7 @@
   {
     "id": "SV-OS-S-AD-012",
     "description": "Forbidden: SQL line comment injection",
-    "sql": "SELECT * FROM mv_kelas -- WHERE 1=1",
+    "sql": "SELECT * FROM v_akademik_kelas -- WHERE 1=1",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["injection", "line_comment"]
@@ -170,7 +170,7 @@
   {
     "id": "SV-OS-S-AD-013",
     "description": "Forbidden: SQL block comment injection",
-    "sql": "SELECT * FROM mv_kelas /* this is a comment */",
+    "sql": "SELECT * FROM v_akademik_kelas /* this is a comment */",
     "expected_valid": false,
     "expected_error_type": "Security Violation",
     "tags": ["injection", "block_comment"]

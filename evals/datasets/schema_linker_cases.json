@@ -1,7 +1,7 @@
 [
   {
     "id": "SL-DL-S-KP-001",
-    "description": "Simple lookup from mv_kelas",
+    "description": "Simple lookup from v_akademik_kelas",
     "query": "Berapa rata-rata nilai IF1220 semester 1 tahun 2024?",
     "query_type": "data_lookup",
     "complexity": "simple",
@@ -10,12 +10,12 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF1220",
+      "kode_matkul": "IF1220",
       "semester": 1
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -29,7 +29,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF",
+      "kode_prodi": "IF",
       "sks": 4
     },
     "expected_resolved": {},
@@ -88,7 +88,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF2210",
+      "kode_matkul": "IF2210",
       "semester": 3,
       "tahun_ajaran": "2025/2026"
     },
@@ -109,7 +109,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF1220"
+      "kode_matkul": "IF1220"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
@@ -128,12 +128,12 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF3110",
+      "kode_matkul": "IF3110",
       "no_kelas": 2
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -147,7 +147,7 @@
       "dosen_id": 42
     },
     "expected_entities": {
-      "kode_mk": "IF2210",
+      "kode_matkul": "IF2210",
       "no_kelas": 1,
       "kd_pertanyaan": "25"
     },
@@ -160,7 +160,7 @@
   },
   {
     "id": "SL-AN-M-KP-009",
-    "description": "Aggregation from mv_statistik_prodi",
+    "description": "Aggregation from v_akademik_statistik_prodi",
     "query": "Berapa rata-rata kelulusan prodi IF dalam 3 tahun terakhir?",
     "query_type": "analytical_numeric",
     "complexity": "medium",
@@ -169,16 +169,16 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_prodi": 135
+      "no_prodi": 135
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_prodi"
+      "analitik.v_akademik_statistik_prodi"
     ]
   },
   {
     "id": "SL-AN-M-DS-010",
-    "description": "Aggregation from mv_statistik_dosen",
+    "description": "Aggregation from v_akademik_statistik_dosen",
     "query": "Berapa total SKS yang saya ajar per semester selama 2 tahun terakhir?",
     "query_type": "analytical_numeric",
     "complexity": "medium",
@@ -189,12 +189,12 @@
     "expected_entities": {},
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_dosen"
+      "analitik.v_akademik_statistik_dosen"
     ]
   },
   {
     "id": "SL-CM-M-DK-011",
-    "description": "Compare aggregated data from mv_statistik_prodi",
+    "description": "Compare aggregated data from v_akademik_statistik_prodi",
     "query": "Bandingkan jumlah mahasiswa aktif IF, STI, dan EL semester ini",
     "query_type": "comparative",
     "complexity": "medium",
@@ -203,21 +203,21 @@
       "kd_fak": "STEI"
     },
     "expected_entities": {
+      "semester": 1,
       "kode_prodi": [
         "IF",
         "STI",
         "EL"
-      ],
-      "semester": 1
+      ]
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_prodi"
+      "analitik.v_akademik_statistik_prodi"
     ]
   },
   {
     "id": "SL-DG-M-KP-012",
-    "description": "Diagnostic join evaluasi.nilai_kelas and mv_kelas",
+    "description": "Diagnostic join evaluasi.nilai_kelas and v_akademik_kelas",
     "query": "Kenapa skor Q22 (capaian pembelajaran) IF3150 lebih rendah dari mata kuliah lain?",
     "query_type": "diagnostic",
     "complexity": "medium",
@@ -226,13 +226,13 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF3150",
+      "kode_matkul": "IF3150",
       "kd_pertanyaan": "22"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
       "evaluasi.nilai_kelas",
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -246,7 +246,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF",
+      "kode_prodi": "IF",
       "semester": 1,
       "kd_stat_daftar": "C"
     },
@@ -267,7 +267,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF"
+      "kode_prodi": "IF"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
@@ -277,7 +277,7 @@
   },
   {
     "id": "SL-CM-C-DK-015",
-    "description": "Complex compare mv_statistik_prodi across multiple dimensions",
+    "description": "Complex compare v_akademik_statistik_prodi across multiple dimensions",
     "query": "Bandingkan tren kelulusan (A-C vs A-D) dan rata-rata IP untuk IF, STI, EL dari 2022-2024, breakdown per semester",
     "query_type": "comparative",
     "complexity": "complex",
@@ -286,7 +286,7 @@
       "kd_fak": "STEI"
     },
     "expected_entities": {
-      "singkatan_prodi": [
+      "kode_prodi": [
         "IF",
         "STI",
         "EL"
@@ -304,7 +304,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_prodi"
+      "analitik.v_akademik_statistik_prodi"
     ]
   },
   {
@@ -318,7 +318,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF2210",
+      "kode_matkul": "IF2210",
       "no_kelas": 1
     },
     "expected_resolved": {},
@@ -339,7 +339,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF",
+      "kode_prodi": "IF",
       "semester": 1
     },
     "expected_resolved": {},
@@ -367,7 +367,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_dosen"
+      "analitik.v_akademik_statistik_dosen"
     ]
   },
   {
@@ -381,11 +381,11 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF"
+      "kode_prodi": "IF"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -399,7 +399,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF2210",
+      "kode_matkul": "IF2210",
       "no_kelas": 2,
       "semester": 1
     },
@@ -420,7 +420,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF3110",
+      "kode_matkul": "IF3110",
       "no_kelas": 1
     },
     "expected_resolved": {},
@@ -432,7 +432,7 @@
   },
   {
     "id": "SL-AN-M-DS-022",
-    "description": "Aggregation from mv_statistik_dosen - trend analysis",
+    "description": "Aggregation from v_akademik_statistik_dosen - trend analysis",
     "query": "Bagaimana tren evaluasi saya (Q25-Q27) dari semester ke semester?",
     "query_type": "analytical_numeric",
     "complexity": "medium",
@@ -443,12 +443,12 @@
     "expected_entities": {},
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_dosen"
+      "analitik.v_akademik_statistik_dosen"
     ]
   },
   {
     "id": "SL-CM-M-DK-023",
-    "description": "Compare faculty-level aggregation from mv_statistik_prodi",
+    "description": "Compare faculty-level aggregation from v_akademik_statistik_prodi",
     "query": "Bandingkan rata-rata skor kuesioner overall STEI vs FMIPA semester ini",
     "query_type": "comparative",
     "complexity": "medium",
@@ -463,7 +463,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_prodi"
+      "analitik.v_akademik_statistik_prodi"
     ]
   },
   {
@@ -485,12 +485,12 @@
       "dosen_id": "fuzzy_match_expected"
     },
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
     "id": "SL-DL-M-KP-025",
-    "description": "Fuzzy resolution - course name to kode_mk",
+    "description": "Fuzzy resolution - course name to kode_matkul",
     "query": "Berapa mahasiswa Basis Data kelas 1?",
     "query_type": "data_lookup",
     "complexity": "medium",
@@ -503,10 +503,10 @@
       "no_kelas": 1
     },
     "expected_resolved": {
-      "kode_mk": "fuzzy_match_expected"
+      "kode_matkul": "fuzzy_match_expected"
     },
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -520,7 +520,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF"
+      "kode_prodi": "IF"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
@@ -531,7 +531,7 @@
   },
   {
     "id": "SL-DG-M-KP-027",
-    "description": "Diagnostic - identify outliers from mv_kelas",
+    "description": "Diagnostic - identify outliers from v_akademik_kelas",
     "query": "Kelas fitbd mana yang jumlah mahasiswanya lebih dari 2x rata-rata?",
     "query_type": "diagnostic",
     "complexity": "medium",
@@ -544,7 +544,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -558,19 +558,19 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF",
+      "kode_prodi": "IF",
       "semester": 1,
       "tahun_ajaran": "2022/2023"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas",
+      "analitik.v_akademik_kelas",
       "utama.mata_kuliah"
     ]
   },
   {
     "id": "SL-CG-M-DK-029",
-    "description": "Chart from mv_statistik_prodi - trend line",
+    "description": "Chart from v_akademik_statistik_prodi - trend line",
     "query": "Buatkan line chart tren jumlah mahasiswa aktif per prodi STEI dari 2022-2024",
     "query_type": "chart_generate",
     "complexity": "medium",
@@ -583,7 +583,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_prodi"
+      "analitik.v_akademik_statistik_prodi"
     ]
   },
   {
@@ -606,7 +606,7 @@
   },
   {
     "id": "SL-AN-M-DS-031",
-    "description": "Aggregation comparing self vs peers from mv_statistik_dosen",
+    "description": "Aggregation comparing self vs peers from v_akademik_statistik_dosen",
     "query": "Bagaimana rata-rata evaluasi saya dibandingkan dosen lain di KK yang sama?",
     "query_type": "analytical_numeric",
     "complexity": "medium",
@@ -617,7 +617,7 @@
     "expected_entities": {},
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_dosen"
+      "analitik.v_akademik_statistik_dosen"
     ]
   },
   {
@@ -631,7 +631,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": [
+      "kode_matkul": [
         "IF2210",
         "IF2211",
         "IF2212"
@@ -659,7 +659,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas",
+      "analitik.v_akademik_kelas",
       "evaluasi.nilai_dosen"
     ]
   },
@@ -676,7 +676,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_dosen"
+      "analitik.v_akademik_statistik_dosen"
     ]
   },
   {
@@ -690,7 +690,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_mk": "IF2210",
+      "kode_matkul": "IF2210",
       "no_kelas": 1
     },
     "expected_resolved": {},
@@ -711,16 +711,16 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF"
+      "kode_prodi": "IF"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
     "id": "SL-CM-M-KP-037",
-    "description": "Comparison - semester ganjil vs genap from mv_statistik_prodi",
+    "description": "Comparison - semester ganjil vs genap from v_akademik_statistik_prodi",
     "query": "Bandingkan rata-rata IP mahasiswa prodi 135 semester ganjil vs genap 2024",
     "query_type": "comparative",
     "complexity": "medium",
@@ -729,7 +729,7 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "kode_prodi": 135,
+      "no_prodi": 135,
       "semester": [
         1,
         2
@@ -737,7 +737,7 @@
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_statistik_prodi"
+      "analitik.v_akademik_statistik_prodi"
     ]
   },
   {
@@ -770,11 +770,11 @@
       "prodi_id": 144
     },
     "expected_entities": {
-      "singkatan_prodi": "MR"
+      "kode_prodi": "MR"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   },
   {
@@ -788,11 +788,11 @@
       "prodi_id": 135
     },
     "expected_entities": {
-      "singkatan_prodi": "IF"
+      "kode_prodi": "IF"
     },
     "expected_resolved": {},
     "expected_tables_subset": [
-      "analitik.mv_kelas"
+      "analitik.v_akademik_kelas"
     ]
   }
 ]
