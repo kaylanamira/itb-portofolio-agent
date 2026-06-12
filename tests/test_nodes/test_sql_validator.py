@@ -17,7 +17,7 @@ def _make_validator() -> SQLTool:
         entity_resolver=AsyncMock(return_value=None),
         few_shot_examples=lambda _query_type: "",
         schema_context="unused",
-        default_table="analitik.mv_kelas",
+        default_table="analitik.v_akademik_kelas",
         executor=MagicMock(),
     )
 
@@ -69,14 +69,14 @@ def test_security_checker_matches_dataset_label(case: SqlValidatorCase):
 @pytest.mark.parametrize("keyword", ["INSERT", "UPDATE", "DELETE", "DROP", "TRUNCATE", "ALTER", "CREATE", "MERGE"])
 def test_write_operations_are_blocked(keyword):
     sql_by_keyword = {
-        "INSERT": "INSERT INTO analitik.mv_kelas (kode_mk) VALUES ('IF9999')",
-        "UPDATE": "UPDATE analitik.mv_kelas SET rata_ip_akhir_mahasiswa = 4.0 WHERE kode_mk = 'IF1220'",
-        "DELETE": "DELETE FROM analitik.mv_kelas WHERE kode_mk = 'IF1220'",
-        "DROP": "DROP TABLE analitik.mv_kelas",
-        "TRUNCATE": "TRUNCATE analitik.mv_kelas",
-        "ALTER": "ALTER TABLE analitik.mv_kelas ADD COLUMN dummy int",
+        "INSERT": "INSERT INTO analitik.v_akademik_kelas (kode_matkul) VALUES ('IF9999')",
+        "UPDATE": "UPDATE analitik.v_akademik_kelas SET avg_ip_akhir_mahasiswa = 4.0 WHERE kode_matkul = 'IF1220'",
+        "DELETE": "DELETE FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF1220'",
+        "DROP": "DROP TABLE analitik.v_akademik_kelas",
+        "TRUNCATE": "TRUNCATE analitik.v_akademik_kelas",
+        "ALTER": "ALTER TABLE analitik.v_akademik_kelas ADD COLUMN dummy int",
         "CREATE": "CREATE TABLE analitik.eval_tmp (id int)",
-        "MERGE": "MERGE INTO analitik.mv_kelas USING analitik.mv_kelas source ON true WHEN MATCHED THEN UPDATE SET kode_mk = source.kode_mk",
+        "MERGE": "MERGE INTO analitik.v_akademik_kelas USING analitik.v_akademik_kelas source ON true WHEN MATCHED THEN UPDATE SET kode_matkul = source.kode_matkul",
     }
     _assert_blocked(sql_by_keyword[keyword], "Security Violation")
 
@@ -88,8 +88,8 @@ def test_sensitive_columns_are_blocked(column):
 
 
 @pytest.mark.parametrize("sql", [
-    "SELECT * FROM analitik.mv_kelas -- WHERE 1=1",
-    "SELECT * FROM analitik.mv_kelas /* comment */",
+    "SELECT * FROM analitik.v_akademik_kelas -- WHERE 1=1",
+    "SELECT * FROM analitik.v_akademik_kelas /* comment */",
     "SELECT 1; SELECT 2",
     "SELECT pg_sleep(5)",
     "SELECT pg_read_file('/etc/passwd')",
@@ -130,13 +130,13 @@ async def test_empty_non_select_and_invalid_syntax_are_blocked(sql):
 
 
 @pytest.mark.parametrize("sql", [
-    "SELECT dist_jumlah_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220' AND semester = 1 AND tahun = 2024",
-    "SELECT COALESCE(AVG(rata_ip_akhir_mahasiswa), 0) AS avg_ip FROM analitik.mv_kelas WHERE kode_prodi = 135 AND rata_ip_akhir_mahasiswa IS NOT NULL",
-    "SELECT nama_prodi_id, avg_ip_mhs FROM analitik.mv_statistik_prodi WHERE kode_fakultas = 'STEI' ORDER BY avg_ip_mhs DESC NULLS LAST",
-    "SELECT nama_dosen_gelar, avg_skor_pelaksanaan FROM analitik.mv_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' LIMIT 3",
-    "SELECT komentar_teks FROM analitik.mv_komentar_mahasiswa WHERE kode_mk = 'IF1220'",
+    "SELECT dist_jumlah_a FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF1220' AND semester = 1 AND tahun = 2024",
+    "SELECT COALESCE(AVG(avg_ip_akhir_mahasiswa), 0) AS avg_ip FROM analitik.v_akademik_kelas WHERE no_prodi = 135 AND avg_ip_akhir_mahasiswa IS NOT NULL",
+    "SELECT nama_prodi_id, avg_ip_akhir_mahasiswa FROM analitik.v_akademik_statistik_prodi WHERE kode_fakultas = 'STEI' ORDER BY avg_ip_akhir_mahasiswa DESC NULLS LAST",
+    "SELECT nama_dosen_gelar, avg_skor_pelaksanaan FROM analitik.v_akademik_statistik_dosen WHERE kode_fakultas_dosen = 'STEI' LIMIT 3",
+    "SELECT komentar_teks FROM analitik.v_akademik_komentar_mahasiswa WHERE kode_matkul = 'IF1220'",
     "SELECT c.nama->>'id' AS cpmk FROM kur24.cpmk c JOIN utama.mata_kuliah mk ON mk.mata_kuliah_id = c.mata_kuliah_id WHERE mk.kd_kuliah = 'IF1220' AND c.active = true ORDER BY c.weight",
-    "WITH top_mk AS (SELECT kode_mk, AVG(rata_ip_akhir_mahasiswa) AS avg_ip FROM analitik.mv_kelas WHERE kode_prodi = 135 GROUP BY kode_mk) SELECT kode_mk, avg_ip FROM top_mk ORDER BY avg_ip DESC NULLS LAST LIMIT 5",
+    "WITH top_mk AS (SELECT kode_matkul, AVG(avg_ip_akhir_mahasiswa) AS avg_ip FROM analitik.v_akademik_kelas WHERE no_prodi = 135 GROUP BY kode_matkul) SELECT kode_matkul, avg_ip FROM top_mk ORDER BY avg_ip DESC NULLS LAST LIMIT 5",
 ])
 @pytest.mark.asyncio
 async def test_valid_analytics_queries_pass(sql):
@@ -151,7 +151,7 @@ def test_security_config_reuses_application_allowlists():
 
 
 @pytest.mark.parametrize("sql", [
-    "SELECT dist_jumlah_a FROM analitik.mv_kelas WHERE kode_mk = 'IF1220'",
+    "SELECT dist_jumlah_a FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF1220'",
     "SELECT nama->>'id' AS nama_prodi FROM utama.program_studi WHERE kd_fak = 'STEI' AND active = true",
 ])
 def test_scope_placeholder_is_not_required_because_rls_is_executor_managed(sql):
