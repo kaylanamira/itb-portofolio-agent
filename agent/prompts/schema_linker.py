@@ -14,12 +14,12 @@ ENTITY TYPES TO EXTRACT:
 
 TABLE SELECTION GUIDANCE:
 The database has these table categories:
-- **Analytics MVs** (analitik schema): Pre-joined materialized views for performance analysis.
+- **Analytics Views** (analitik schema): Pre-joined views for performance analysis.
   Use these as the default for score, grade, attendance, and evaluation queries.
-  - analitik.mv_kelas — per-class analytics (scores, grades, attendance, evaluation)
-  - analitik.mv_statistik_prodi — per-prodi aggregation per semester
-  - analitik.mv_statistik_dosen — per-dosen aggregation per semester
-  - analitik.mv_komentar_mahasiswa — student free-text comments
+  - analitik.v_akademik_kelas — per-class analytics (scores, grades, attendance, evaluation)
+  - analitik.v_akademik_statistik_prodi — per-prodi aggregation per semester
+  - analitik.v_akademik_statistik_dosen — per-dosen aggregation per semester
+  - analitik.v_akademik_komentar_mahasiswa — student free-text comments
 
 - **Lookup tables** (utama schema): Master data for institution-wide reference queries.
   - utama.fakultas, utama.program_studi, utama.dosen, utama.kk, utama.mata_kuliah
@@ -29,7 +29,7 @@ The database has these table categories:
   - evaluasi.pertanyaan_portofolio — portfolio section definitions
   - evaluasi.kelompok_kuesioner — questionnaire dimension groups
 
-- **Extended tables**: For deeper analysis when MVs are insufficient.
+- **Extended tables**: For deeper analysis when Views are insufficient.
   - evaluasi.nilai_kelas, evaluasi.nilai_dosen, evaluasi.portofolio
   - kelas.kelas, kelas.pengajar
   - mahasiswa.kuliah (grade data per student)
@@ -38,12 +38,12 @@ The database has these table categories:
 
 Select the minimal set of tables that can answer the query. Prefer MVs for analytics, lookup/metadata tables for definitions.
 
-CHART AND TREND QUERIES: Any query asking for a chart, graph, trend, or visualization of scores, grades, attendance, student counts, or evaluation metrics → ALWAYS use analitik.mv_* tables (not utama.*). utama.* tables are for counting/listing entities only, not for time-series or performance data.
+CHART AND TREND QUERIES: Any query asking for a chart, graph, trend, or visualization of scores, grades, attendance, student counts, or evaluation metrics → ALWAYS use analitik.v_akademik_* views (not utama.*). utama.* tables are for counting/listing entities only, not for time-series or performance data.
 
 IMPORTANT COLUMN NAMING:
-- In MVs: kode_mk, kode_prodi, kode_fakultas, singkatan_prodi, nama_mk_id, nama_mk_en
-- In raw tables: utama.mata_kuliah uses kd_kuliah (not kode_mk), nama is JSONB {id: ..., en: ...}
-- In raw tables: utama.program_studi uses no_ps (not kode_prodi), kd_ps (not singkatan_prodi)
+- In views: kode_matkul, no_prodi, kode_prodi, kode_fakultas, nama_matkul_id, nama_matkul_en
+- In raw tables: utama.mata_kuliah uses kd_kuliah (not kode_matkul), nama is JSONB {id: ..., en: ...}
+- In raw tables: utama.program_studi uses no_ps (not no_prodi), kd_ps (not kode_prodi)
 - In raw tables: utama.fakultas uses kd_fak (not kode_fakultas), nama is JSONB
 - utama.dosen uses nama_gelar (generated column with full name + titles)
 - active = true for filtering active records in utama tables
@@ -59,11 +59,11 @@ RELATIVE TIME RESOLUTION (use the context provided in the human message):
 Return ONLY valid JSON (no markdown):
 {
   "detected_entities": {
-    "kode_mk": "IF2210 or null",
-    "nama_mk": "Basis Data or null",
+    "kode_matkul": "IF2210 or null",
+    "nama_matkul_id": "Basis Data or null",
     "nama_dosen": "Budi Raharjo or null",
-    "kode_prodi": "135 or null (ONLY for numeric codes)",
-    "singkatan_prodi": "IF or null (for abbreviations like IF, STI, EL)",
+    "no_prodi": "135 or null (ONLY for numeric codes)",
+    "kode_prodi": "IF or null (for abbreviations like IF, STI, EL)",
     "nama_prodi": "Informatika or null (for full names like Informatika, Geologi)",
     "kode_fakultas": "STEI or null",
     "nama_fakultas": "Seni Rupa dan Desain or null (for full names)",
@@ -73,7 +73,7 @@ Return ONLY valid JSON (no markdown):
     "tahun_ajaran": "2023/2024 or null (ONLY when format YYYY/YYYY is explicitly used)",
     "no_kelas": "1 or null"
   },
-  "relevant_tables": ["analitik.mv_kelas"]
+  "relevant_tables": ["analitik.v_akademik_kelas"]
 }
 """
 
@@ -117,14 +117,14 @@ def build_schema_linker_human_message(
 
 PORTFOLIO_SQL_DOMAIN_RULES = """
 - Table routing:
-  * Analytics (scores, grades, attendance, evaluation): analitik.mv_kelas / analitik.mv_statistik_prodi / analitik.mv_statistik_dosen
-  * Student comments / feedback text: analitik.mv_komentar_mahasiswa
+  * Analytics (scores, grades, attendance, evaluation): analitik.v_akademik_kelas / analitik.v_akademik_statistik_prodi / analitik.v_akademik_statistik_dosen
+  * Student comments / feedback text: analitik.v_akademik_komentar_mahasiswa
   * Institutional facts (list/count faculties, prodi, dosen, kk, mata kuliah): utama.* tables
   * Portfolio free-text (refleksi, metode, usulan perbaikan): evaluasi.portofolio
   * Who is dekan/kaprodi/kepala KK: join utama.fakultas/program_studi/kk with utama.dosen via dosen_id_dekan/dosen_id_kaprodi/etc, or query users.user_role for historical jabatan
 
-- Column naming differences (MV vs raw tables):
-  * MV columns like kode_mk, kode_prodi, kode_fakultas, singkatan_prodi, nama_mk_id are aliases.
+- Column naming differences (Regular View vs raw tables):
+  * View columns like kode_matkul, no_prodi, kode_prodi, kode_fakultas, nama_matkul_id are aliases.
   * Raw utama.mata_kuliah uses kd_kuliah, nama->>'id', nama->>'en'
   * Raw utama.program_studi uses no_ps, kd_ps, nama->>'id'
   * Raw utama.fakultas uses kd_fak, nama->>'id'
@@ -138,7 +138,7 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
     > prodi:    WHERE kd_ps ILIKE '%%IF%%' OR nama->>'id' ILIKE '%%informatika%%'
     > fakultas: WHERE kd_fak ILIKE '%%STEI%%' OR nama->>'id' ILIKE '%%elektro%%'
     > KK:       WHERE nama->>'id' ILIKE '%%rekayasa perangkat lunak%%'
-    > mata kuliah (MV): WHERE nama_mk_id ILIKE '%%basis data%%'
+    > mata kuliah (MV): WHERE nama_matkul_id ILIKE '%%basis data%%'
     > mata kuliah (raw): WHERE nama->>'id' ILIKE '%%basis data%%' OR nama->>'en' ILIKE '%%basis data%%'
   * Strip honorifics: "bu yani" → search for 'yani', "pak budi" → 'budi'
 
@@ -149,24 +149,25 @@ PORTFOLIO_SQL_DOMAIN_RULES = """
 - semester values: 1=Ganjil, 2=Genap, 3=Semester Pendek (SP)
 - tahun_ajaran format: 'YYYY/YYYY', e.g. '2024/2025'
 
-- Grade distribution columns in analitik.mv_kelas:
+- Grade distribution columns in analitik.v_akademik_kelas:
   * dist_jumlah_a through dist_jumlah_e for ABCDE grading
   * dist_jumlah_pass, dist_jumlah_fail for PassFail
   * dist_pct_lulus_A_C, dist_pct_lulus_A_D for pass rates
+  * ALWAYS add WHERE is_distribusi_nilai_sah = TRUE when touching dist_jumlah_* or dist_pct_* columns
 
 - Aggregations & Null Handling:
   * ALWAYS use COALESCE when applying SUM() to ensure a default 0 is returned instead of NULL (e.g., COALESCE(SUM(dist_jumlah_a), 0)).
-  * ALWAYS include IS NOT NULL filters when applying AVG(), MIN(), MAX(), or ordering by nullable performance metrics to avoid skewed results (e.g., WHERE rata_ip_akhir_mahasiswa IS NOT NULL).
+  * ALWAYS include IS NOT NULL filters when applying AVG(), MIN(), MAX(), or ordering by nullable performance metrics to avoid skewed results (e.g., WHERE avg_ip_akhir_mahasiswa IS NOT NULL).
 
 - Filter active records: WHERE active = true (not is_active)
 
 - PRIVACY: Never SELECT columns containing personal data (nim, nip, tgl_lahir, email, alamat, no_hp, ip_address, etc.)
 
 - Common SQL patterns:
-  * All classes for a course: SELECT * FROM analitik.mv_kelas WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun = 2024;
-  * Dosen's classes: SELECT * FROM analitik.mv_kelas WHERE dosen_id = ANY(semua_dosen_id) AND tahun_ajaran = '2024/2025';
-  * Compare prodi stats: SELECT * FROM analitik.mv_statistik_prodi WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024 ORDER BY avg_skor_overall DESC;
-  * Student comments for a class: SELECT komentar_teks FROM analitik.mv_komentar_mahasiswa WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun = 2024;
+  * All classes for a course: SELECT * FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2210' AND semester = 1 AND tahun = 2024;
+  * Dosen's classes: SELECT * FROM analitik.v_akademik_kelas WHERE dosen_id = ANY(semua_dosen_id) AND tahun_ajaran = '2024/2025';
+  * Compare prodi stats: SELECT * FROM analitik.v_akademik_statistik_prodi WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024 ORDER BY avg_skor_overall DESC;
+  * Student comments for a class: SELECT komentar_teks FROM analitik.v_akademik_komentar_mahasiswa WHERE kode_matkul = 'IF2210' AND semester = 1 AND tahun = 2024;
   * Who is dekan of STEI: SELECT d.nama_gelar FROM utama.fakultas f JOIN utama.dosen d ON d.dosen_id = f.dosen_id_dekan WHERE f.kd_fak = 'STEI' AND f.active = true;
   * Count prodi in a faculty: SELECT COUNT(*) FROM utama.program_studi WHERE kd_fak = 'STEI' AND active = true;
 """
