@@ -9,8 +9,9 @@ async def synthesizer(state: AgentState) -> dict:
     llm = get_llm("synthesis")
     query = state.get("effective_query", state.get("raw_query", ""))
     abort_reason = state.get("abort_reason")
-    
-    if abort_reason:
+    is_max_retries = abort_reason == "MAX_RETRIES_EXCEEDED"
+
+    if abort_reason and not is_max_retries:
         messages = [
             SystemMessage(content=REJECTION_SYSTEM_PROMPT),
             HumanMessage(content=f"Query User: {query}\nAlasan Penolakan: {abort_reason}\n\nBuat respons penolakan:")

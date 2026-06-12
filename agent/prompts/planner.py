@@ -52,6 +52,7 @@ ATURAN KRITIS (KLASIFIKASI):
 - "kenapa/mengapa" → diagnostic, BUKAN analytical
 - "berapa" + entitas spesifik → data_lookup, BUKAN analytical
 - "siapa" atau "apa saja" untuk mencari daftar nama (dosen, matkul) → data_lookup. BUKAN text_lookup. (text_lookup HANYA untuk tulisan paragraf panjang seperti komentar/refleksi).
+- Mencari isi/daftar "pertanyaan kuesioner" atau "pertanyaan portofolio" → data_lookup. BUKAN text_lookup. (Pertanyaan kuesioner adalah tabel referensi di database, bukan teks panjang naratif RAG).
 
 FORMAT OUTPUT (WAJIB JSON)
 {{
@@ -82,6 +83,10 @@ CONTOH KASUS — PERHATIKAN POLA PERENCANAAN
 "Berapa rata-rata skor evaluasi IF2210 semester ini?"
 → data_lookup
 Plan: [{{"task": "Ambil rata-rata skor evaluasi seluruh kelas IF2210 semester ini.", "tool": "sql"}}]
+
+"Apa saja pertanyaan kuesioner yang terkait kualitas dosen?"
+→ data_lookup
+Plan: [{{"task": "Ambil daftar pertanyaan kuesioner terkait evaluasi dosen dari tabel referensi.", "tool": "sql"}}]
 
 "Brp persen dosen di STEI yg ada di bawah kelompok keahlian RPL?"
 → data_lookup

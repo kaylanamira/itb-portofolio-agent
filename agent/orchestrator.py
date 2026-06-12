@@ -2,17 +2,13 @@ import logging
 from langgraph.graph import StateGraph, END
 from agent.state import AgentState
 from agent.graph import portfolio_graph
+from agent.wisudawan_graph import wisudawan_graph
 from agent.nodes.input_guard import input_guard, route_after_input_guard
 from agent.nodes.intent_classifier import intent_classifier, route_after_intent
 from agent.nodes.synthesizer import synthesizer
 
 logger = logging.getLogger(__name__)
 
-async def wisudawan_agent(state: AgentState):
-    logger.info("Routing to Wisudawan Agent node.")
-    return {
-        "abort_reason": "Fitur modul Wisudawan ITB saat ini masih dalam tahap pengembangan dan belum dapat diakses."
-    }
 
 class AgentOrchestrator:
     """Orchestrator class for managing the ITB Academic Portfolio Agent workflow."""
@@ -26,7 +22,7 @@ class AgentOrchestrator:
         g.add_node("input_guard", input_guard)
         g.add_node("intent_classifier", intent_classifier)
         g.add_node("portfolio_agent", portfolio_graph)
-        g.add_node("wisudawan_agent", wisudawan_agent)
+        g.add_node("wisudawan_agent", wisudawan_graph)
         g.add_node("out_of_scope", synthesizer)
         
         g.set_entry_point("input_guard")
@@ -42,8 +38,7 @@ class AgentOrchestrator:
         })
         
         g.add_edge("portfolio_agent", END)
-        g.add_edge("wisudawan_agent", "out_of_scope")
-        # g.add_edge("wisudawan_agent", END)
+        g.add_edge("wisudawan_agent", END)
         g.add_edge("out_of_scope", END)
         
         logger.info("Compiling the main orchestrator StateGraph...")

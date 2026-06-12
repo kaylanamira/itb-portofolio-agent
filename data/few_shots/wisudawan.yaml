@@ -1,0 +1,159 @@
+examples:
+  # --- mv_wisudawan_statistik_pertanyaan: avg/median/stddev per question ---
+
+  - nl: "Berapa rata-rata skor kepuasan fasilitas ITB wisudawan S1?"
+    sql: |
+      SELECT kode_pertanyaan, rata_rata, median, std_dev, jumlah_responden
+      FROM analitik.mv_wisudawan_statistik_pertanyaan
+      WHERE kode_grup_pertanyaan = 'U03'
+        AND jenjang = 'S1'
+      ORDER BY rata_rata DESC
+      LIMIT 100;
+
+  - nl: "Bandingkan rata-rata skor kepuasan dosen wisudawan S1 antar fakultas"
+    sql: |
+      SELECT kode_fakultas, nama_fakultas_id,
+        ROUND(AVG(rata_rata), 3) AS avg_skor_kepuasan_dosen,
+        SUM(jumlah_responden) AS total_responden
+      FROM analitik.mv_wisudawan_statistik_pertanyaan
+      WHERE kode_grup_pertanyaan = 'U01'
+        AND jenjang = 'S1'
+      GROUP BY kode_fakultas, nama_fakultas_id
+      ORDER BY avg_skor_kepuasan_dosen DESC
+      LIMIT 100;
+
+  - nl: "Tren rata-rata skor kepuasan fasilitas ITB per periode wisuda"
+    sql: |
+      SELECT periode_ijazah_id, tahun_ijazah, bulan_ijazah,
+        ROUND(AVG(rata_rata), 3) AS avg_skor_fasilitas,
+        SUM(jumlah_responden) AS total_responden
+      FROM analitik.mv_wisudawan_statistik_pertanyaan
+      WHERE kode_pertanyaan = 'U03_SQ012'
+        AND periode_ijazah_id IS NOT NULL
+      GROUP BY periode_ijazah_id, tahun_ijazah, bulan_ijazah
+      ORDER BY periode_ijazah_id
+      LIMIT 100;
+
+  - nl: "Ranking pertanyaan softskill berdasarkan rata-rata skor wisudawan prodi IF"
+    sql: |
+      SELECT kode_pertanyaan, rata_rata, jumlah_responden,
+        RANK() OVER (ORDER BY rata_rata DESC) AS ranking
+      FROM analitik.mv_wisudawan_statistik_pertanyaan
+      WHERE kode_prodi = 135
+        AND kode_grup_pertanyaan = 'U04'
+      ORDER BY ranking
+      LIMIT 100;
+
+  # --- mv_wisudawan_distribusi_jawaban: distribution & % per nilai ---
+
+  - nl: "Berapa distribusi jawaban wisudawan S1 STEI untuk kepuasan program studi?"
+    sql: |
+      SELECT kode_pertanyaan, nilai, jumlah_responden, persentase
+      FROM analitik.mv_wisudawan_distribusi_jawaban
+      WHERE kode_fakultas = 'STEI'
+        AND kode_grup_pertanyaan = 'U01'
+        AND jenjang = 'S1'
+      ORDER BY kode_pertanyaan, nilai
+      LIMIT 100;
+
+  - nl: "Berapa persen wisudawan S1 yang setuju atau cenderung setuju tentang kualitas dosen?"
+    sql: |
+      SELECT
+        kode_pertanyaan,
+        SUM(jumlah_responden) FILTER (WHERE nilai >= 3) * 100.0
+          / NULLIF(SUM(jumlah_responden), 0) AS pct_top2box,
+        SUM(jumlah_responden) AS total_responden
+      FROM analitik.mv_wisudawan_distribusi_jawaban
+      WHERE kode_grup_pertanyaan = 'U01'
+        AND kode_grup_opsi = 'SETUJU'
+        AND jenjang = 'S1'
+      GROUP BY kode_pertanyaan
+      ORDER BY pct_top2box DESC
+      LIMIT 100;
+
+  - nl: "Berapa persen wisudawan S1 yang pernah mengalami masalah psikologis selama studi?"
+    sql: |
+      SELECT
+        SUM(jumlah_responden) FILTER (WHERE nilai >= 2) * 100.0
+          / NULLIF(SUM(jumlah_responden), 0) AS pct_pernah_alami,
+        SUM(jumlah_responden) AS total_responden
+      FROM analitik.mv_wisudawan_distribusi_jawaban
+      WHERE kode_pertanyaan = 'U06_SQ004'
+        AND jenjang = 'S1';
+
+  - nl: "Distribusi rencana studi lanjut wisudawan S1 ITB"
+    sql: |
+      SELECT
+        mv.nilai,
+        ro.label->>'id' AS rencana,
+        SUM(mv.jumlah_responden) AS jumlah,
+        ROUND(SUM(mv.jumlah_responden) * 100.0
+          / NULLIF(SUM(SUM(mv.jumlah_responden)) OVER (), 0), 2) AS persentase
+      FROM analitik.mv_wisudawan_distribusi_jawaban mv
+      JOIN evaluasi_wisudawan.ref_opsi ro
+        ON ro.kd_grup_opsi = mv.kode_grup_opsi AND ro.nilai = mv.nilai
+      WHERE mv.kode_pertanyaan = 'S101'
+        AND mv.jenjang = 'S1'
+      GROUP BY mv.nilai, ro.label
+      ORDER BY mv.nilai
+      LIMIT 100;
+
+  # --- mv_wisudawan_jawaban_responden: per-respondent flat table ---
+
+  - nl: "Tampilkan saran perbaikan proses pendidikan dari wisudawan S1 STEI"
+    sql: |
+      SELECT response_id, nama_prodi_id, submit_date, g01q33 AS saran_perbaikan
+      FROM analitik.mv_wisudawan_jawaban_responden
+      WHERE kode_fakultas = 'STEI'
+        AND jenjang = 'S1'
+        AND g01q33 IS NOT NULL
+      ORDER BY submit_date DESC
+      LIMIT 100;
+
+  - nl: "Tampilkan semua jawaban kuesioner wisudawan tertentu berdasarkan response_id"
+    sql: |
+      SELECT *
+      FROM analitik.mv_wisudawan_jawaban_responden
+      WHERE response_id = 1234
+      LIMIT 1;
+
+  - nl: "Berapa wisudawan S1 IF yang berencana melanjutkan studi ke luar negeri?"
+    sql: |
+      SELECT COUNT(*) AS jumlah_responden
+      FROM analitik.mv_wisudawan_jawaban_responden
+      WHERE kode_prodi = 135
+        AND jenjang = 'S1'
+        AND s101 = 'Ya / Yes'
+        AND s102 = 'Di luar negeri';
+
+  # --- seremoni filter ---
+
+  - nl: "Rata-rata skor kepuasan fasilitas wisudawan pada seremoni wisuda Februari 2025"
+    sql: |
+      SELECT kode_pertanyaan, rata_rata, jumlah_responden
+      FROM analitik.mv_wisudawan_statistik_pertanyaan
+      WHERE tahun_seremoni = 2025
+        AND bulan_seremoni = 2
+        AND kode_grup_pertanyaan = 'U03'
+      ORDER BY rata_rata DESC
+      LIMIT 100;
+
+  # --- question catalog ---
+
+  - nl: "Apa saja pertanyaan dalam section kepuasan fasilitas itb?"
+    sql: |
+      SELECT kd_pertanyaan, pertanyaan->>'id' AS pertanyaan_id, kd_grup_opsi, batasan
+      FROM evaluasi_wisudawan.pertanyaan
+      WHERE kd_grup = 'U03'
+        AND active = TRUE
+      ORDER BY urutan
+      LIMIT 100;
+
+  - nl: "Apa saja pertanyaan kuesioner wisudawan untuk section softskill?"
+    sql: |
+      SELECT kd_pertanyaan, pertanyaan->>'id' AS pertanyaan_id, kd_grup_opsi
+      FROM evaluasi_wisudawan.pertanyaan
+      WHERE kd_grup = 'U04'
+        AND active = TRUE
+      ORDER BY urutan
+      LIMIT 100;
