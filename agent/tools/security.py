@@ -14,11 +14,11 @@ import sqlglot
 import sqlglot.expressions as exp
 
 ALLOWED_SCHEMAS: frozenset[str] = frozenset({
-    "utama", "kelas", "evaluasi", "mahasiswa", "users",
+    "utama", "kelas", "evaluasi", "evaluasi_wisudawan", "mahasiswa", "users",
     "kur24", "analitik", "referensi", "kurikulum",
 })
 
-FORBIDDEN_SCHEMA_PREFIXES: tuple[str, ...] = ("v_", "x_", "__")
+FORBIDDEN_SCHEMA_PREFIXES: tuple[str, ...] = ("x_", "__")
 
 FORBIDDEN_TABLES: frozenset[str] = frozenset({
     "checkpoints", "checkpoint_blobs", "checkpoint_writes",

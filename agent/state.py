@@ -38,12 +38,12 @@ class ChartContext(BaseModel):
     filters_applied: dict = Field(default_factory=dict)
 
 class DetectedEntities(BaseModel):
-    kode_mk: Optional[str] = None
-    nama_mk: Optional[str] = None
+    kode_matkul: Optional[str] = None
+    nama_matkul: Optional[str] = None
     no_kelas: Optional[str] = None
     nama_dosen: Optional[str] = None
+    no_prodi: Optional[str | list[str]] = None
     kode_prodi: Optional[str | list[str]] = None
-    singkatan_prodi: Optional[str | list[str]] = None
     nama_prodi: Optional[str | list[str]] = None
     kode_fakultas: Optional[str] = None
     nama_fakultas: Optional[str] = None

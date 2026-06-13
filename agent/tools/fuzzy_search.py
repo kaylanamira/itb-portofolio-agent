@@ -86,7 +86,7 @@ async def fuzzy_resolve_entities(
     try:
         async with get_db_connection() as conn:
 
-            if entities.nama_mk and not entities.resolved_matkul_id:
+            if entities.nama_matkul and not entities.resolved_matkul_id:
                 rows = await _query_many(conn, """
                     SELECT mata_kuliah_id, kd_kuliah, nama->>'id' AS nama_id,
                         GREATEST(
@@ -97,20 +97,20 @@ async def fuzzy_resolve_entities(
                     WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
-                """, (entities.nama_mk, entities.nama_mk), threshold=config.name_threshold)
+                """, (entities.nama_matkul, entities.nama_matkul), threshold=config.name_threshold)
 
                 if rows:
-                    updates["nama_mk"] = rows[0]["nama_id"]
+                    updates["nama_matkul"] = rows[0]["nama_id"]
                     if _is_unambiguous(rows, config, require_id=True):
-                        updates["kode_mk"] = updates.get("kode_mk") or rows[0]["kd_kuliah"]
+                        updates["kode_matkul"] = updates.get("kode_matkul") or rows[0]["kd_kuliah"]
                         updates["resolved_matkul_id"] = rows[0]["mata_kuliah_id"]
                     else:
-                        candidates["nama_mk"] = [
-                            {"nama_mk": r["nama_id"], "kode_mk": r["kd_kuliah"], "sim": r["sim"]}
+                        candidates["nama_matkul"] = [
+                            {"nama_matkul": r["nama_id"], "kode_matkul": r["kd_kuliah"], "sim": r["sim"]}
                             for r in rows
                         ]
 
-            if entities.kode_mk and not updates.get("kode_mk") and not entities.resolved_matkul_id:
+            if entities.kode_matkul and not updates.get("kode_matkul") and not entities.resolved_matkul_id:
                 rows = await _query_many(conn, """
                     SELECT mata_kuliah_id, kd_kuliah, nama->>'id' AS nama_id,
                            similarity(kd_kuliah::text, %s::text) AS sim
@@ -118,16 +118,16 @@ async def fuzzy_resolve_entities(
                     WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
-                """, (entities.kode_mk.upper(),), threshold=config.code_threshold)
+                """, (entities.kode_matkul.upper(),), threshold=config.code_threshold)
 
                 if rows:
                     if _is_unambiguous(rows, config, require_id=True):
-                        updates["kode_mk"] = rows[0]["kd_kuliah"]
-                        updates["nama_mk"] = updates.get("nama_mk") or rows[0]["nama_id"]
+                        updates["kode_matkul"] = rows[0]["kd_kuliah"]
+                        updates["nama_matkul"] = updates.get("nama_matkul") or rows[0]["nama_id"]
                         updates["resolved_matkul_id"] = rows[0]["mata_kuliah_id"]
                     else:
-                        candidates["kode_mk"] = [
-                            {"kode_mk": r["kd_kuliah"], "nama_mk": r["nama_id"], "sim": r["sim"]}
+                        candidates["kode_matkul"] = [
+                            {"kode_matkul": r["kd_kuliah"], "nama_matkul": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
@@ -161,7 +161,7 @@ async def fuzzy_resolve_entities(
                             for r in rows
                         ]
 
-            if entities.singkatan_prodi and not entities.resolved_prodi_id:
+            if entities.kode_prodi and not entities.resolved_prodi_id:
                 rows = await _query_many(conn, """
                     SELECT no_ps, kd_ps, nama->>'id' AS nama_id,
                            GREATEST(
@@ -172,23 +172,23 @@ async def fuzzy_resolve_entities(
                     WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
-                """, (entities.singkatan_prodi, entities.singkatan_prodi),
+                """, (entities.kode_prodi, entities.kode_prodi),
                     threshold=config.name_threshold)
 
                 if rows:
                     if _is_unambiguous(rows, config, require_id=True):
-                        updates["singkatan_prodi"] = rows[0]["kd_ps"]
-                        updates["kode_prodi"] = str(rows[0]["no_ps"])
+                        updates["kode_prodi"] = rows[0]["kd_ps"]
+                        updates["no_prodi"] = str(rows[0]["no_ps"])
                         updates["resolved_prodi_id"] = rows[0]["no_ps"]
                     else:
-                        candidates["singkatan_prodi"] = [
-                            {"singkatan_prodi": r["kd_ps"], "nama_prodi": r["nama_id"], "sim": r["sim"]}
+                        candidates["kode_prodi"] = [
+                            {"kode_prodi": r["kd_ps"], "nama_prodi": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
             # ── program_studi by numeric code ──
             if (
-                entities.kode_prodi
+                entities.no_prodi
                 and not updates.get("resolved_prodi_id")
                 and not entities.resolved_prodi_id
             ):
@@ -203,17 +203,17 @@ async def fuzzy_resolve_entities(
                     WHERE active = TRUE
                     ORDER BY sim DESC
                     LIMIT 3
-                """, (entities.kode_prodi, entities.kode_prodi, entities.kode_prodi),
+                """, (entities.no_prodi, entities.no_prodi, entities.no_prodi),
                     threshold=config.name_threshold)
 
                 if rows:
                     if _is_unambiguous(rows, config, require_id=True):
-                        updates["kode_prodi"] = str(rows[0]["no_ps"])
-                        updates["singkatan_prodi"] = updates.get("singkatan_prodi") or rows[0]["kd_ps"]
+                        updates["no_prodi"] = str(rows[0]["no_ps"])
+                        updates["kode_prodi"] = updates.get("kode_prodi") or rows[0]["kd_ps"]
                         updates["resolved_prodi_id"] = rows[0]["no_ps"]
                     else:
-                        candidates["kode_prodi"] = [
-                            {"kode_prodi": str(r["no_ps"]), "nama_prodi": r["nama_id"], "sim": r["sim"]}
+                        candidates["no_prodi"] = [
+                            {"no_prodi": str(r["no_ps"]), "nama_prodi": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 
@@ -235,13 +235,13 @@ async def fuzzy_resolve_entities(
 
                 if rows:
                     if _is_unambiguous(rows, config, require_id=True):
-                        updates["kode_prodi"] = str(rows[0]["no_ps"])
-                        updates["singkatan_prodi"] = updates.get("singkatan_prodi") or rows[0]["kd_ps"]
+                        updates["no_prodi"] = str(rows[0]["no_ps"])
+                        updates["kode_prodi"] = updates.get("kode_prodi") or rows[0]["kd_ps"]
                         updates["resolved_prodi_id"] = rows[0]["no_ps"]
                         updates["nama_prodi"] = rows[0]["nama_id"]
                     else:
                         candidates["nama_prodi"] = [
-                            {"kode_prodi": str(r["no_ps"]), "nama_prodi": r["nama_id"], "sim": r["sim"]}
+                            {"no_prodi": str(r["no_ps"]), "nama_prodi": r["nama_id"], "sim": r["sim"]}
                             for r in rows
                         ]
 

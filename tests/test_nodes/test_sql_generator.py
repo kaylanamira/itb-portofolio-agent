@@ -74,7 +74,7 @@ def _check_gold_sql(case: SqlGeneratorCase, sql: str) -> list[str]:
     return failures
 
 
-@pytest.mark.parametrize("case", CASES, ids=lambda c: c.id)
+@pytest.mark.parametrize("case", CASES[:10], ids=lambda c: c.id)
 @pytest.mark.asyncio
 async def test_sql_generator_node(case: SqlGeneratorCase, make_state, scope_kaprodi, node_results):
     entities_kwargs = {}

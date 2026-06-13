@@ -4,7 +4,7 @@ CONVERSATION_SUMMARY_PROMPT = f"""You are a conversation summarizer for ITB Acad
 Create a summary of the conversation so far in max {settings.MEMORY_SUMMARY_MAX_WORDS} words.
 
 MUST include if mentioned:
-- Academic entities: kelas (kode_mk + no_kelas), dosen (nama), prodi, semester, tahun_ajaran
+- Academic entities: kelas (kode_matkul + no_kelas), dosen (nama), prodi, semester, tahun_ajaran
 - Last query intent (e.g., "user was investigating low scores in IF2210")
 - Any unresolved comparisons or follow-up questions
 
