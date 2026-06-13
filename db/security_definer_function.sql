@@ -24,12 +24,12 @@ CREATE SCHEMA IF NOT EXISTS analitik;
 -- DECLARE
 --     v_role     text;
 --     v_dosen_id integer;
---     v_no_prodi integer;
+--     v_no_ps integer;
 --     v_kd_fak   character varying;
 -- BEGIN
 --     v_role     := NULLIF(current_setting('app.role',     true), '');
 --     v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
---     v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+--     v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
 --     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
 --     IF v_role IS NULL THEN RETURN; END IF;
 -- ================================================================
@@ -236,12 +236,12 @@ RETURNS TABLE (
 DECLARE
     v_role     text;
     v_dosen_id integer;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
     v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
@@ -273,19 +273,19 @@ BEGIN
         -- Masking skor_dosen_q* untuk DOSEN:
         -- Non-DOSEN → tampilkan JSONB penuh (semua dosen dalam kelas)
         -- DOSEN      → hanya entry dengan key = dosen_id miliknya
-        CASE WHEN v_role = 'DOSEN' THEN
+        CASE WHEN v_role = 'dosen' THEN
             CASE WHEN k.skor_dosen_q25 ? (v_dosen_id::TEXT)
                  THEN jsonb_build_object(v_dosen_id::TEXT,
                           k.skor_dosen_q25->>(v_dosen_id::TEXT))
                  ELSE NULL END
         ELSE k.skor_dosen_q25 END,
-        CASE WHEN v_role = 'DOSEN' THEN
+        CASE WHEN v_role = 'dosen' THEN
             CASE WHEN k.skor_dosen_q26 ? (v_dosen_id::TEXT)
                  THEN jsonb_build_object(v_dosen_id::TEXT,
                           k.skor_dosen_q26->>(v_dosen_id::TEXT))
                  ELSE NULL END
         ELSE k.skor_dosen_q26 END,
-        CASE WHEN v_role = 'DOSEN' THEN
+        CASE WHEN v_role = 'dosen' THEN
             CASE WHEN k.skor_dosen_q27 ? (v_dosen_id::TEXT)
                  THEN jsonb_build_object(v_dosen_id::TEXT,
                           k.skor_dosen_q27->>(v_dosen_id::TEXT))
@@ -296,13 +296,13 @@ BEGIN
         k.avg_skor_overall
     FROM analitik_mv.mv_akademik_kelas k
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN k.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN k.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN k.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN k.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN k.no_prodi = v_no_prodi
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN k.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN k.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN k.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN k.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN k.no_prodi = v_no_ps
         ELSE false
     END;
 END;
@@ -321,25 +321,25 @@ RETURNS SETOF analitik_mv.mv_akademik_komentar_mahasiswa AS $$
 DECLARE
     v_role     text;
     v_dosen_id integer;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
     v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
     SELECT * FROM analitik_mv.mv_akademik_komentar_mahasiswa k
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN k.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN k.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN k.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN k.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN v_dosen_id = ANY(k.semua_dosen_id)
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN k.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN k.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN k.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN k.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN v_dosen_id = ANY(k.semua_dosen_id)
         ELSE false
     END;
 END;
@@ -357,24 +357,24 @@ CREATE OR REPLACE FUNCTION analitik.fn_get_akademik_portofolio()
 RETURNS SETOF analitik_mv.mv_akademik_portofolio AS $$
 DECLARE
     v_role     text;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
     SELECT * FROM analitik_mv.mv_akademik_portofolio p
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN p.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN p.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN p.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN p.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN p.no_prodi = v_no_prodi --dosen_id ada di p.semua_dosen_id
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN p.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN p.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN p.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN p.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN p.no_prodi = v_no_ps --dosen_id ada di p.semua_dosen_id
         ELSE false
     END;
 END;
@@ -392,24 +392,24 @@ CREATE OR REPLACE FUNCTION analitik.fn_get_akademik_statistik_prodi()
 RETURNS SETOF analitik_mv.mv_akademik_statistik_prodi AS $$
 DECLARE
     v_role     text;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
     SELECT * FROM analitik_mv.mv_akademik_statistik_prodi sp
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN sp.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN sp.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN sp.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN sp.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN sp.no_prodi = v_no_prodi
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN sp.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN sp.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN sp.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN sp.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN sp.no_prodi = v_no_ps
         ELSE false
     END;
 END;
@@ -424,8 +424,8 @@ SELECT * FROM analitik.fn_get_akademik_statistik_prodi();
 --
 -- Row filter:
 --   DEKAN/JAJARAN_DEKANAT : kode_fakultas_dosen = v_kd_fak (homebase)
---   KAPRODI/JAJARAN_PRODI : v_no_prodi = ANY(no_prodi_diajar) (prodi diajar)
---   DOSEN                 : v_no_prodi = ANY(no_prodi_diajar) (prodi diajar)
+--   KAPRODI/JAJARAN_PRODI : v_no_ps = ANY(no_prodi_diajar) (prodi diajar)
+--   DOSEN                 : v_no_ps = ANY(no_prodi_diajar) (prodi diajar)
 --
 -- Column masking untuk DOSEN (dosen lain di prodinya):
 --   Tampil penuh   → dosen_id = v_dosen_id (data diri sendiri)
@@ -477,14 +477,14 @@ RETURNS TABLE (
 DECLARE
     v_role     text;
     v_dosen_id integer;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
     -- Shorthand: apakah baris ini milik dosen sendiri?
     -- Dievaluasi per baris di SELECT via ekspresi inline
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
     v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
@@ -509,31 +509,31 @@ BEGIN
         sd.total_sks_diajar,
         -- ── Kolom sensitif — di-mask untuk dosen lain jika role DOSEN ──
         -- Rumus: tampil jika (bukan DOSEN) ATAU (DOSEN dan baris milik sendiri)
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_pct_kehadiran_dosen     ELSE NULL END,
         -- avg_pct_kehadiran_mahasiswa: tidak di-mask (tentang mahasiswa, bukan dosen)
         sd.avg_pct_kehadiran_mahasiswa,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_ip_mhs                  ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_q25                ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_q26                ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_q27                ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_capaian            ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_pelaksanaan        ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_sarana_prasarana   ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_perilaku_mahasiswa ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_overall            ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.jumlah_kelas_dengan_skor    ELSE NULL END,
-        CASE WHEN v_role != 'DOSEN' OR sd.dosen_id = v_dosen_id
+        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_nilai_akhir             ELSE NULL END,
         -- Info prodi yang diajar (selalu tampil)
         sd.kelas_ids,
@@ -542,14 +542,14 @@ BEGIN
         sd.kode_prodi_diajar::character varying[]
     FROM analitik_mv.mv_akademik_statistik_dosen sd
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN sd.kode_fakultas_dosen = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN sd.kode_fakultas_dosen = v_kd_fak
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN sd.kode_fakultas_dosen = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN sd.kode_fakultas_dosen = v_kd_fak
         -- KAPRODI/JAJARAN_PRODI/DOSEN: berdasarkan prodi yang sedang diajar
-        WHEN 'KAPRODI'         THEN v_no_prodi = ANY(sd.no_prodi_diajar)
-        WHEN 'JAJARAN_PRODI'   THEN v_no_prodi = ANY(sd.no_prodi_diajar)
-        WHEN 'DOSEN'           THEN v_no_prodi = ANY(sd.no_prodi_diajar)
+        WHEN 'kaprodi'         THEN v_no_ps = ANY(sd.no_prodi_diajar)
+        WHEN 'jajaran_prodi'   THEN v_no_ps = ANY(sd.no_prodi_diajar)
+        WHEN 'dosen'           THEN v_no_ps = ANY(sd.no_prodi_diajar)
         ELSE false
     END;
 END;
@@ -565,24 +565,24 @@ CREATE OR REPLACE FUNCTION analitik.fn_get_wisudawan_distribusi_jawaban()
 RETURNS SETOF analitik_mv.mv_wisudawan_distribusi_jawaban AS $$
 DECLARE
     v_role     text;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
     SELECT * FROM analitik_mv.mv_wisudawan_distribusi_jawaban w
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN w.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN w.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN w.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN w.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN w.no_prodi = v_no_prodi
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN w.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN w.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN w.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN w.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN w.no_prodi = v_no_ps
         ELSE false
     END;
 END;
@@ -598,24 +598,24 @@ CREATE OR REPLACE FUNCTION analitik.fn_get_wisudawan_statistik_pertanyaan()
 RETURNS SETOF analitik_mv.mv_wisudawan_statistik_pertanyaan AS $$
 DECLARE
     v_role     text;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
     SELECT * FROM analitik_mv.mv_wisudawan_statistik_pertanyaan w
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN w.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN w.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN w.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN w.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN w.no_prodi = v_no_prodi
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN w.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN w.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN w.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN w.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN w.no_prodi = v_no_ps
         ELSE false
     END;
 END;
@@ -632,24 +632,24 @@ CREATE OR REPLACE FUNCTION analitik.fn_get_wisudawan_jawaban_responden()
 RETURNS SETOF analitik_mv.mv_wisudawan_jawaban_responden AS $$
 DECLARE
     v_role     text;
-    v_no_prodi integer;
+    v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_prodi := NULLIF(current_setting('app.no_ps', true), '')::integer;
+    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
 
     RETURN QUERY
     SELECT * FROM analitik_mv.mv_wisudawan_jawaban_responden w
     WHERE CASE v_role
-        WHEN 'ADMIN'           THEN true
-        WHEN 'DIREKTORAT'      THEN true
-        WHEN 'DEKAN'           THEN w.kode_fakultas = v_kd_fak
-        WHEN 'JAJARAN_DEKANAT' THEN w.kode_fakultas = v_kd_fak
-        WHEN 'KAPRODI'         THEN w.no_prodi = v_no_prodi
-        WHEN 'JAJARAN_PRODI'   THEN w.no_prodi = v_no_prodi
-        WHEN 'DOSEN'           THEN w.no_prodi = v_no_prodi
+        WHEN 'admin'           THEN true
+        WHEN 'direktorat'      THEN true
+        WHEN 'dekan'           THEN w.kode_fakultas = v_kd_fak
+        WHEN 'jajaran_dekanat' THEN w.kode_fakultas = v_kd_fak
+        WHEN 'kaprodi'         THEN w.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN w.no_prodi = v_no_ps
+        WHEN 'dosen'           THEN w.no_prodi = v_no_ps
         ELSE false
     END;
 END;
