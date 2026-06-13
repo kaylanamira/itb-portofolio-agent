@@ -1,10 +1,18 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+
 from contextlib import asynccontextmanager
+import os
+
 from core.database import init_db_pool, close_db_pool
+from core.redis_client import close_redis, init_redis
+
 from api.middleware.scope_middleware import ScopeMiddleware
 from api.routers import chat
+from api.routers import auth as auth_router   
 from api.limiter import limiter
+
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
@@ -12,17 +20,33 @@ from slowapi import _rate_limit_exceeded_handler
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown events."""
     await init_db_pool()
+    await init_redis()
     yield
+    await close_redis()
     await close_db_pool()
 
 app = FastAPI(title="ITB Portfolio Analytics", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.add_middleware(ScopeMiddleware)
-app.include_router(chat.router)
+# CORS
+_raw_origins = os.getenv("ALLOWED_ORIGINS")
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
-@app.get("/")
+app.add_middleware(ScopeMiddleware)
+
+# Router
+app.include_router(chat.router)
+app.include_router(auth_router.router)
+
+@app.get("/api")
 async def root():
     return RedirectResponse(url="/docs")
 
