@@ -9,6 +9,8 @@
 
 | Schema | Relevance | Purpose |
 |--------|-----------|---------|
+| `analitik` | **YES** | Agent-facing analytics layer. 13 views (5 public + 8 row/column-secured via `SECURITY DEFINER`). See "Analytics Views" section. |
+| `analitik_mv` | **NO (agent must not query)** | Raw materialized views backing `analitik.*`. Not RLS-enforced — owned by the application DB role, so GRANT/REVOKE does not block direct access. |
 | `utama` | **YES** | Master data: dosen, mahasiswa, mata kuliah, prodi, fakultas, KK |
 | `kelas` | **YES** | Class sessions, instructors, attendance meetings |
 | `evaluasi` | **YES** | Questionnaire scores, portfolio free-text, class/dosen scores |
@@ -21,7 +23,7 @@
 | `kemahasiswaan` | **NO** | Student/dosen activities, competitions, achievements |
 | `jadwal` | **NO** | db is empty |
 | `presensi` | **NO** | Granular per-meeting attendance with timestamps |
-| `wisuda` | **PARTIAL YES** | Graduation data — `periode_ijazah` and `periode_seremoni` are used by `evaluasi_wisudawan` MV for seremoni mapping. Direct queries out of scope per PRD. |
+| `wisuda` | **PARTIAL YES** | Graduation data — `periode_ijazah` and `periode_seremoni` are used by `analitik.v_wisudawan_*` for seremoni mapping. Direct queries out of scope per PRD. |
 | `keuangan` | **NO** | Tuition billing, payment, UKT |
 | `bpp` | **NO** | BPP tuition components |
 | `pmb` | **NO** | Admissions (new student intake) |
@@ -59,7 +61,7 @@ Pengguna aplikasi adalah pemangku kepentingan divisi akademik — dosen, kaprodi
 - Penerimaan mahasiswa baru (PMB/seleksi)
 - Penjurusan mahasiswa TPB — dikelola unit layanan akademik TPB, bukan kaprodi/dekan program studi tujuan
 - Kelas IVC (International Visiting Course) — dikelola kantor urusan internasional dengan kerangka evaluasi terpisah
-- Presensi granular per pertemuan per mahasiswa (hanya agregat dari sistem evaluasi yang tersedia di `mv_kelas`)
+- Presensi granular per pertemuan per mahasiswa (hanya agregat dari sistem evaluasi yang tersedia di `analitik.v_akademik_kelas`)
 - Data kepegawaian dosen di luar identitas dan beban mengajar
 - Sistem informasi eksternal (PDDikti, HRIS, MS365, mobile app)
 
@@ -245,7 +247,7 @@ Prodi cluster groupings. Likely used for administrative grouping of programs; lo
 ## Schema: `kelas` — Class Sessions
 
 **Relevance: YES**
-The primary transactional schema for class data. `kelas.kelas` is the base table from which `mv_kelas` is derived.
+The primary transactional schema for class data. `kelas.kelas` is the base table from which `analitik.v_akademik_kelas` is derived.
 
 ---
 
@@ -357,7 +359,7 @@ Reference/lookup tables for activity types, delivery methods, and regularity cod
 ## Schema: `evaluasi` — Evaluation & Portfolio
 
 **Relevance: YES**
-Contains all questionnaire scores and portfolio free-text data. This is the most critical schema for the analytics system alongside `mv_kelas`.
+Contains all questionnaire scores and portfolio free-text data. This is the most critical schema for the analytics system alongside `analitik.v_akademik_kelas`.
 
 ---
 
@@ -675,21 +677,51 @@ A dekan of two faculties will have two rows in `user_role` with `role_name = 'de
 
 ---
 
-## Materialized Views
+## Analytics Views (`analitik.*`)
 
 **primary query surface for the analytics agent.**
 
-Most MVs are defined in `schema_mv_portofolio_kuesioner.sql` and documented in `mv_dokumentasi.md` (living in the `public` schema). The comments materialized view `mv_komentar_mahasiswa` is located in the `analitik` schema.
+The analytics layer is split into two schemas:
+
+- `analitik_mv.*` — raw materialized views (defined in `schema_mv_portofolio_kuesioner.sql`, documented in `mv_dokumentasi.md`). **Agent must NEVER query this schema** — not RLS-enforced, and the application DB role owns it (GRANT/REVOKE does not block direct access).
+- `analitik.*` — 13 views consumed by the agent. 5 public views (Group A, no row filtering) + 8 row/column-secured views (Group B), each backed by an `analitik.fn_get_*()` `SECURITY DEFINER` function.
+
+Every generated query must reference `analitik.*` with the schema prefix. References to `analitik_mv.*`, other schemas, or unqualified table names must be rejected before execution.
+
+### Row-Level Security (Group B)
+
+Before querying any Group B view, the following session variables must be set via `SET LOCAL`, in the same transaction as the query:
+
+| Variable | Type | Notes |
+|----------|------|-------|
+| `app.role` | text | **Lowercase, exact match.** `admin`, `direktorat`, `dekan`, `jajaran_dekanat`, `kaprodi`, `jajaran_prodi`, `dosen` |
+| `app.user_id` | integer | App user ID |
+| `app.dosen_id` | integer | Dosen ID, empty if N/A |
+| `app.kk_id` | integer | KK ID, empty if N/A |
+| `app.no_ps` | integer | = `no_prodi`, empty if N/A |
+| `app.kd_fak` | varchar | Faculty code, empty if N/A |
+
+| `app.role` | Effect on Group B views |
+|---|---|
+| `admin`, `direktorat` | All rows, all columns |
+| `dekan`, `jajaran_dekanat` | Row filter: `kode_fakultas = app.kd_fak` |
+| `kaprodi`, `jajaran_prodi` | Row filter: `no_prodi = app.no_ps` |
+| `dosen` | Row filter: `no_prodi = app.no_ps`, plus column masking (see `skor_dosen_q25/26/27` below and `v_akademik_statistik_dosen`) |
+
+Without these session variables, all 8 Group B views return **0 rows** (not an error). Group A views (the 5 `v_info_umum_*` / `v_akademik_jenis_dan_sifat_matkul` views) always return data regardless of session variables.
 
 ---
 
-### `mv_kelas`
+### `analitik.v_akademik_kelas`
 
 **Granularity: 1 row = 1 class.**
 The primary analytics view. All dimensions are pre-joined and flattened. Query this before any base table for numeric analytics.
 
+**Row filter:** see RLS table above (`kode_fakultas` for dekan/jajaran_dekanat, `no_prodi` for kaprodi/jajaran_prodi/dosen).
+**Column masking (role `dosen`):** `skor_dosen_q25/26/27` (JSONB) — restricted to the entry for `app.dosen_id` only.
+
 #### Refresh dependency
-Must be refreshed first before `mv_statistik_prodi` and `mv_statistik_dosen`.
+Must be refreshed first before `analitik.v_akademik_statistik_prodi` and `analitik.v_akademik_statistik_dosen`.
 
 #### Key columns
 
@@ -701,38 +733,45 @@ Must be refreshed first before `mv_statistik_prodi` and `mv_statistik_dosen`.
 | `semester` | `smallint` | `1` (Ganjil), `2` (Genap), `3` (SP) |
 | `tahun` | `smallint` | `2024` |
 | `tahun_ajaran` | `text` | `"2024/2025"` |
-| `kode_mk` | `varchar` | `"IF2210"` |
-| `nama_mk_id` | `text` | `"Pemrograman Berorientasi Objek"` |
-| `nama_mk_en` | `text` | `"Object-Oriented Programming"` |
+| `kode_matkul` | `varchar` | `"IF2210"` |
+| `nama_matkul_id` | `text` | `"Pemrograman Berorientasi Objek"` |
+| `nama_matkul_en` | `text` | `"Object-Oriented Programming"` |
 | `sks` | `integer` | `3` |
 | `jenis_nilai` | `text` | `"ABCDE"` or `"PassFail"` |
 | `tahun_kurikulum` | `integer` | `2019` |
-| `kode_prodi` | `integer` | `135` (= `no_ps`) |
-| `singkatan_prodi` | `varchar` | `"IF"` |
+| `no_prodi` | `integer` | `135` (= `no_ps`) |
+| `kode_prodi` | `varchar` | `"IF"` |
 | `nama_prodi_id` | `text` | `"Teknik Informatika"` |
 | `jenjang` | `varchar` | `"S1"`, `"S2"`, `"S3"` |
 | `kode_fakultas` | `varchar` | `"STEI"` |
 | `nama_fakultas_id` | `text` | `"Sekolah Teknik Elektro dan Informatika"` |
 | `semua_dosen_id` | `integer[]` | `{123, 456}` |
 | `semua_dosen_nama_gelar` | `text[]` | `{"Prof. Dr. Budi, M.T.", "Dr. Siti, Ph.D."}` |
+| `kode_jenis_list` | `varchar[]` | Jenis MK dalam kurikulum (dari `v_akademik_jenis_dan_sifat_matkul`), bisa >1 entri |
+| `nama_jenis_list` | `text[]` | Nama jenis MK, paralel dengan `kode_jenis_list` |
+| `nama_paket_list` | `text[]` | Nama paket kurikulum yang memuat MK ini |
+| `kode_sifat_list` | `varchar[]` | `C`=Core/Wajib, `E`=Elective, paralel dengan `kode_jenis_list` |
+| `is_wajib_itb` | `boolean` | Dari kurikulum lama; selalu `FALSE` untuk kur24 (proxy: `kode_jenis_list` contains `'B'`) |
 | `pct_kehadiran_dosen` | `numeric` | `92.50` |
 | `pct_kehadiran_mahasiswa` | `numeric` | `88.00` |
-| `rata_ip_akhir_mahasiswa` | `numeric` | `3.12` |
-| `jumlah_mahasiswa` | `integer` | `40` |
+| `avg_ip_akhir_mahasiswa` | `numeric` | `3.12` |
 | `skor_dna` | `numeric` | `3.80` |
+| `ts_dna` | `timestamptz` | DNA computation timestamp |
 | `ip_mhs_dna` | `numeric` | `3.15` |
+| `is_distribusi_nilai_sah` | `boolean` | **Gate column.** `TRUE` = nilai sudah sah. Jika `FALSE`/NULL, semua kolom `dist_*` di bawah bernilai NULL (bukan 0) — WAJIB `WHERE is_distribusi_nilai_sah = TRUE` sebelum agregasi `dist_*` |
+| `jumlah_mahasiswa` | `integer` | `40` (jumlah dgn nilai sah) |
 | `dist_jumlah_a` .. `dist_jumlah_e` | `integer` | `12`, `8`, `10`, `5`, `3`, `1`, `1` |
 | `dist_jumlah_pass` / `dist_jumlah_fail` | `integer` | For PassFail courses only |
 | `dist_pct_a` .. `dist_pct_fail` | `numeric` | `30.00`, `20.00`, ... |
-| `dist_pct_lulus_A_C` | `numeric` | `95.00` — % with grade ≥ C (or Pass) |
-| `dist_pct_lulus_A_D` | `numeric` | `97.50` — % with grade ≥ D (or Pass) |
-| `skor_q21` .. `skor_q24`, `skor_q28` .. `skor_q30`, `skor_q35`, `skor_q37` | `numeric` | `3.74` (Likert 1–5, class-level) |
-| `skor_q25_avg`, `skor_q26_avg`, `skor_q27_avg` | `numeric` | `3.67` (averaged across dosen) |
-| `skor_kues_dosen_q25` | `jsonb` | `{"123": 3.6667, "456": 4.0000}` |
-| `skor_kues_dosen_q26` | `jsonb` | Same structure |
-| `skor_kues_dosen_q27` | `jsonb` | Same structure |
+| `dist_pct_lulus_a_c` | `numeric` | `95.00` — % with grade ≥ C (or Pass) |
+| `dist_pct_lulus_a_d` | `numeric` | `97.50` — % with grade ≥ D (or Pass) |
+| `skor_q21` .. `skor_q24`, `skor_q28` .. `skor_q30`, `skor_q35`, `skor_q37` | `numeric` | `3.74` (Likert 1–4, class-level) |
+| `skor_q25`, `skor_q26`, `skor_q27` | `numeric` | `3.67` (averaged across dosen) |
+| `skor_dosen_q25` | `jsonb` | `{"123": 3.6667, "456": 4.0000}`. **Role `dosen`**: hanya entry milik `app.dosen_id` (atau `NULL` jika tidak ada) |
+| `skor_dosen_q26` | `jsonb` | Same structure, same masking |
+| `skor_dosen_q27` | `jsonb` | Same structure, same masking |
 | `avg_skor_capaian` | `numeric` | Avg(Q21, Q22, Q23) |
-| `avg_skor_pelaksanaan` | `numeric` | Avg(Q24, Q25\_avg, Q26\_avg, Q27\_avg, Q28) |
+| `avg_skor_pelaksanaan` | `numeric` | Avg(Q24, Q25, Q26, Q27, Q28) |
 | `avg_skor_sarana_prasarana` | `numeric` | Avg(Q29, Q30) |
 | `avg_skor_perilaku_mahasiswa` | `numeric` | Avg(Q35, Q37) |
 | `avg_skor_overall` | `numeric` | Avg of all Q with data |
@@ -742,10 +781,10 @@ Must be refreshed first before `mv_statistik_prodi` and `mv_statistik_dosen`.
 | Index | Columns |
 |-------|---------|
 | `idx_mv_kelas_pk` (UNIQUE) | `kelas_id` |
-| `idx_mv_kelas_prodi_sem` | `(kode_prodi, semester, tahun)` |
+| `idx_mv_kelas_prodi_sem` | `(no_prodi, semester, tahun)` |
 | `idx_mv_kelas_fak_sem` | `(kode_fakultas, semester, tahun)` |
-| `idx_mv_kelas_matkul_sem` | `(kode_mk, semester, tahun)` |
-| `idx_mv_kelas_tahun_ajaran` | `(tahun_ajaran, kode_prodi)` |
+| `idx_mv_kelas_matkul_sem` | `(kode_matkul, semester, tahun)` |
+| `idx_mv_kelas_tahun_ajaran` | `(tahun_ajaran, no_prodi)` |
 | `idx_mv_kelas_dosen_arr` (GIN) | `semua_dosen_id` |
 | `idx_mv_kelas_skor_dosen_q2{5,6,7}` (GIN) | JSONB dosen score fields |
 
@@ -753,35 +792,37 @@ Must be refreshed first before `mv_statistik_prodi` and `mv_statistik_dosen`.
 
 ```sql
 -- All classes for a course in a semester
-SELECT * FROM mv_kelas
-WHERE kode_mk = 'IF2210' AND semester = 1 AND tahun = 2024;
+SELECT * FROM analitik.v_akademik_kelas
+WHERE kode_matkul = 'IF2210' AND semester = 1 AND tahun = 2024;
 
 -- Filter by prodi (scoped user)
-WHERE kode_prodi = 135 AND semester = 1 AND tahun = 2024
+WHERE no_prodi = 135 AND semester = 1 AND tahun = 2024
 
 -- Filter by fakultas (scoped user)
 WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024
 
 -- Text search for course name (bilingual)
-WHERE (nama_mk_id || ' ' || COALESCE(nama_mk_en, '')) ILIKE '%basis data%'
+WHERE (nama_matkul_id || ' ' || COALESCE(nama_matkul_en, '')) ILIKE '%basis data%'
 
 -- Per-dosen Q25 score from JSONB
-(skor_kues_dosen_q25->>:dosen_id_str)::numeric
+(skor_dosen_q25->>:dosen_id_str)::numeric
 ```
 
 ---
 
-### `mv_statistik_prodi`
+### `analitik.v_akademik_statistik_prodi`
 
 **Granularity: 1 row = 1 prodi × 1 semester × 1 tahun.**
 Pre-aggregated for prodi-level dashboard panels.
+
+**Row filter:** `kode_fakultas` for dekan/jajaran_dekanat, `no_prodi` for kaprodi/jajaran_prodi/dosen. **Column masking:** none.
 
 #### Key columns
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `kode_prodi` | `integer` | PK component (= `no_ps`) |
-| `singkatan_prodi` | `varchar` | `"IF"` |
+| `no_prodi` | `integer` | PK component (= `no_ps`) |
+| `kode_prodi` | `varchar` | `"IF"` |
 | `nama_prodi_id` / `nama_prodi_en` | `text` | |
 | `jenjang` | `varchar` | |
 | `kode_fakultas` | `varchar` | |
@@ -795,11 +836,11 @@ Pre-aggregated for prodi-level dashboard panels.
 | `jumlah_mahasiswa_aktif` | `bigint` | From `mahasiswa.status` by home prodi |
 | `avg_pct_kehadiran_dosen` | `numeric` | |
 | `avg_pct_kehadiran_mahasiswa` | `numeric` | |
-| `avg_ip_mhs` | `numeric` | |
+| `avg_ip_akhir_mahasiswa` | `numeric` | |
 | `total_jumlah_a` .. `total_jumlah_fail` | `bigint` | SUM across all kelas |
 | `total_mahasiswa_dinilai` | `bigint` | Total graded students (denominator) |
 | `dist_pct_a` .. `dist_pct_fail` | `numeric` | Computed from absolute sums, not averaged percentages |
-| `dist_pct_lulus_A_C` / `dist_pct_lulus_A_D` | `numeric` | |
+| `dist_pct_lulus_a_c` / `dist_pct_lulus_a_d` | `numeric` | |
 | `avg_skor_q21` .. `avg_skor_q37` | `numeric` | Per-question averages across kelas |
 | `avg_skor_capaian` / `avg_skor_pelaksanaan` / `avg_skor_sarana_prasarana` / `avg_skor_perilaku_mahasiswa` / `avg_skor_overall` | `numeric` | |
 
@@ -809,16 +850,19 @@ Faculty-level aggregation: `GROUP BY kode_fakultas, nama_fakultas_id, semester, 
 
 | Index | Columns |
 |-------|---------|
-| `idx_mv_prodi_pk` (UNIQUE) | `(kode_prodi, semester, tahun)` |
+| `idx_mv_prodi_pk` (UNIQUE) | `(no_prodi, semester, tahun)` |
 | `idx_mv_prodi_fak_sem` | `(kode_fakultas, semester, tahun)` |
-| `idx_mv_prodi_tahun_ajaran` | `(tahun_ajaran, kode_prodi)` |
+| `idx_mv_prodi_tahun_ajaran` | `(tahun_ajaran, no_prodi)` |
 
 ---
 
-### `mv_statistik_dosen`
+### `analitik.v_akademik_statistik_dosen`
 
 **Granularity: 1 row = 1 dosen × 1 semester × 1 tahun.**
 Pre-aggregated for dosen-level dashboard panels.
+
+**Row filter:** `kode_fakultas_dosen` (homebase) for dekan/jajaran_dekanat; `app.no_ps = ANY(no_prodi_diajar)` for kaprodi/jajaran_prodi/dosen.
+**Column masking (role `dosen`):** for rows of *other* dosen (`dosen_id != app.dosen_id`), the `[SENSITIF]` columns below (`avg_pct_kehadiran_dosen`, `avg_ip_mhs`, `avg_skor_q25/26/27`, `avg_skor_capaian/pelaksanaan/sarana_prasarana/perilaku_mahasiswa/overall`, `jumlah_kelas_dengan_skor`, `avg_nilai_akhir`) are set to `NULL`. Own rows (`dosen_id = app.dosen_id`) show full data. `avg_pct_kehadiran_mahasiswa` is never masked.
 
 #### Key columns
 
@@ -830,7 +874,7 @@ Pre-aggregated for dosen-level dashboard panels.
 | `kk_id` | `integer` | |
 | `nama_kk_id` / `nama_kk_en` | `text` | |
 | `kode_fakultas_dosen` | `varchar` | Home faculty from `utama.dosen.kd_fak` |
-| `kode_prodi` | `integer` | Home prodi from `utama.dosen.no_ps` |
+| `no_prodi` | `integer` | Home prodi from `utama.dosen.no_ps` |
 | `semester` | `smallint` | PK component |
 | `tahun` | `smallint` | PK component |
 | `tahun_ajaran` | `text` | |
@@ -847,9 +891,9 @@ Pre-aggregated for dosen-level dashboard panels.
 | `jumlah_kelas_dengan_skor` | `bigint` | Classes with questionnaire data |
 | `avg_nilai_akhir` | `numeric` | Usually NULL — inconsistently populated |
 | `kelas_ids` | `integer[]` | Array of taught kelas_id |
-| `kode_mk_list` | `varchar[]` | Unique course codes taught |
-| `kode_prodi_diajar` | `integer[]` | Prodi where this dosen taught (may differ from home prodi) |
-| `singkatan_prodi_diajar` | `varchar[]` | |
+| `kode_matkul_list` | `varchar[]` | Unique course codes taught |
+| `no_prodi_diajar` | `integer[]` | Prodi where this dosen taught (may differ from home prodi) |
+| `kode_prodi_diajar` | `varchar[]` | |
 
 #### Indexes
 
@@ -858,13 +902,15 @@ Pre-aggregated for dosen-level dashboard panels.
 | `idx_mv_dosen_pk` (UNIQUE) | `(dosen_id, semester, tahun)` |
 | `idx_mv_dosen_kk_sem` | `(kk_id, semester, tahun)` |
 | `idx_mv_dosen_fak_dosen_sem` | `(kode_fakultas_dosen, semester, tahun)` |
-| `idx_mv_dosen_no_ps_sem` | `(kode_prodi, semester, tahun)` |
+| `idx_mv_dosen_no_ps_sem` | `(no_prodi, semester, tahun)` |
 | `idx_mv_dosen_tahun_ajaran` | `(tahun_ajaran, dosen_id)` |
 
-### `mv_komentar_mahasiswa` (under `analitik` schema)
+### `analitik.v_akademik_komentar_mahasiswa` (under `analitik` schema)
 
 **Granularity: 1 row = 1 student free-text comment per class.**
 Contains pre-joined student evaluation comments for easy RAG ingestion and analysis. Excludes `mahasiswa_id` (comment content only).
+
+**Row filter:** `kode_fakultas` for dekan/jajaran_dekanat; `no_prodi` for kaprodi/jajaran_prodi; for `dosen`, `app.dosen_id = ANY(semua_dosen_id)` (only classes they teach). **Column masking:** none.
 
 #### Key columns
 
@@ -875,13 +921,13 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 | `tahun` | `smallint` | Year |
 | `semester` | `smallint` | Semester code |
 | `tahun_ajaran` | `text` | e.g. `"2024/2025"` |
-| `kode_mk` | `varchar` | Course code (e.g., `"IF2210"`) |
-| `nama_mk_id` | `text` | Indonesian course name |
-| `nama_mk_en` | `text` | English course name |
+| `kode_matkul` | `varchar` | Course code (e.g., `"IF2210"`) |
+| `nama_matkul_id` | `text` | Indonesian course name |
+| `nama_matkul_en` | `text` | English course name |
 | `sks` | `integer` | Course credit weight |
 | `no_kelas` | `integer` | Class number |
-| `kode_prodi` | `integer` | Prodi identifier |
-| `singkatan_prodi` | `varchar` | Prodi code abbreviation (e.g., `"IF"`) |
+| `no_prodi` | `integer` | Prodi identifier |
+| `kode_prodi` | `varchar` | Prodi code abbreviation (e.g., `"IF"`) |
 | `nama_prodi_id` | `text` | Prodi name |
 | `jenjang` | `varchar` | Degree level (e.g., `"S1"`) |
 | `kode_fakultas` | `varchar` | Faculty abbreviation (e.g., `"STEI"`) |
@@ -893,11 +939,13 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 
 ---
 
-### `mv_portofolio` (under `analitik` schema)
+### `analitik.v_akademik_portofolio` (under `analitik` schema)
 
-> **✅ Status:** Fully queryable. Ini adalah **primary surface untuk semua query portfolio dosen** — query langsung ke `evaluasi.portofolio` (JSONB raw) tidak lagi diperlukan untuk analytics maupun RAG. Semua dimensi kelas dari `mv_kelas` sudah ter-join, dan semua teks sudah clean dari HTML via `analitik.strip_html()`. Full column docs: `db/mv_portofolio.md`.
+> **✅ Status:** Fully queryable. Ini adalah **primary surface untuk semua query portfolio dosen** — query langsung ke `evaluasi.portofolio` (JSONB raw) tidak lagi diperlukan untuk analytics maupun RAG. Semua dimensi kelas dari `analitik.v_akademik_kelas` sudah ter-join, dan semua teks sudah clean dari HTML via `analitik.strip_html()`.
 
-> **Refresh:** `REFRESH MATERIALIZED VIEW CONCURRENTLY analitik.mv_portofolio` — jalankan setelah `analitik.mv_kelas` selesai refresh.
+**Row filter:** `kode_fakultas` for dekan/jajaran_dekanat; `no_prodi` for kaprodi/jajaran_prodi/dosen. **Column masking:** none.
+
+> **Refresh:** the underlying `analitik_mv.mv_akademik_portofolio` is refreshed via `REFRESH MATERIALIZED VIEW CONCURRENTLY analitik_mv.mv_akademik_portofolio` — jalankan setelah `analitik_mv.mv_akademik_kelas` selesai refresh. `analitik.v_akademik_portofolio` itself is a plain view (via `SECURITY DEFINER`), so it reflects the underlying MV immediately after refresh.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -912,8 +960,8 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 | `tahun_ajaran` | `text` | e.g. `"2024/2025"` |
 | `tahun_kurikulum` | `integer` | e.g. `2024` |
 | `jenis_nilai` | `text` | e.g. `"ABCDE"` |
-| `kode_prodi` | `integer` | Prodi identifier |
-| `singkatan_prodi` | `varchar` | Prodi code abbreviation (e.g., `"IF"`) |
+| `no_prodi` | `integer` | Prodi identifier |
+| `kode_prodi` | `varchar` | Prodi code abbreviation (e.g., `"IF"`) |
 | `nama_prodi_id` | `text` | Prodi name |
 | `jenjang` | `varchar` | Degree level (e.g., `"S1"`) |
 | `kode_fakultas` | `varchar` | Faculty abbreviation (e.g., `"STEI"`) |
@@ -949,17 +997,17 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 | `lama_komentar_rencana_tindak_lanjut` | `text` |  |
 | `lama_komentar_rekomendasi` | `text` |  |
 
-### `mv_jenis_dan_sifat_matkul` (under `analitik` schema)
+### `analitik.v_akademik_jenis_dan_sifat_matkul` (under `analitik` schema, **publik / Group A — no row filter**)
 
-> **⚠️ Routing note:** `kd_jenis_matkul` (jenis/sifat MK dalam kurikulum: Major Wajib, TPB, Spesialisasi, Minor, dll.) **tidak ada di `mv_kelas`**. Untuk informasi jenis dan sifat MK dalam struktur kurikulum, selalu join ke `analitik.mv_jenis_dan_sifat_matkul` via `mata_kuliah_id` dan `kode_prodi`.
+> **⚠️ Routing note:** `analitik.v_akademik_kelas` now carries summarized array columns (`kode_jenis_list`, `nama_jenis_list`, `nama_paket_list`, `kode_sifat_list`, `is_wajib_itb`) for jenis/sifat MK — for most queries those are sufficient and no join is needed. Join to `analitik.v_akademik_jenis_dan_sifat_matkul` via `mata_kuliah_id` and `no_prodi` only when the per-paket detail (`paket_id`, `struktur_id`, `sumber`) is required.
 
-Jenis dan sifat MK dalam struktur kurikulum. Grain: 1 baris = 1 (mata_kuliah_id, no_ps, paket/struktur). Satu MK bisa >1 baris jika masuk ke >1 paket dalam prodi yang sama. Sumber: kur24.* (kode_sifat C=Wajib/E=Pilihan) UNION kurikulum.* (W=C, P=E). Kolom filter: jenjang, kode_prodi, kode_fakultas, tahun_kurikulum. nama_prodi_id/en dan nama_fakultas_id/en tersedia untuk display/label.
+Jenis dan sifat MK dalam struktur kurikulum. Grain: 1 baris = 1 (mata_kuliah_id, no_ps, paket/struktur). Satu MK bisa >1 baris jika masuk ke >1 paket dalam prodi yang sama. Sumber: kur24.* (kode_sifat C=Wajib/E=Pilihan) UNION kurikulum.* (W=C, P=E). Kolom filter: jenjang, no_prodi, kode_fakultas, tahun_kurikulum. nama_prodi_id/en dan nama_fakultas_id/en tersedia untuk display/label.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `mata_kuliah_id` | `integer` | PK component |
-| `kode_prodi` | `integer` | Prodi identifier |
-| `singkatan_prodi` | `varchar` | Prodi code abbreviation |
+| `no_prodi` | `integer` | Prodi identifier |
+| `kode_prodi` | `varchar` | Prodi code abbreviation |
 | `jenjang` | `varchar` | Degree level |
 | `nama_prodi_id` | `text` | Prodi name |
 | `nama_prodi_en` | `text` | Prodi name |
@@ -975,6 +1023,64 @@ Jenis dan sifat MK dalam struktur kurikulum. Grain: 1 baris = 1 (mata_kuliah_id,
 | `nama_paket` | `text` | PK component |
 | `kode_sifat` | `varchar` | PK component |
 | `is_wajib_itb` | `boolean` | PK component |
+
+---
+
+### `analitik.v_info_umum_kelas_matkul` (**publik / Group A — no row filter**)
+
+**Granularity: 1 row = 1 class.** Lookup kelas/MK/dosen/prodi tanpa nilai/kehadiran/skor (versi `v_akademik_kelas` tanpa kolom evaluasi & RLS).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `kelas_id`, `mata_kuliah_id`, `no_kelas`, `semester`, `tahun`, `tahun_ajaran` | — | Identitas kelas |
+| `kode_matkul`, `nama_matkul_id` / `nama_matkul_en`, `sks`, `tahun_kurikulum`, `jenis_nilai` | — | Info MK |
+| `no_prodi`, `kode_prodi`, `nama_prodi_id` / `nama_prodi_en`, `jenjang` | — | Prodi |
+| `kode_fakultas`, `nama_fakultas_id` / `nama_fakultas_en` | — | Fakultas |
+| `semua_dosen_id`, `semua_dosen_nama_gelar` | `integer[]` / `text[]` | `[0]` = dosen utama |
+| `kode_jenis_list`, `nama_jenis_list`, `nama_paket_list`, `kode_sifat_list` | array | `NULL` jika MK tidak terdaftar di kurikulum |
+| `is_wajib_itb` | `boolean` | Dari kurikulum lama |
+
+---
+
+### `analitik.v_info_umum_institusi` (**publik / Group A — no row filter**)
+
+**Granularity: 1 row = (no_prodi, semester, tahun).** Jumlah kelas/MK/dosen/mahasiswa aktif per prodi per semester.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `no_prodi`, `kode_prodi`, `nama_prodi_id` / `nama_prodi_en`, `jenjang`, `kode_fakultas`, `nama_fakultas_id` / `nama_fakultas_en`, `semester`, `tahun`, `tahun_ajaran` | — | Dimensi |
+| `jumlah_kelas` | `bigint` | |
+| `jumlah_matkul_aktif` | `bigint` | |
+| `jumlah_dosen_aktif` | `bigint` | |
+| `jumlah_mahasiswa_aktif` | `bigint` | |
+
+---
+
+### `analitik.v_info_umum_dosen` (**publik / Group A — no row filter**)
+
+**Granularity: 1 row = (dosen_id, semester, tahun).** Beban mengajar dosen + daftar prodi/MK diajar, tanpa skor evaluasi (skor evaluasi ada di `v_akademik_statistik_dosen`, filtered+masked).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `dosen_id`, `semester`, `tahun` | — | PK |
+| `nama_dosen_gelar`, `nip`, `kk_id`, `kode_fakultas_dosen`, `no_prodi`, `kode_prodi` | — | Identitas / homebase |
+| `jumlah_kelas`, `jumlah_matkul`, `total_sks_diajar` | `bigint` | Beban mengajar |
+| `kode_matkul_list`, `no_prodi_diajar`, `kode_prodi_diajar` | array | MK/prodi yang diajar |
+
+---
+
+### `analitik.v_info_umum_wisuda` (**publik / Group A — no row filter**)
+
+**Granularity: 1 row = (no_prodi, periode_ijazah_id_final, periode_seremoni_id).** Jumlah responden survei wisudawan per prodi per periode.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `no_prodi`, `kode_prodi`, `nama_prodi_id` / `nama_prodi_en`, `jenjang`, `kode_fakultas`, `nama_fakultas_id` / `nama_fakultas_en` | — | Prodi/fakultas |
+| `periode_ijazah_id_final`, `tahun_ijazah`, `bulan_ijazah` | — | Periode ijazah |
+| `periode_seremoni_id`, `tahun_seremoni`, `bulan_seremoni`, `nama_seremoni`, `is_seremoni_asumtif` | — | Periode seremoni (saat ini semua `is_seremoni_asumtif = TRUE`, data dummy) |
+| `jumlah_responden` | `bigint` | `COUNT(DISTINCT response_id)` — jumlah pengisi survei, BUKAN jumlah lulusan riil |
+
+---
 
 ## Schema: `referensi` — Lookup / Reference Data
 
@@ -1246,16 +1352,17 @@ These schemas must not be queried by the analytics agent.
 
 ---
 
-## Application State Tables (To Be Created)
+## Application State Tables
 
-The following tables must be created in `dev_six` under a dedicated application schema (e.g., `analitik`) for the analytics system's own state, WHICH IS ALREADY CREATED.
+The following tables exist in `dev_six` under the `analitik` schema for the analytics system's own state:
 
 | Table | Purpose |
 |-------|---------|
-| `analitik.llm_analysis_cache` | SHA256-keyed LLM narrative cache; must include `refreshed_at` for invalidation on MV refresh |
+| `analitik.llm_analysis_cache` | SHA256-keyed LLM narrative cache; includes `refreshed_at` for invalidation on `analitik_mv` refresh |
 | `analitik.vector_chunks` | pgvector embeddings for portfolio text from `evaluasi.portofolio.isian` and `komentar` |
-| `analitik.mv_refresh_log` | Tracks last MV refresh timestamp; used to invalidate `llm_analysis_cache` stale entries |
-| `analitik.mv_*` | already created |
+| `analitik.mv_refresh_log` | Tracks last refresh timestamp of `analitik_mv.*`; used to invalidate stale `llm_analysis_cache` entries |
+
+The 13 `analitik.*` views (5 public + 8 `SECURITY DEFINER`-backed) and their underlying `analitik_mv.*` materialized views are already created — see "Analytics Views" section.
 
 The existing `users.user` and `users.user_role` tables in SIX cover authentication and role assignment — no separate `pengguna` or `user_scope` table is needed.
 
@@ -1269,34 +1376,33 @@ The prior `SCHEMA_REFERENCE.md` used a custom schema design. The actual SIX tabl
 |---|---|---|
 | `kelas` (public) | `kelas.kelas` | Different schema prefix |
 | `pengajar_kelas` | `kelas.pengajar` | |
-| `mata_kuliah` | `utama.mata_kuliah` | `kode_mk` = `kd_kuliah`, UUID PK → INTEGER |
-| `program_studi` | `utama.program_studi` | `prodi_id` → `no_ps` which is `kode_prodi` (INTEGER), `singkatan_prodi` → `kd_ps` |
+| `mata_kuliah` | `utama.mata_kuliah` | `kode_matkul` = `kd_kuliah`, UUID PK → INTEGER |
+| `program_studi` | `utama.program_studi` | `prodi_id` → `no_ps` which is `no_prodi` (INTEGER), `kode_prodi` → `kd_ps` |
 | `fakultas` | `utama.fakultas` | `fakultas_id` → `kd_fak` (VARCHAR), `nama_fakultas` → `nama->>'id'` or `nama->>'en'` |
 | `dosen` | `utama.dosen` | `dosen_id` is INTEGER not UUID, `nama_gelar` is GENERATED column |
 | `kelompok_keahlian` | `utama.kk` | |
 | `distribusi_nilai` | `mahasiswa.kuliah` | No separate table; computed via COUNT FILTER |
 | `skor_kuesioner` | `evaluasi.nilai_kelas.kuesioner` (JSONB) | Q-number is a string key, not a column |
-| `teks_portofolio` | `analitik.mv_komentar_mahasiswa` or `evaluasi.portofolio.isian` (JSONB) | JSONB keyed by `kd_pertanyaan` |
-| `komentar_mahasiswa` | `analitik.mv_komentar_mahasiswa` or raw through `evaluasi.portofolio.isian` with `kd_pertanyaan = 103` | |
+| `teks_portofolio` | `analitik.v_akademik_portofolio` or `evaluasi.portofolio.isian` (JSONB) | JSONB keyed by `kd_pertanyaan` |
+| `komentar_mahasiswa` | `analitik.v_akademik_komentar_mahasiswa` or raw through `evaluasi.portofolio.isian` with `kd_pertanyaan = 103` | |
 | `pengguna` | `users.user` | |
 | `user_scope` | `users.user_role` (multi-row) | One user, many roles, each with `scope` and `ts_valid` |
 | `jenis_nilai = 'ABCDE'` | `kd_penilaian = 'A'` | |
 | `jenis_nilai = 'Pass/Fail'` | `kd_penilaian = 'P'` | |
-| `kode_prodi` (VARCHAR) | `no_ps` (INTEGER) | |
 
 ---
 
 **Gaps and limitations:**
 
-1. **Portfolio free-text now in `analitik.mv_portofolio`.** `evaluasi.portofolio.isian` is the raw source. `analitik.mv_portofolio` is the recommended query surface — all text is HTML-stripped and all class dimensions are pre-joined. Use `analitik.mv_komentar_mahasiswa` for student comments specifically.
+1. **Portfolio free-text now in `analitik.v_akademik_portofolio`.** `evaluasi.portofolio.isian` is the raw source. `analitik.v_akademik_portofolio` is the recommended query surface — all text is HTML-stripped and all class dimensions are pre-joined. Use `analitik.v_akademik_komentar_mahasiswa` for student comments specifically.
 
-3. **Q25/Q26/Q27 NULL for older semesters.** Data before the new questionnaire system contains `{}` in `evaluasi.nilai_dosen.kuesioner`. All dosen-specific Q scores will be NULL in `mv_statistik_dosen` for historical data. Queries comparing trends must handle this.
+3. **Q25/Q26/Q27 NULL for older semesters.** Data before the new questionnaire system contains `{}` in `evaluasi.nilai_dosen.kuesioner`. All dosen-specific Q scores will be NULL in `analitik.v_akademik_statistik_dosen` for historical data. Queries comparing trends must handle this.
 
 4. **`avg_nilai_akhir` is unreliable.** `evaluasi.nilai_dosen.nilai_akhir` is inconsistently populated. Avoid this column for any meaningful metric.
 
 5. **`jumlah_mahasiswa_aktif` is by home prodi.** Students enrolled in cross-prodi courses are not counted in the host prodi's `jumlah_mahasiswa_aktif`. This is correct for enrollment counts but may create confusion in queries mixing class-level and prodi-level student counts.
 
-7. **MV scope injection must be in WHERE, not RLS.** The MVs have no RLS. All scope filtering (by `kode_prodi`, `kode_fakultas`, or `semua_dosen_id`) must be injected by the SQL executor before running queries.
+7. **RLS via `analitik.*` view layer, not `analitik_mv.*`.** `analitik_mv.*` has no RLS. Row/column filtering is enforced only when querying through `analitik.*`, via `SECURITY DEFINER` functions reading the `app.*` session variables (see "Analytics Views" section). Without these session variables set, all 8 Group B views return zero rows.
 
 8. **Multi-role user scope resolution.** A user may hold valid roles at multiple scopes simultaneously (e.g., dekan at two faculties). The application must resolve which scope is active for a given request, or handle returning union results across all valid scopes.
 
@@ -1791,7 +1897,7 @@ Skala: `HARAPAN` — hanya diisi oleh yang pernah mengalami masalah
 
 ### 1. Dashboard Agregasi (Rata-rata Skor per Pertanyaan)
 
-Gunakan **Materialized View** `mv_wisudawan_statistik_pertanyaan` (lihat dokumen MV), bukan query langsung ke `respons`. Tabel `respons` adalah sumber data mentah.
+Gunakan **Materialized View** `analitik.v_wisudawan_statistik_pertanyaan` (lihat dokumen MV), bukan query langsung ke `respons`. Tabel `respons` adalah sumber data mentah.
 
 Filter yang tersedia di `respons`: `kd_fak`, `no_ps`, `kd_strata`, `periode_ijazah_id`.
 
@@ -1862,7 +1968,7 @@ WHERE kd_fak = 'FTSL'
   AND (jawaban ? 'G01Q33' OR jawaban ? 'G01Q34');
 ```
 
-Untuk RAG, **index full-text atau embedding vector** sebaiknya dibangun di atas konten free-text dari kolom `jawaban` (key G-series). Gunakan `mv_wisudawan_jawaban_responden` yang sudah memisahkan kolom free-text untuk kemudahan akses.
+Untuk RAG, **index full-text atau embedding vector** sebaiknya dibangun di atas konten free-text dari kolom `jawaban` (key G-series). Gunakan `analitik.v_wisudawan_jawaban_responden` yang sudah memisahkan kolom free-text untuk kemudahan akses.
 
 ### 4. Query Katalog Pertanyaan (untuk System Prompt Agen)
 
@@ -1899,6 +2005,9 @@ ORDER BY p.kd_grup, p.urutan;
 - ❌ Jangan gabungkan skor D2 (`U07`, `HARAPAN`) dan Section J FSRD (`HARAPAN_FSRD`) dalam satu AVG — nilai-4 berbeda secara semantik.
 - ❌ Jangan anggap `periode_ijazah_id = NULL` sebagai data hilang — 66.6% memang NULL dan tidak bisa diimputasi.
 - ❌ Jangan filter `last_page = 11` sebagai satu-satunya filter "complete" — mayoritas data sudah complete.
+
+---
+
 # Schema Materialized View: `evaluasi_wisudawan`
 
 > **Untuk:** Developer agen RAG, agen Text-to-SQL, dan dashboard Data Ulasan Wisudawan ITB  
@@ -1910,7 +2019,7 @@ ORDER BY p.kd_grup, p.urutan;
 
 ## Gambaran Umum
 
-Tiga Materialized View (MV) ini adalah **lapisan analitik** di atas tabel `respons`. Masing-masing memiliki granularitas berbeda, dirancang untuk use case yang berbeda, dan tidak saling menggantikan.
+Tiga Materialized View (MV) ini adalah **lapisan analitik** di atas tabel `respons`. Masing-masing memiliki granularitas berbeda, dirancang untuk use case yang berbeda, dan tidak saling menggantikan. Ketiga MV ini sekarang berada di `analitik_mv.*` (raw, **dilarang diakses agen**) dan diakses agen melalui wrapper `analitik.v_wisudawan_*` (RLS via `SECURITY DEFINER` — lihat "Analytics Views").
 
 ```
 respons (raw) ──────────────────────────────────────────────────────┐
@@ -1918,21 +2027,21 @@ respons (raw) ──────────────────────
                      ┌──────────────────────────────────────────────┘
                      ▼
         ┌────────────────────────────────┐
-        │   mv_wisudawan_distribusi_jawaban        │  ← Distribusi & persentase
+        │   analitik.v_wisudawan_distribusi_jawaban        │  ← Distribusi & persentase
         │   1 baris per:                 │    per (periode, strata,
         │   (periode, strata, fak,       │    fak, pertanyaan, nilai)
         │    no_ps, pertanyaan, nilai)   │
         └────────────────────────────────┘
 
         ┌────────────────────────────────┐
-        │   mv_wisudawan_statistik_pertanyaan           │  ← Rata-rata skor ordinal
+        │   analitik.v_wisudawan_statistik_pertanyaan           │  ← Rata-rata skor ordinal
         │   1 baris per:                 │    per (periode, strata,
         │   (periode, strata, fak,       │    fak, no_ps, pertanyaan)
         │    no_ps, pertanyaan)          │
         └────────────────────────────────┘
 
         ┌────────────────────────────────┐
-        │   mv_wisudawan_jawaban_responden              │  ← Flat table per responden
+        │   analitik.v_wisudawan_jawaban_responden              │  ← Flat table per responden
         │   1 baris per responden        │    untuk RAG & Text-to-SQL
         │   Semua jawaban = kolom flat   │    individual
         └────────────────────────────────┘
@@ -1942,33 +2051,32 @@ respons (raw) ──────────────────────
 
 | Kebutuhan | Gunakan MV |
 |-----------|-----------|
-| Grafik distribusi jawaban (bar chart), top-2-box, % setuju | `mv_wisudawan_distribusi_jawaban` |
-| Grafik rata-rata skor, ranking pertanyaan, trend per periode | `mv_wisudawan_statistik_pertanyaan` |
-| Query per responden, analisis individual, chatbot RAG, Text-to-SQL natural | `mv_wisudawan_jawaban_responden` |
+| Grafik distribusi jawaban (bar chart), top-2-box, % setuju | `analitik.v_wisudawan_distribusi_jawaban` |
+| Grafik rata-rata skor, ranking pertanyaan, trend per periode | `analitik.v_wisudawan_statistik_pertanyaan` |
+| Query per responden, analisis individual, chatbot RAG, Text-to-SQL natural | `analitik.v_wisudawan_jawaban_responden` |
 | AVG/STDDEV langsung dari data mentah | Query ke `respons` langsung |
 
 ---
 
 ## Strategi Refresh
-
-> ⚠️ **Catatan kritis:** `mv_wisudawan_distribusi_jawaban` dan `mv_wisudawan_statistik_pertanyaan` menggunakan `REFRESH` **tanpa** `CONCURRENTLY`. Hal ini karena kolom `periode_ijazah_id` nullable (66.6% NULL di data aktual) — UNIQUE INDEX PostgreSQL memperlakukan NULL ≠ NULL, sehingga `REFRESH CONCURRENTLY` berisiko gagal meng-match baris lama vs baru untuk row dengan periode NULL. Karena data survey diimport secara batch (bukan real-time), downtime singkat saat refresh tidak berdampak ke operasional.
-
 ```sql
--- Jalankan setelah setiap batch import CSV:
+-- Jalankan setelah setiap batch import CSV (target analitik_mv, bukan analitik):
 
 -- 1. Distribusi jawaban (TANPA CONCURRENTLY)
-REFRESH MATERIALIZED VIEW analitik.mv_wisudawan_distribusi_jawaban;
+REFRESH MATERIALIZED VIEW analitik_mv.mv_wisudawan_distribusi_jawaban;
 
 -- 2. Skor rata-rata (TANPA CONCURRENTLY)
-REFRESH MATERIALIZED VIEW analitik.mv_wisudawan_statistik_pertanyaan;
+REFRESH MATERIALIZED VIEW analitik_mv.mv_wisudawan_statistik_pertanyaan;
 
 -- 3. Wide respons (CONCURRENTLY aman — unique index hanya pada response_id SERIAL)
-REFRESH MATERIALIZED VIEW CONCURRENTLY analitik.mv_wisudawan_jawaban_responden;
+REFRESH MATERIALIZED VIEW CONCURRENTLY analitik_mv.mv_wisudawan_jawaban_responden;
 ```
+
+> **Akses agen:** agen TIDAK pernah query `analitik_mv.*` di atas secara langsung. Agen selalu query lewat `analitik.v_wisudawan_*` (wrapper `SECURITY DEFINER`), yang otomatis mengikuti hasil refresh MV terbaru. **Row filter** untuk ketiga `v_wisudawan_*`: `kode_fakultas` utk dekan/jajaran_dekanat, `no_prodi` utk kaprodi/jajaran_prodi/dosen — lihat tabel RLS di bagian "Analytics Views". **Column masking:** tidak ada.
 
 ---
 
-## MV 1: `mv_wisudawan_distribusi_jawaban`
+## MV 1: `analitik.v_wisudawan_distribusi_jawaban`
 
 **Tujuan:** Sumber tunggal untuk semua kebutuhan **distribusi & persentase jawaban** — bar chart, top-2-box, incidence rate. Mencakup pertanyaan ordinal (Likert) dan nominal (kategoris). Free-text otomatis dikecualikan.
 
@@ -1988,8 +2096,8 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY analitik.mv_wisudawan_jawaban_responden;
 | `kode_fakultas` | `VARCHAR` | Kode fakultas. |
 | `nama_fakultas_id` | `TEXT` | Nama fakultas. |
 | `nama_fakultas_en` | `TEXT` | Nama fakultas. |
-| `kode_prodi` | `INTEGER` | Kode program studi. |
-| `singkatan_prodi` | `VARCHAR(2)` | Singkatan program studi. |
+| `no_prodi` | `INTEGER` | Kode program studi. |
+| `kode_prodi` | `VARCHAR(2)` | Singkatan program studi. |
 | `nama_prodi_id` | `TEXT` | Nama program studi. |
 | `nama_prodi_en` | `TEXT` | Nama program studi. |
 | `jenjang` | `CHAR(2)` | Jenjang studi. |
@@ -2027,7 +2135,7 @@ SELECT
     kode_fakultas ,
     kode_pertanyaan ,
     SUM(jumlah_responden) FILTER (WHERE nilai >= 3) * 100.0 / SUM(jumlah_responden) AS pct_setuju
-FROM analitik.mv_wisudawan_distribusi_jawaban
+FROM analitik.v_wisudawan_distribusi_jawaban
 WHERE kode_grup_opsi  = 'SETUJU'
   AND kode_grup_pertanyaan  = 'U03'
 GROUP BY kode_fakultas, kode_pertanyaan
@@ -2040,7 +2148,7 @@ ORDER BY kode_fakultas, kode_pertanyaan;
 SELECT
     p.pertanyaan->'en' as pertanyaan,
     SUM(mv.jumlah_responden) FILTER (WHERE nilai >= 2) * 100.0 / SUM(mv.jumlah_responden) AS pct_pernah_alami
-FROM analitik.mv_wisudawan_distribusi_jawaban mv join evaluasi_wisudawan.pertanyaan p 
+FROM analitik.v_wisudawan_distribusi_jawaban mv join evaluasi_wisudawan.pertanyaan p 
 on p.kd_pertanyaan = mv.kode_pertanyaan 
 WHERE kode_grup_opsi = 'FREKUENSI'
 GROUP BY p.pertanyaan
@@ -2054,7 +2162,7 @@ SELECT
     o.label->>'id' AS pilihan,
     d.jumlah_responden,
     d.persentase
-FROM analitik.mv_wisudawan_distribusi_jawaban d
+FROM analitik.v_wisudawan_distribusi_jawaban d
 JOIN evaluasi_wisudawan.ref_opsi o
     ON o.kd_grup_opsi = d.kode_grup_opsi AND o.nilai = d.nilai
 WHERE d.kode_pertanyaan = 'U02'
@@ -2066,16 +2174,16 @@ ORDER BY d.kd_fak, d.nilai;
 ```sql
 SELECT
     periode_ijazah_id,
-    kode_prodi ,
+    no_prodi ,
     kode_pertanyaan ,
     nilai,
     jumlah_responden ,
     persentase 
-FROM analitik.mv_wisudawan_distribusi_jawaban
+FROM analitik.v_wisudawan_distribusi_jawaban
 WHERE kode_fakultas  = 'STEI'          -- dikunci oleh scope dekanat
   AND kode_grup_pertanyaan  = 'U01'
   AND jenjang  = 'S1'
-ORDER BY kode_prodi, kode_pertanyaan, nilai;
+ORDER BY no_prodi, kode_pertanyaan, nilai;
 ```
 
 #### Dashboard Kaprodi: Distribusi per Periode untuk Satu Prodi
@@ -2086,8 +2194,8 @@ SELECT
     nilai,
     jumlah_responden,
     persentase 
-FROM analitik.mv_wisudawan_distribusi_jawaban
-WHERE kode_prodi = 135              -- dikunci oleh scope kaprodi
+FROM analitik.v_wisudawan_distribusi_jawaban
+WHERE no_prodi = 135              -- dikunci oleh scope kaprodi
   AND kode_grup_opsi = 'SETUJU'
   AND periode_ijazah_id IS NOT NULL  -- hanya yang ada info periode
 ORDER BY periode_ijazah_id, kode_pertanyaan, nilai;
@@ -2095,7 +2203,7 @@ ORDER BY periode_ijazah_id, kode_pertanyaan, nilai;
 
 ---
 
-## MV 2: `mv_wisudawan_statistik_pertanyaan`
+## MV 2: `analitik.v_wisudawan_statistik_pertanyaan`
 
 **Tujuan:** Sumber untuk **grafik rata-rata skor**, ranking pertanyaan, dan perbandingan antar dimensi. Hanya mencakup pertanyaan **ordinal** (`tipe = 'O'`) — nominal tidak boleh di-AVG.
 
@@ -2117,8 +2225,8 @@ ORDER BY periode_ijazah_id, kode_pertanyaan, nilai;
 | `kode_fakultas` | `VARCHAR` | Kode fakultas. |
 | `nama_fakultas_id` | `TEXT` | Nama fakultas. |
 | `nama_fakultas_en` | `TEXT` | Nama fakultas. |
-| `kode_prodi` | `INTEGER` | Kode program studi. |
-| `singkatan_prodi` | `VARCHAR(2)` | Singkatan program studi. |
+| `no_prodi` | `INTEGER` | Kode program studi. |
+| `kode_prodi` | `VARCHAR(2)` | Singkatan program studi. |
 | `nama_prodi_id` | `TEXT` | Nama program studi. |
 | `nama_prodi_en` | `TEXT` | Nama program studi. |
 | `jenjang` | `CHAR(2)` | Jenjang studi. |
@@ -2173,7 +2281,7 @@ SELECT
     rata_rata,
     std_dev,
     jumlah_responden
-FROM analitik.mv_wisudawan_statistik_pertanyaan
+FROM analitik.v_wisudawan_statistik_pertanyaan
 WHERE jenjang = 'S1'
   AND kode_grup_pertanyaan = 'U03'
 ORDER BY kode_fakultas, rata_rata DESC;
@@ -2185,9 +2293,9 @@ SELECT
     kode_pertanyaan,
     rata_rata,
     jumlah_responden,
-    RANK() OVER (PARTITION BY kode_prodi ORDER BY rata_rata DESC) AS ranking
-FROM analitik.mv_wisudawan_statistik_pertanyaan
-WHERE kode_prodi = 135
+    RANK() OVER (PARTITION BY no_prodi ORDER BY rata_rata DESC) AS ranking
+FROM analitik.v_wisudawan_statistik_pertanyaan
+WHERE no_prodi = 135
   AND kode_grup_pertanyaan = 'U04'
 ORDER BY ranking;
 ```
@@ -2199,7 +2307,7 @@ SELECT
     kode_pertanyaan,
     rata_rata,
     jumlah_responden
-FROM analitik.mv_wisudawan_statistik_pertanyaan
+FROM analitik.v_wisudawan_statistik_pertanyaan
 WHERE kode_pertanyaan = 'U03_SQ012'   -- overall satisfaction ITB
   AND periode_ijazah_id IS NOT NULL
 ORDER BY periode_ijazah_id;
@@ -2210,7 +2318,7 @@ ORDER BY periode_ijazah_id;
 SELECT
     kode_fakultas,
     ROUND(AVG(rata_rata), 3) AS rata_rata_section_b
-FROM analitik.mv_wisudawan_statistik_pertanyaan
+FROM analitik.v_wisudawan_statistik_pertanyaan
 WHERE kode_grup_pertanyaan = 'U01'
   AND jenjang = 'S1'
 GROUP BY kode_fakultas
@@ -2225,14 +2333,14 @@ SELECT
     m.rata_rata          AS skor_prodi,
     avg_itb.rata_rata    AS skor_itb,
     m.rata_rata - avg_itb.rata_rata AS selisih
-FROM analitik.mv_wisudawan_statistik_pertanyaan m
+FROM analitik.v_wisudawan_statistik_pertanyaan m
 JOIN (
     SELECT kode_pertanyaan, AVG(rata_rata) AS rata_rata
-    FROM analitik.mv_wisudawan_statistik_pertanyaan
+    FROM analitik.v_wisudawan_statistik_pertanyaan
     WHERE jenjang = 'S1' AND kode_grup_pertanyaan = 'U01'
     GROUP BY kode_pertanyaan
 ) avg_itb USING (kode_pertanyaan)
-WHERE m.kode_prodi = 135              -- dikunci scope kaprodi
+WHERE m.no_prodi = 135              -- dikunci scope kaprodi
   AND m.jenjang = 'S1'
   AND m.kode_grup_pertanyaan = 'U01'
 ORDER BY selisih;
@@ -2240,7 +2348,7 @@ ORDER BY selisih;
 
 ---
 
-## MV 3: `mv_wisudawan_jawaban_responden`
+## MV 3: `analitik.v_wisudawan_jawaban_responden`
 
 **Tujuan:** Tabel **flat per responden** — setiap kolom merepresentasikan satu pertanyaan. Digunakan untuk analisis individual, chatbot RAG, dan agen Text-to-SQL yang membutuhkan akses per baris (bukan agregasi).
 
@@ -2263,8 +2371,8 @@ ORDER BY selisih;
 | `kode_fakultas` | `VARCHAR` | Kode fakultas. |
 | `nama_fakultas_id` | `TEXT` | Nama fakultas. |
 | `nama_fakultas_en` | `TEXT` | Nama fakultas. |
-| `kode_prodi` | `INTEGER` | Kode program studi. |
-| `singkatan_prodi` | `VARCHAR(2)` | Singkatan program studi. |
+| `no_prodi` | `INTEGER` | Kode program studi. |
+| `kode_prodi` | `VARCHAR(2)` | Singkatan program studi. |
 | `nama_prodi_id` | `TEXT` | Nama program studi. |
 | `nama_prodi_en` | `TEXT` | Nama program studi. |
 | `jenjang` | `CHAR(2)` | Jenjang studi. |
@@ -2431,8 +2539,8 @@ SELECT
     g01q32 AS segi_negatif,
     g01q33 AS saran_perbaikan,
     g01q34 AS saran_mahasiswa
-FROM analitik.mv_wisudawan_jawaban_responden
-WHERE kode_prodi  = 135
+FROM analitik.v_wisudawan_jawaban_responden
+WHERE no_prodi  = 135
   AND (g01q31 IS NOT NULL OR g01q32 IS NOT NULL
        OR g01q33 IS NOT NULL OR g01q34 IS NOT NULL);
 ```
@@ -2445,8 +2553,8 @@ SELECT
     u03_sq012  AS kepuasan_fasilitas_itb,
     u01_sq012  AS pilih_prodi_lagi,
     u02        AS rekomendasi_prodi
-FROM analitik.mv_wisudawan_jawaban_responden
-WHERE kode_prodi = 135        -- dikunci scope kaprodi
+FROM analitik.v_wisudawan_jawaban_responden
+WHERE no_prodi = 135        -- dikunci scope kaprodi
   AND jenjang = 'S1'
 ORDER BY submit_date DESC;
 ```
@@ -2461,7 +2569,7 @@ Implementasi akses berjenjang pada semua MV menggunakan **filter WHERE statis** 
 |-------|---------------|-----------|
 | **Admin / Institusi** | *(tidak ada constraint tambahan)* | Akses seluruh data: semua filter tersedia (fakultas, prodi, strata, periode) |
 | **Dekanat** | `WHERE kode_fakultas = '<kode_fakultas_dekan>'` | Scope dikunci ke satu fakultas. Filter prodi, strata, periode tetap tersedia. |
-| **Kaprodi** | `WHERE kode_prodi = <kode_prodi_kaprodi>` | Scope dikunci ke satu prodi. Filter strata dan periode tetap tersedia. |
+| **Kaprodi** | `WHERE no_prodi = <no_prodi_kaprodi>` | Scope dikunci ke satu prodi. Filter strata dan periode tetap tersedia. |
 
 ### Contoh Implementasi Filter Berjenjang
 
@@ -2470,19 +2578,19 @@ Implementasi akses berjenjang pada semua MV menggunakan **filter WHERE statis** 
 -- (diimplementasikan di layer aplikasi/API)
 
 -- Admin: query bebas
-SELECT * FROM analitik.mv_wisudawan_statistik_pertanyaan
+SELECT * FROM analitik.v_wisudawan_statistik_pertanyaan
 WHERE jenjang = $strata_filter
   AND periode_ijazah_id = $periode_filter;
 
 -- Dekanat STEI: tambah kd_fak
-SELECT * FROM analitik.mv_wisudawan_statistik_pertanyaan
+SELECT * FROM analitik.v_wisudawan_statistik_pertanyaan
 WHERE kode_fakultas = 'STEI'              -- injected dari session user
   AND jenjang = $strata_filter
   AND periode_ijazah_id = $periode_filter;
 
 -- Kaprodi IF (no_ps=135): tambah no_ps
-SELECT * FROM analitik.mv_wisudawan_statistik_pertanyaan
-WHERE kode_prodi = 135                  -- injected dari session user
+SELECT * FROM analitik.v_wisudawan_statistik_pertanyaan
+WHERE no_prodi = 135                  -- injected dari session user
   AND jenjang = $strata_filter
   AND periode_ijazah_id = $periode_filter;
 ```
@@ -2491,7 +2599,7 @@ WHERE kode_prodi = 135                  -- injected dari session user
 
 ## Ringkasan Perbandingan Ketiga MV
 
-| Aspek | `mv_wisudawan_distribusi_jawaban` | `mv_wisudawan_statistik_pertanyaan` | `mv_wisudawan_jawaban_responden` |
+| Aspek | `analitik.v_wisudawan_distribusi_jawaban` | `analitik.v_wisudawan_statistik_pertanyaan` | `analitik.v_wisudawan_jawaban_responden` |
 |-------|------------------------|---------------------|-------------------|
 | **Granularitas** | Per (dimensi, pertanyaan, **nilai**) | Per (dimensi, pertanyaan) | Per **responden** |
 | **Baris perkiraan** | ~300K–500K (banyak) | ~50K–100K | 7.535 |
