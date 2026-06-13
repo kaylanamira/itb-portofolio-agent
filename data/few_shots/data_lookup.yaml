@@ -74,3 +74,34 @@ examples:
       SELECT COUNT(*) AS jumlah_dosen
       FROM utama.dosen
       WHERE kd_fak = 'STEI' AND active = TRUE;
+
+  - nl: "Siapa saja dosen yang mengajar IF2210 semester ini?"
+    sql: |
+      SELECT DISTINCT unnest(semua_dosen_nama_gelar) AS nama_dosen
+      FROM analitik.v_info_umum_kelas_matkul
+      WHERE kode_matkul = 'IF2210' AND semester = 1 AND tahun = 2024
+      ORDER BY nama_dosen
+      LIMIT 100;
+
+  - nl: "Mata kuliah apa saja yang wajib di prodi IF?"
+    sql: |
+      SELECT DISTINCT kode_matkul, nama_matkul_id, kode_jenis_list, kode_sifat_list
+      FROM analitik.v_info_umum_kelas_matkul
+      WHERE kode_prodi = 'IF'
+        AND is_wajib_itb = TRUE
+      ORDER BY kode_matkul
+      LIMIT 100;
+
+  - nl: "Berapa jumlah dosen aktif dan kelas di prodi IF semester ini?"
+    sql: |
+      SELECT jumlah_kelas, jumlah_dosen_aktif, jumlah_mahasiswa_aktif
+      FROM analitik.v_info_umum_institusi
+      WHERE kode_prodi = 'IF' AND semester = 1 AND tahun = 2024
+      LIMIT 1;
+
+  - nl: "Di prodi mana saja Bu Yani mengajar semester ini?"
+    sql: |
+      SELECT DISTINCT unnest(kode_prodi_diajar) AS kode_prodi
+      FROM analitik.v_info_umum_dosen
+      WHERE nama_dosen_gelar ILIKE '%yani%' AND semester = 1 AND tahun = 2024
+      LIMIT 100;

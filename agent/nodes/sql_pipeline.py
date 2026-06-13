@@ -24,7 +24,7 @@ async def _portfolio_entity_resolver(entities_dict: dict):
     for k, v in entities_dict.items():
         if k not in valid_fields or v is None or str(v).strip().lower() in ("null", "none", ""):
             continue
-        if k in ["no_kelas", "kode_prodi"] and isinstance(v, int):
+        if k in ["no_kelas", "no_prodi"] and isinstance(v, int):
             filtered[k] = str(v)
         else:
             filtered[k] = v

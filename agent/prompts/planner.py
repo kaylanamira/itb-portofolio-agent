@@ -65,7 +65,7 @@ FORMAT OUTPUT (WAJIB JSON)
       "tool": "rag",
       "rag_source_types": ["komentar_mahasiswa", "teks_portofolio"],
       "rag_tipe_konten": ["refleksi", "usulan"],
-      "rag_scope_override": {{"kode_mk": "IF2210"}}
+      "rag_scope_override": {{"kode_matkul": "IF2210"}}
     }}
   ]
 }}

@@ -23,7 +23,7 @@ async def _entity_resolver(entities_dict: dict):
     for k, v in entities_dict.items():
         if k not in valid_fields or v is None or str(v).strip().lower() in ("null", "none", ""):
             continue
-        if k in ["no_kelas", "kode_prodi"] and isinstance(v, int):
+        if k in ["no_kelas", "no_prodi"] and isinstance(v, int):
             filtered[k] = str(v)
         else:
             filtered[k] = v
@@ -68,7 +68,7 @@ _wisudawan_sql_pipeline = build_sql_pipeline(
     few_shot_examples=_few_shot_examples,
     human_message_builder=_human_message_builder,
     schema_context=describe_tables,
-    default_table="analitik.mv_wisudawan_statistik_pertanyaan",
+    default_table="analitik.v_wisudawan_statistik_pertanyaan",
     executor=PsycopgExecutor(),
     max_attempts=settings.MAX_SQL_ATTEMPTS,
     domain_rules=WISUDAWAN_SQL_DOMAIN_RULES,
