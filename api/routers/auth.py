@@ -230,7 +230,7 @@ async def me(request: Request):
     }
 
 
-@router.patch("/role", summary="Ganti role aktif untuk session ini")
+# @router.patch("/role", summary="Ganti role aktif untuk session ini")
 async def switch_role(request: Request, body: SwitchRoleRequest):
     """
     Ganti active_role ke salah satu role yang dimiliki user.
