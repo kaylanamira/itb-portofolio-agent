@@ -1,6 +1,6 @@
 #!/bin/bash
 # Sebelum pakai, generate session dev sekali:
-#   uv run python scripts/dev_session.py --role direktorat
+#   uv run python dev_session.py --role direktorat
 #   export DEV_SESSION_ID=<session_id_yang_dicetak>
 
 QUERY="${1:-Berapa rata-rata skor kepuasan fasilitas ITB wisudawan S1??}"

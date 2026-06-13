@@ -1,5 +1,5 @@
 # Sebelum pakai, generate session dev sekali:
-#   uv run python scripts/dev_session.py --role direktorat
+#   uv run python dev_session.py --role direktorat
 #   $env:DEV_SESSION_ID = "<session_id_yang_dicetak>"
 #
 # Lalu jalankan:
