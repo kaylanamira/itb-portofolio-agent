@@ -99,6 +99,15 @@ examples:
       WHERE kode_prodi = 'IF' AND semester = 1 AND tahun = 2024
       LIMIT 1;
 
+  - nl: "Kelas mana yang punya kehadiran mahasiswa terendah semester ini?"
+    sql: |
+      SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, nama_prodi_id, pct_kehadiran_mahasiswa
+      FROM analitik.v_akademik_kelas
+      WHERE semester = 1 AND tahun = 2024
+        AND pct_kehadiran_mahasiswa IS NOT NULL
+      ORDER BY pct_kehadiran_mahasiswa ASC
+      LIMIT 100;
+
   - nl: "Di prodi mana saja Bu Yani mengajar semester ini?"
     sql: |
       SELECT DISTINCT unnest(kode_prodi_diajar) AS kode_prodi

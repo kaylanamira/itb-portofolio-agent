@@ -155,3 +155,4 @@ class AgentState(MessagesState):
     error_history: Annotated[list[dict], operator.add]
     is_aborted: bool
     abort_reason: Optional[str]
+    empty_result_reason: Optional[str]

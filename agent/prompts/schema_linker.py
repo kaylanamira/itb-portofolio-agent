@@ -22,15 +22,15 @@ Column-level DDL is fetched live from DB comments. Use this table to select the 
 | Per-dosen aggregation per semester (evaluation scores) | `analitik.v_akademik_statistik_dosen` |
 | Student free-text comments | `analitik.v_akademik_komentar_mahasiswa` |
 | Lecturer portfolio text (refleksi, metode, usulan perbaikan) | `analitik.v_akademik_portofolio` |
-| Class/MK/dosen info WITHOUT performance data (who teaches, class list, MK type/sifat) | `analitik.v_info_umum_kelas_matkul` |
-| Active counts per prodi per semester (jumlah kelas/MK/dosen/mahasiswa aktif) | `analitik.v_info_umum_institusi` |
-| Dosen teaching load (beban mengajar, prodi/MK diajar) — no evaluation scores | `analitik.v_info_umum_dosen` |
-| MK curriculum type per paket (breakdown by paket required) | `analitik.v_akademik_jenis_dan_sifat_matkul` |
+| Class/mata kuliah (matkul)/dosen info WITHOUT performance data (who teaches, class list, mata kuliah (matkul) type/sifat) | `analitik.v_info_umum_kelas_matkul` |
+| Active counts per prodi per semester (jumlah kelas/mata kuliah (matkul)/dosen/mahasiswa aktif) | `analitik.v_info_umum_institusi` |
+| Dosen teaching load (beban mengajar, prodi/mata kuliah (matkul) diajar) — no evaluation scores | `analitik.v_info_umum_dosen` |
+| mata kuliah (matkul) curriculum type per paket (breakdown by paket required) | `analitik.v_akademik_jenis_dan_sifat_matkul` |
 | Questionnaire question text (Q21–Q37 definitions) | `evaluasi.pertanyaan_kuesioner` |
 | Who is dekan/kaprodi/kepala KK | `utama.fakultas`/`program_studi`/`kk` via `dosen_id_*` FK |
 | Master data — only when v_info_umum_* is insufficient | `utama.fakultas`, `utama.program_studi`, `utama.dosen`, `utama.kk`, `utama.mata_kuliah` |
 
-Note: v_info_umum_kelas_matkul includes kode_jenis_list, kode_sifat_list, is_wajib_itb — use for MK type queries without joining v_akademik_jenis_dan_sifat_matkul unless per-paket breakdown is needed.
+Note: v_info_umum_kelas_matkul includes kode_jenis_list, kode_sifat_list, is_wajib_itb — use for mata kuliah (matkul) type queries without joining v_akademik_jenis_dan_sifat_matkul unless per-paket breakdown is needed.
 
 COLUMN NAMING:
 - analitik.v_* views: `kode_matkul`, `no_prodi` (int, e.g. 135), `kode_prodi` (varchar, e.g. "IF"), `kode_fakultas`, `nama_matkul_id`
@@ -84,7 +84,7 @@ Column-level DDL is fetched live from DB comments. Use this table to select the 
 | Raw JSONB responses — only when views are insufficient | `evaluasi_wisudawan.respons` |
 
 Note: v_info_umum_wisuda — jumlah_responden = survey respondents, NOT total graduates.
-Note: is_seremoni_asumtif = TRUE for all rows currently (seremoni data is placeholder).
+- is_seremoni_asumtif = TRUE for all rows currently (seremoni data is placeholder). NEVER filter `is_seremoni_asumtif = FALSE` — it always returns 0 rows. Note this to the user when discussing seremoni-specific results.
 
 COLUMN NAMING — v_wisudawan_* / v_info_umum_wisuda:
 - `no_prodi` (int), `kode_prodi` (varchar), `kode_fakultas`, `jenjang`
@@ -151,12 +151,12 @@ TABLE ROUTING:
 - Per-dosen aggregation per semester (dosen evaluation scores): analitik.v_akademik_statistik_dosen
 - Student free-text comments: analitik.v_akademik_komentar_mahasiswa
 - Lecturer portfolio text (refleksi, metode, usulan): analitik.v_akademik_portofolio
-- Class/MK/dosen info WITHOUT scores (who teaches, class list, MK type): analitik.v_info_umum_kelas_matkul
+- Class/mata kuliah (matkul)/dosen info WITHOUT scores (who teaches, class list, MK type): analitik.v_info_umum_kelas_matkul
 - Institution counts (jumlah kelas/dosen/mahasiswa aktif per prodi per semester): analitik.v_info_umum_institusi
 - Dosen teaching load (beban mengajar, list prodi/MK diajar, no scores): analitik.v_info_umum_dosen
 - MK curriculum type breakdown per paket: analitik.v_akademik_jenis_dan_sifat_matkul
   → v_akademik_kelas and v_info_umum_kelas_matkul already carry kode_jenis_list, kode_sifat_list, is_wajib_itb — only join v_akademik_jenis_dan_sifat_matkul when breakdown per paket is needed
-- Master data (KK list, NIP, etc.) — use utama.* ONLY when v_info_umum_* is insufficient.
+- Master data (KK list, etc.) — use utama.* ONLY when v_info_umum_* is insufficient.
 
 COLUMN NAMING — analitik.v_*:
 - kode_matkul (6-char, e.g. "IF2210"), nama_matkul_id, nama_matkul_en
@@ -191,7 +191,7 @@ AGGREGATIONS:
 - WHERE avg_ip_akhir_mahasiswa IS NOT NULL before AVG/ORDER BY on IP columns.
 
 SECURITY: Generate SELECT only. Never reference analitik_mv.* or any schema outside ALLOWED_SCHEMAS.
-PRIVACY: Never SELECT nim, nip, tgl_lahir, email, no_hp, alamat, ip_address, password, token.
+PRIVACY:  Never SELECT columns containing personal data nim, nip, tgl_lahir, email, no_hp, alamat, ip_address, password, token.
 """
 
 WISUDAWAN_SQL_DOMAIN_RULES = """
@@ -209,7 +209,7 @@ COLUMN NAMING — v_wisudawan_* views:
 - jumlah_responden, persentase, rata_rata, median, std_dev
 - periode_ijazah_id_final ← ALWAYS use this (periode_ijazah_id is 66% NULL by design)
 - tahun_ijazah, bulan_ijazah, periode_seremoni_id, nama_seremoni, tahun_seremoni, bulan_seremoni
-- is_seremoni_asumtif: currently TRUE for all rows (seremoni data is placeholder); note this to the user when querying seremoni-specific data
+- is_seremoni_asumtif: currently TRUE for all rows (seremoni data is placeholder); note this to the user when querying seremoni-specific data. NEVER add `WHERE is_seremoni_asumtif = FALSE` — this will always return 0 rows.
 
 kode_grup_pertanyaan values — use EXACT, NEVER ILIKE on kode_pertanyaan:
   U03=fasilitas ITB | U01=pendidikan/prodi/dosen | U02=rekomendasi prodi (NOMINAL)
@@ -218,8 +218,9 @@ kode_grup_pertanyaan values — use EXACT, NEVER ILIKE on kode_pertanyaan:
   FSRD01–FSRD05=FSRD specific | SBM01=SBM specific
 
 ORDINAL vs NOMINAL:
-- NEVER AVG/STDDEV on tipe_opsi='N'. Nominal questions: U02, S101, S102, S103, M01, M02, M03.
+- NEVER apply AVG/STDDEV/MEDIAN on tipe_opsi='N'. Nominal questions: U02, S101, S102, S103, M01, M02, M03.
 - For nominal: use v_wisudawan_distribusi_jawaban (jumlah_responden, persentase) only.
+- For ordinal: avg, median, stddev are safe
 - FREKUENSI scale (U06): nilai >= 2 = "pernah mengalami". High score = more problems (negative).
 - HARAPAN and HARAPAN_FSRD: both 1–5 but nilai-4 has different label — never aggregate across both.
 

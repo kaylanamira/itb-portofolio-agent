@@ -1,20 +1,25 @@
 from core.utils import extract_json_from_llm
 import uuid
 from agent.state import AgentState, FormattedResponse, TableArtifact, ChartArtifact
-from agent.prompts.synthesizer import SYNTHESIZER_SYSTEM_PROMPT, REJECTION_SYSTEM_PROMPT, build_synthesizer_human_message
+from agent.prompts.synthesizer import SYNTHESIZER_SYSTEM_PROMPT, REJECTION_SYSTEM_PROMPT, ABORT_REASON_MESSAGES, build_synthesizer_human_message
 from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
+
 
 async def synthesizer(state: AgentState) -> dict:
     llm = get_llm("synthesis")
     query = state.get("effective_query", state.get("raw_query", ""))
     abort_reason = state.get("abort_reason")
-    is_max_retries = abort_reason == "MAX_RETRIES_EXCEEDED"
 
-    if abort_reason and not is_max_retries:
+    if abort_reason:
+        rejection_context = (
+            f"Query User: {query}\n"
+            f"Alasan Penolakan: {ABORT_REASON_MESSAGES.get(abort_reason, abort_reason)}\n\n"
+            f"Buat respons penolakan:"
+        )
         messages = [
             SystemMessage(content=REJECTION_SYSTEM_PROMPT),
-            HumanMessage(content=f"Query User: {query}\nAlasan Penolakan: {abort_reason}\n\nBuat respons penolakan:")
+            HumanMessage(content=rejection_context)
         ]
         try:
             response = await llm.ainvoke(messages)
@@ -36,17 +41,17 @@ async def synthesizer(state: AgentState) -> dict:
     steps = state.get("steps_completed", [])
     sys_prompt = SYNTHESIZER_SYSTEM_PROMPT
     human_content = build_synthesizer_human_message(query, steps)
-    
+
     messages = [
         SystemMessage(content=sys_prompt),
         HumanMessage(content=human_content),
     ]
-    
+
     response = await llm.ainvoke(messages)
-    
+
     try:
         content = extract_json_from_llm(response.content)
-        
+
         artifacts = []
         for art in content.get("artifacts", []):
             art_id = str(uuid.uuid4())
@@ -70,7 +75,7 @@ async def synthesizer(state: AgentState) -> dict:
                     row_count=art.get("row_count", len(art.get("rows", []))),
                     is_truncated=art.get("is_truncated", False)
                 ))
-                
+
         formatted = FormattedResponse(
             response_type="mixed" if artifacts else "text",
             narrative=content.get("narrative", "Berikut adalah hasil analisis kami."),
@@ -83,5 +88,5 @@ async def synthesizer(state: AgentState) -> dict:
             response_type="error",
             narrative=f"Maaf, terjadi kesalahan saat menyusun jawaban: {str(e)}"
         )
-        
+
     return {"formatted_response": formatted}

@@ -1,0 +1,486 @@
+[
+  {
+    "id": "SC-KP-001",
+    "category": "kuesioner / skor pelaksanaan",
+    "description": "Kaprodi asks about teaching execution score in their own prodi — data exists",
+    "query": "Berapa rata-rata skor pelaksanaan perkuliahan di Prodi Teknik Informatika semester ganjil 2024?",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 1,
+      "active_role": { "user_role_id": 1, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 1, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "135", "kode_prodi": "IF", "nama_prodi": "Teknik Informatika", "resolved_prodi_id": 135, "semester": 1, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Prodi matches — if empty it means no data for that period, not scope violation"
+  },
+  {
+    "id": "SC-KP-002",
+    "category": "kuesioner / capaian pembelajaran",
+    "description": "Kaprodi asks about learning outcomes achievement dimension (user intent, not direct Q-number) in another prodi — OUT_OF_SCOPE",
+    "query": "Bagaimana capaian pembelajaran di Prodi Desain Produk tahun ini?",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 2,
+      "active_role": { "user_role_id": 2, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 2, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "175", "kode_prodi": "DP", "nama_prodi": "Desain Produk", "resolved_prodi_id": 175, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "Intent maps to avg_skor_capaian — but prodi 175 ≠ 135"
+  },
+  {
+    "id": "SC-KP-003",
+    "category": "kuesioner / sarana prasarana",
+    "description": "Dekan asks about facility satisfaction score in their own faculty — LEGITIMATE_NO_DATA (old semester)",
+    "query": "Bagaimana kepuasan sarana prasarana di STEI semester ganjil 2018?",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 3,
+      "active_role": { "user_role_id": 3, "role": "dekan", "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 3, "role": "dekan", "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_fakultas": "STEI", "semester": 1, "tahun": 2018, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Faculty matches kd_fak=STEI — empty because data may not exist for 2018"
+  },
+  {
+    "id": "SC-KP-004",
+    "category": "kuesioner / perilaku mahasiswa",
+    "description": "Dekan asks about student behavior dimension in a different faculty — OUT_OF_SCOPE",
+    "query": "Bagaimana rata-rata skor perilaku mahasiswa di SBM tahun 2024?",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 4,
+      "active_role": { "user_role_id": 4, "role": "dekan", "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 4, "role": "dekan", "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_fakultas": "SBM", "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "kode_fakultas=SBM ≠ kd_fak=STEI"
+  },
+  {
+    "id": "SC-KP-005",
+    "category": "kuesioner / dosen individual scores",
+    "description": "Dosen asks about their own Q25 (communication) score across their classes — LEGITIMATE_NO_DATA",
+    "query": "Berapa skor komunikasi saya di setiap kelas yang saya ajar semester genap 2025?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 5,
+      "active_role": { "user_role_id": 5, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 5, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "semester": 2, "tahun": 2025, "resolved_dosen_id": 42, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "dosen_id=42 matches — skor_dosen_q25 JSONB will be masked to own entry only; empty means no classes that semester"
+  },
+  {
+    "id": "SC-KP-006",
+    "category": "kuesioner / dosen masking validation",
+    "description": "Dosen in co-teaching class asks their own Q26 score — LEGITIMATE_NO_DATA (DB masking test)",
+    "query": "Berapa skor kepedulian saya di kelas IF2210 K01 tahun 2024?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 6,
+      "active_role": { "user_role_id": 6, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 6, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF2210", "no_kelas": "1", "resolved_dosen_id": 42, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "sql_to_validate": "SELECT kelas_id, skor_dosen_q26->>'42' AS skor_kepedulian FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2210' AND no_kelas = 1 AND tahun = 2024 AND semua_dosen_id @> ARRAY[42]",
+    "db_masking_check": "skor_dosen_q26 JSONB must only contain key '42' (own dosen_id); other dosen entries must be absent",
+    "notes": "Validates DB SECURITY DEFINER masking: skor_dosen_q25/26/27 should only show own entry for role=dosen"
+  },
+  {
+    "id": "SC-KP-007",
+    "category": "kuesioner / dosen asks about another dosen's score",
+    "description": "Dosen tries to look up another dosen's individual Q27 fairness score — OUT_OF_SCOPE",
+    "query": "Berapa skor keadilan dosen Budi Santoso di kelas IF2210?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 7,
+      "active_role": { "user_role_id": 7, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 7, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF2210", "nama_dosen": "Budi Santoso", "resolved_dosen_id": 99, "confidence": 0.9, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "dosen_id=42 but resolved_dosen_id=99 (Budi Santoso) — scope mismatch"
+  },
+  {
+    "id": "SC-ST-001",
+    "category": "mahasiswa score / distribusi nilai",
+    "description": "Kaprodi asks about grade distribution in their own prodi — LEGITIMATE_NO_DATA (no data for future semester)",
+    "query": "Berapa distribusi nilai mahasiswa di prodi IF semester genap 2026?",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 8,
+      "active_role": { "user_role_id": 8, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 8, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "135", "kode_prodi": "IF", "resolved_prodi_id": 135, "semester": 2, "tahun": 2026, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Prodi matches; empty because future semester has no data"
+  },
+  {
+    "id": "SC-ST-002",
+    "category": "mahasiswa score / avg IP",
+    "description": "Jajaran prodi asks avg IP in another prodi — OUT_OF_SCOPE",
+    "query": "Berapa rata-rata IP mahasiswa Prodi Arsitektur tahun 2024?",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 9,
+      "active_role": { "user_role_id": 9, "role": "jajaran_prodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 9, "role": "jajaran_prodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "201", "nama_prodi": "Arsitektur", "resolved_prodi_id": 201, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "no_prodi=201 ≠ no_ps=135"
+  },
+  {
+    "id": "SC-ST-003",
+    "category": "mahasiswa score / tingkat kelulusan",
+    "description": "Dosen asks graduation rate in their own prodi class — LEGITIMATE_NO_DATA",
+    "query": "Berapa persen mahasiswa lulus ≥C di kelas IF2210 yang saya ajar tahun 2024?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 10,
+      "active_role": { "user_role_id": 10, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 10, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF2210", "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "No cross-scope entity detected; dist_pct_lulus_a_c query within own prodi"
+  },
+  {
+    "id": "SC-ST-004",
+    "category": "mahasiswa score / kehadiran",
+    "description": "Jajaran dekanat asks about student attendance in a class from another faculty — OUT_OF_SCOPE",
+    "query": "Berapa rata-rata kehadiran mahasiswa di kelas-kelas FTI semester ganjil 2024?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 11,
+      "active_role": { "user_role_id": 11, "role": "jajaran_dekanat", "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 11, "role": "jajaran_dekanat", "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_fakultas": "FTI", "semester": 1, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "kode_fakultas=FTI ≠ kd_fak=STEI"
+  },
+  {
+    "id": "SC-LU-001",
+    "category": "lookup / v_info_umum_kelas_matkul",
+    "description": "Admin looks up all classes for IF2210 — LEGITIMATE_NO_DATA (old semester, no data)",
+    "query": "Tampilkan semua kelas IF2210 pada tahun ajaran 2017/2018",
+    "view": "analitik.v_info_umum_kelas_matkul",
+    "user_scope": {
+      "user_id": 12,
+      "active_role": { "user_role_id": 12, "role": "admin", "is_prime": true },
+      "available_roles": [{ "user_role_id": 12, "role": "admin", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF2210", "tahun_ajaran": "2017/2018", "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Group A view — no RLS; can_see_all=True; empty = genuinely no data"
+  },
+  {
+    "id": "SC-LU-002",
+    "category": "lookup / v_info_umum_institusi",
+    "description": "Direktorat looks up student count across all prodi — LEGITIMATE_NO_DATA",
+    "query": "Berapa jumlah mahasiswa aktif per prodi semester ganjil 2024?",
+    "view": "analitik.v_info_umum_institusi",
+    "user_scope": {
+      "user_id": 13,
+      "active_role": { "user_role_id": 13, "role": "direktorat", "is_prime": true },
+      "available_roles": [{ "user_role_id": 13, "role": "direktorat", "is_prime": true }]
+    },
+    "detected_entities": { "semester": 1, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Group A view; direktorat can_see_all; any empty = genuinely no data"
+  },
+  {
+    "id": "SC-LU-003",
+    "category": "lookup / v_info_umum_dosen",
+    "description": "Kaprodi looks up teaching load of a dosen in their prodi — LEGITIMATE_NO_DATA",
+    "query": "Berapa jumlah kelas yang diajar dosen Budi Santoso di prodi IF semester ini?",
+    "view": "analitik.v_info_umum_dosen",
+    "user_scope": {
+      "user_id": 14,
+      "active_role": { "user_role_id": 14, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 14, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "nama_dosen": "Budi Santoso", "resolved_dosen_id": 99, "no_prodi": "135", "resolved_prodi_id": 135, "confidence": 0.9, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Group A view (no RLS) — resolved_prodi_id=135 matches no_ps=135; dosen_id not checked against scope for kaprodi role"
+  },
+  {
+    "id": "SC-LU-004",
+    "category": "lookup / v_akademik_statistik_dosen",
+    "description": "Kaprodi looks up dosen performance stats for a dosen who taught their prodi — LEGITIMATE_NO_DATA",
+    "query": "Tampilkan statistik mengajar semua dosen di prodi Informatika semester ganjil 2024",
+    "view": "analitik.v_akademik_statistik_dosen",
+    "user_scope": {
+      "user_id": 15,
+      "active_role": { "user_role_id": 15, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 15, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "135", "resolved_prodi_id": 135, "semester": 1, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Row filter: no_ps=135 matches; DB will enforce no_prodi_diajar filter for kaprodi"
+  },
+  {
+    "id": "SC-LU-005",
+    "category": "lookup / v_akademik_statistik_dosen cross-prodi",
+    "description": "Kaprodi asks about dosen stats in another prodi — OUT_OF_SCOPE",
+    "query": "Siapa dosen dengan kehadiran tertinggi di prodi Elektro tahun 2024?",
+    "view": "analitik.v_akademik_statistik_dosen",
+    "user_scope": {
+      "user_id": 16,
+      "active_role": { "user_role_id": 16, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 16, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "180", "nama_prodi": "Teknik Elektro", "resolved_prodi_id": 180, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "resolved_prodi_id=180 ≠ no_ps=135"
+  },
+  {
+    "id": "SC-PF-001",
+    "category": "portofolio / metode perkuliahan text",
+    "description": "Kaprodi reads portfolio teaching method text for own prodi — LEGITIMATE_NO_DATA (kelas never submitted)",
+    "query": "Bagaimana metode perkuliahan yang digunakan di kelas IF4050 tahun 2024?",
+    "view": "analitik.v_akademik_portofolio",
+    "user_scope": {
+      "user_id": 17,
+      "active_role": { "user_role_id": 17, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 17, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF4050", "no_prodi": "135", "resolved_prodi_id": 135, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "metode_perkuliahan column query — prodi matches; empty = portfolio not submitted"
+  },
+  {
+    "id": "SC-PF-002",
+    "category": "portofolio / refleksi perkuliahan text",
+    "description": "Dosen reads their own portfolio reflection — LEGITIMATE_NO_DATA",
+    "query": "Apa refleksi perkuliahan saya untuk kelas IF2210 tahun lalu?",
+    "view": "analitik.v_akademik_portofolio",
+    "user_scope": {
+      "user_id": 18,
+      "active_role": { "user_role_id": 18, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 18, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF2210", "resolved_dosen_id": 42, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "refleksi_perkuliahan column; dosen_id=42 matches own scope"
+  },
+  {
+    "id": "SC-PF-003",
+    "category": "portofolio / portfolio score (nilai verifikasi)",
+    "description": "Kaprodi checks portfolio verification scores for their prodi — LEGITIMATE_NO_DATA",
+    "query": "Berapa nilai portofolio rata-rata kelas di prodi IF yang sudah diverifikasi tahun 2024?",
+    "view": "analitik.v_akademik_portofolio",
+    "user_scope": {
+      "user_id": 19,
+      "active_role": { "user_role_id": 19, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 19, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "135", "resolved_prodi_id": 135, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Joins evaluasi.portofolio.nilai — prodi matches"
+  },
+  {
+    "id": "SC-PF-004",
+    "category": "portofolio / analisis ketercapaian outcomes",
+    "description": "Dekan reads outcome achievement analysis across a different faculty — OUT_OF_SCOPE",
+    "query": "Bagaimana analisis ketercapaian outcomes di FMIPA tahun 2024?",
+    "view": "analitik.v_akademik_portofolio",
+    "user_scope": {
+      "user_id": 20,
+      "active_role": { "user_role_id": 20, "role": "dekan", "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 20, "role": "dekan", "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_fakultas": "FMIPA", "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "kode_fakultas=FMIPA ≠ kd_fak=STEI"
+  },
+  {
+    "id": "SC-KM-001",
+    "category": "komentar mahasiswa / v_akademik_komentar_mahasiswa",
+    "description": "Kaprodi reads student comments for their prodi — LEGITIMATE_NO_DATA (rare matkul)",
+    "query": "Apa saja komentar mahasiswa untuk matkul IF9901 di prodi IF?",
+    "view": "analitik.v_akademik_komentar_mahasiswa",
+    "user_scope": {
+      "user_id": 21,
+      "active_role": { "user_role_id": 21, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 21, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF9901", "no_prodi": "135", "resolved_prodi_id": 135, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Prodi matches; IF9901 doesn't exist"
+  },
+  {
+    "id": "SC-KM-002",
+    "category": "komentar mahasiswa / dosen reads own class comments",
+    "description": "Dosen reads comments for classes they teach — LEGITIMATE_NO_DATA",
+    "query": "Apa saja komentar mahasiswa di kelas-kelas saya semester ganjil 2024?",
+    "view": "analitik.v_akademik_komentar_mahasiswa",
+    "user_scope": {
+      "user_id": 22,
+      "active_role": { "user_role_id": 22, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 22, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "resolved_dosen_id": 42, "semester": 1, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "dosen_id=42 matches; DB filter: semua_dosen_id @> ARRAY[42]"
+  },
+  {
+    "id": "SC-WS-001",
+    "category": "wisudawan / v_wisudawan overall satisfaction",
+    "description": "Admin queries graduation survey satisfaction scores — LEGITIMATE_NO_DATA (no data for that period)",
+    "query": "Berapa rata-rata kepuasan wisudawan prodi IF periode ijazah Februari 2019?",
+    "view": "analitik.v_wisudawan_kepuasan (or equivalent)",
+    "user_scope": {
+      "user_id": 23,
+      "active_role": { "user_role_id": 23, "role": "admin", "is_prime": true },
+      "available_roles": [{ "user_role_id": 23, "role": "admin", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "135", "resolved_prodi_id": 135, "tahun": 2019, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "can_see_all=True; empty = no responden for that period"
+  },
+  {
+    "id": "SC-WS-002",
+    "category": "wisudawan / kaprodi reads their prodi survey",
+    "description": "Kaprodi reads graduation survey of their own prodi — LEGITIMATE_NO_DATA",
+    "query": "Bagaimana tingkat kepuasan wisudawan Teknik Informatika terhadap fasilitas kampus?",
+    "view": "analitik.v_wisudawan_kepuasan (or equivalent)",
+    "user_scope": {
+      "user_id": 24,
+      "active_role": { "user_role_id": 24, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 24, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "no_prodi": "135", "nama_prodi": "Teknik Informatika", "resolved_prodi_id": 135, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Prodi matches no_ps=135"
+  },
+  {
+    "id": "SC-WS-003",
+    "category": "wisudawan / kaprodi reads another prodi survey — OUT_OF_SCOPE",
+    "description": "Kaprodi tries to read wisudawan survey from a different prodi",
+    "query": "Berapa persentase wisudawan SBM yang merekomendasikan prodi mereka?",
+    "view": "analitik.v_wisudawan_kepuasan (or equivalent)",
+    "user_scope": {
+      "user_id": 25,
+      "active_role": { "user_role_id": 25, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 25, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_fakultas": "SBM", "no_prodi": "220", "resolved_prodi_id": 220, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "resolved_prodi_id=220 (SBM) ≠ no_ps=135"
+  },
+  {
+    "id": "SC-WS-004",
+    "category": "wisudawan / v_info_umum_wisuda respondent count",
+    "description": "Dekan checks responden count for their faculty's wisudawan — LEGITIMATE_NO_DATA",
+    "query": "Berapa jumlah wisudawan STEI yang mengisi survei tahun 2024?",
+    "view": "analitik.v_info_umum_wisuda",
+    "user_scope": {
+      "user_id": 26,
+      "active_role": { "user_role_id": 26, "role": "dekan", "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 26, "role": "dekan", "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_fakultas": "STEI", "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "Group A public view — no RLS; kd_fak=STEI matches detected entity"
+  },
+  {
+    "id": "SC-CK-001",
+    "category": "co-teaching / dosen asks about class they are NOT in",
+    "description": "Dosen queries a class they are not teaching — OUT_OF_SCOPE (resolved_dosen_id mismatch)",
+    "query": "Berapa skor kuesioner rata-rata kelas IF2210 K02 yang diajar Budi Santoso?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 27,
+      "active_role": { "user_role_id": 27, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 27, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF2210", "no_kelas": "2", "nama_dosen": "Budi Santoso", "resolved_dosen_id": 99, "confidence": 0.9, "entity_candidates": {} },
+    "expected_empty_result_reason": "OUT_OF_SCOPE",
+    "notes": "resolved_dosen_id=99 ≠ dosen_id=42 → OUT_OF_SCOPE even though the class is in same prodi"
+  },
+  {
+    "id": "SC-CK-002",
+    "category": "co-teaching / dosen asks own scores in co-teaching class",
+    "description": "Dosen in co-teaching class queries their own scores only — LEGITIMATE_NO_DATA (DB masking test)",
+    "query": "Berapa skor Q25 dan Q26 saya di kelas IF3110 yang saya co-ajar?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 28,
+      "active_role": { "user_role_id": 28, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 28, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF3110", "resolved_dosen_id": 42, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "sql_to_validate": "SELECT kelas_id, (skor_dosen_q25->>'42')::numeric AS q25, (skor_dosen_q26->>'42')::numeric AS q26 FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3110' AND semua_dosen_id @> ARRAY[42]",
+    "db_masking_check": "Result must NOT contain entries for other dosen_ids (e.g., 55, 66) in skor_dosen_q25/q26 JSONB. Only key '42' should appear.",
+    "notes": "Critical DB masking validation: SECURITY DEFINER must strip other dosen entries from JSONB"
+  },
+  {
+    "id": "SC-KU-001",
+    "category": "kurikulum / CPMK lookup",
+    "description": "Kaprodi queries CPMK for a course in their prodi — LEGITIMATE_NO_DATA (course has no CPMK defined)",
+    "query": "Apa saja CPMK dari mata kuliah IF9999 di prodi IF?",
+    "view": "kur24.cpmk + utama.mata_kuliah",
+    "user_scope": {
+      "user_id": 29,
+      "active_role": { "user_role_id": 29, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 29, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_matkul": "IF9999", "no_prodi": "135", "resolved_prodi_id": 135, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "kur24 tables are not RLS-protected; empty = IF9999 doesn't exist or has no CPMK"
+  },
+  {
+    "id": "SC-AD-001",
+    "category": "admin / global cross-faculty",
+    "description": "Admin queries global comparison across all faculties — always LEGITIMATE_NO_DATA",
+    "query": "Bandingkan skor kuesioner overall antar semua fakultas semester ganjil 2024",
+    "view": "analitik.v_akademik_statistik_prodi",
+    "user_scope": {
+      "user_id": 30,
+      "active_role": { "user_role_id": 30, "role": "admin", "is_prime": true },
+      "available_roles": [{ "user_role_id": 30, "role": "admin", "is_prime": true }]
+    },
+    "detected_entities": { "semester": 1, "tahun": 2024, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "can_see_all=True; no scope fields on admin ScopeEntry"
+  },
+  {
+    "id": "SC-ED-001",
+    "category": "edge case / kode_prodi only (no resolved_prodi_id)",
+    "description": "Kaprodi query where only kode_prodi detected (not numeric), no resolved_prodi_id — safe fallback",
+    "query": "Tampilkan semua kelas aktif di prodi IF semester ganjil 2030",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 31,
+      "active_role": { "user_role_id": 31, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 31, "role": "kaprodi", "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": { "kode_prodi": "IF", "no_prodi": null, "resolved_prodi_id": null, "semester": 1, "tahun": 2030, "confidence": 1.0, "entity_candidates": {} },
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "int() cast fails silently when no_prodi=null and resolved_prodi_id=null → no checks → safe LEGITIMATE_NO_DATA fallback"
+  },
+  {
+    "id": "SC-ED-002",
+    "category": "edge case / no entities detected",
+    "description": "Dosen asks a generic question with no entity extraction — safe fallback",
+    "query": "Berapa rata-rata kehadiran mahasiswa semester ini?",
+    "view": "analitik.v_akademik_kelas",
+    "user_scope": {
+      "user_id": 32,
+      "active_role": { "user_role_id": 32, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true },
+      "available_roles": [{ "user_role_id": 32, "role": "dosen", "dosen_id": 42, "no_ps": 135, "kd_fak": "STEI", "is_prime": true }]
+    },
+    "detected_entities": null,
+    "expected_empty_result_reason": "LEGITIMATE_NO_DATA",
+    "notes": "detected_entities=None → classifier returns LEGITIMATE_NO_DATA immediately"
+  }
+]

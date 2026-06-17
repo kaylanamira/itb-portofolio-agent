@@ -270,25 +270,24 @@ class SQLTool:
         generated_sql: str,
         sql_result: Optional[list[dict]],
         sql_row_count: int,
+        user_scope: Optional[Any] = None,
+        detected_entities: Optional[Any] = None,
         plan_step_context: Optional[dict] = None,
     ) -> dict:
-        """Checks if the SQL result answers the question via LLM.
-
-        Args:
-            question: Original user query.
-            generated_sql: Executed SQL string.
-            sql_result: Rows returned by the query.
-            sql_row_count: Number of rows returned.
-            plan_step_context: Current plan step dict.
-
-        Returns:
-            Dict with 'answer_is_valid' (bool) and 'reason' (str).
-        """
         if sql_result is None:
             return {"answer_is_valid": False, "reason": "SQL returned no result set"}
 
         if sql_row_count == 1 and sql_result and all(v is None for v in sql_result[0].values()):
-            return {"answer_is_valid": False, "reason": "Query returned null values for all requested columns"}
+            from agent.tools.sql.scope_classifier import classify_empty_result
+            reason = classify_empty_result(user_scope, detected_entities) if user_scope else "LEGITIMATE_NO_DATA"
+            print(f"[DEBUG empty_result] trigger=all_null_row | no_ps={getattr(getattr(user_scope, 'active_role', None), 'no_ps', None)} | no_prodi={getattr(detected_entities, 'no_prodi', None)} | resolved_prodi_id={getattr(detected_entities, 'resolved_prodi_id', None)} | reason={reason}")
+            return {"answer_is_valid": True, "reason": reason, "empty_result_reason": reason}
+
+        if sql_row_count == 0:
+            from agent.tools.sql.scope_classifier import classify_empty_result
+            reason = classify_empty_result(user_scope, detected_entities) if user_scope else "LEGITIMATE_NO_DATA"
+            print(f"[DEBUG empty_result] trigger=zero_rows | no_ps={getattr(getattr(user_scope, 'active_role', None), 'no_ps', None)} | no_prodi={getattr(detected_entities, 'no_prodi', None)} | resolved_prodi_id={getattr(detected_entities, 'resolved_prodi_id', None)} | reason={reason}")
+            return {"answer_is_valid": True, "reason": reason, "empty_result_reason": reason}
 
         try:
             llm = get_llm("answer_validation")
@@ -327,12 +326,14 @@ class SQLTool:
                 "generated_sql": None,
                 "sql_result": None,
                 "sql_error": None,
+                "sql_row_count": None,
+                "answer_is_valid": None,
             }
         return {
             "attempt_count": new_attempt,
             "is_aborted": True,
             "abort_reason": "MAX_RETRIES_EXCEEDED",
-    }
+        }
 
     @staticmethod
     def _format_entities(entities: Any) -> str:

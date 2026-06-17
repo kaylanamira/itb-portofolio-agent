@@ -1,4 +1,20 @@
 examples:
+  - nl: "Berapa rata-rata kehadiran mahasiswa semester ini dan kelas mana yang kehadirannya paling rendah?"
+    sql: |
+      SELECT
+        kelas_id,
+        kode_matkul,
+        nama_matkul_id,
+        no_kelas,
+        nama_prodi_id,
+        ROUND(AVG(pct_kehadiran_mahasiswa)::numeric, 2) AS avg_kehadiran_mahasiswa
+      FROM analitik.v_akademik_kelas
+      WHERE semester = 1 AND tahun = 2024
+        AND pct_kehadiran_mahasiswa IS NOT NULL
+      GROUP BY kelas_id, kode_matkul, nama_matkul_id, no_kelas, nama_prodi_id
+      ORDER BY avg_kehadiran_mahasiswa ASC
+      LIMIT 100;
+
   - nl: "Bagaimana tren nilai mahasiswa IF3140 dua tahun terakhir?"
     sql: |
       SELECT tahun_ajaran, semester, ROUND(AVG(avg_ip_akhir_mahasiswa)::numeric, 2) AS avg_nilai
@@ -45,15 +61,25 @@ examples:
       ORDER BY ranking
       LIMIT 100;
 
-  - nl: "Bagaimana distribusi skor evaluasi pelaksanaan perkuliahan di STEI semester ini?"
+  - nl: "Bagaimana skor pelaksanaan perkuliahan di prodi IF semester ganjil 2024, aspek mana yang tertinggi dan terendah?"
     sql: |
-      SELECT
-        kode_prodi,
-        ROUND(AVG(avg_skor_pelaksanaan)::numeric, 2) AS avg_pelaksanaan,
-        ROUND(AVG(avg_skor_capaian)::numeric, 2) AS avg_capaian,
-        ROUND(AVG(avg_skor_overall)::numeric, 2) AS avg_overall
-      FROM analitik.v_akademik_kelas
-      WHERE kode_fakultas = 'STEI' AND semester = 1 AND tahun = 2024
-      GROUP BY no_prodi, kode_prodi
-      ORDER BY avg_overall DESC
-      LIMIT 100;
+      WITH agg AS (
+        SELECT
+          AVG(avg_skor_capaian)           AS capaian,
+          AVG(avg_skor_pelaksanaan)       AS pelaksanaan,
+          AVG(avg_skor_sarana_prasarana)  AS sarana,
+          AVG(avg_skor_perilaku_mahasiswa) AS perilaku,
+          AVG(avg_skor_overall)           AS overall
+        FROM analitik.v_akademik_statistik_prodi
+        WHERE kode_prodi = 'IF' AND semester = 1 AND tahun = 2024
+      )
+      SELECT dimensi, ROUND(skor::numeric, 2) AS skor
+      FROM agg
+      CROSS JOIN LATERAL (VALUES
+        ('Capaian Pembelajaran', agg.capaian),
+        ('Pelaksanaan Perkuliahan', agg.pelaksanaan),
+        ('Sarana & Prasarana', agg.sarana),
+        ('Perilaku Mahasiswa', agg.perilaku),
+        ('Overall', agg.overall)
+      ) AS t(dimensi, skor)
+      ORDER BY skor DESC;

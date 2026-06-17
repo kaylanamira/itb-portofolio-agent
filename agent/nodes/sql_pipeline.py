@@ -107,6 +107,9 @@ async def sql_pipeline(state: AgentState) -> dict:
 
     result = await _portfolio_sql_pipeline.ainvoke(sql_state)
 
+    empty_result_reason = result.get("empty_result_reason")
+    is_out_of_scope = empty_result_reason == "OUT_OF_SCOPE"
+
     return {
         "detected_entities": result.get("detected_entities"),
         "relevant_tables": result.get("relevant_tables"),
@@ -118,8 +121,9 @@ async def sql_pipeline(state: AgentState) -> dict:
         "answer_is_valid": result.get("answer_is_valid"),
         "attempt_count": result.get("attempt_count", 0),
         "error_history": result.get("error_history", []),
-        "is_aborted": result.get("is_aborted", False),
-        "abort_reason": result.get("abort_reason"),
+        "empty_result_reason": empty_result_reason,
+        "is_aborted": is_out_of_scope or result.get("is_aborted", False),
+        "abort_reason": "EMPTY_SCOPE_RESULT" if is_out_of_scope else result.get("abort_reason"),
     }
 
 

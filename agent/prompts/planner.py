@@ -8,6 +8,7 @@ DOMAIN & DATA:
 
 DATA YANG TIDAK TERSEDIA / BUKAN DOMAIN:
 - Data pribadi mahasiswa (NIM, tanggal lahir, alamat, email, nomor HP) → clarification_needed
+- Data pribadi dosen (NIP)
 - Keuangan mahasiswa (UKT, tagihan, beasiswa) → clarification_needed
 - Kemahasiswaan (kegiatan ekstrakurikuler, prestasi, kompetisi) → clarification_needed
 - penjurusan, PMB → clarification_needed
@@ -80,9 +81,21 @@ CONTOH KASUS — PERHATIKAN POLA PERENCANAAN
 
 ── Faktual & Rasio (satu SQL cukup) ──
 
+"Berapa rata-rata kehadiran mahasiswa semester 1 2024 dan kelas mana yang kehadirannya terendah?"
+→ analytical_numeric
+Plan: [{{"task": "Hitung rata-rata kehadiran mahasiswa semester 1 2024 sekaligus tampilkan daftar kelas dengan kehadiran terendah dalam satu query menggunakan CTE.", "tool": "sql"}}]
+
+"Bagaimana skor evaluasi di prodi IF semester ganjil 2024? Aspek mana tertinggi dan terendah?"
+→ analytical_numeric
+Plan: [{{"task": "Ambil semua dimensi skor kuesioner prodi IF semester ganjil 2024 dari v_akademik_statistik_prodi, termasuk capaian, pelaksanaan, sarana, perilaku, dan overall dalam satu query.", "tool": "sql"}}]
+
 "Berapa rata-rata skor evaluasi IF2210 semester ini?"
 → data_lookup
 Plan: [{{"task": "Ambil rata-rata skor evaluasi seluruh kelas IF2210 semester ini.", "tool": "sql"}}]
+
+"Bagaimana skor pelaksanaan perkuliahan di prodi IF semester ganjil 2024, termasuk nilai rata-rata, aspek tertinggi dan terendah?"
+→ analytical_numeric
+Plan: [{{"task": "Ambil rata-rata semua dimensi skor kuesioner (capaian, pelaksanaan, sarana, perilaku, overall) di prodi IF semester ganjil 2024 dari v_akademik_statistik_prodi dalam satu query.", "tool": "sql"}}]
 
 "Apa saja pertanyaan kuesioner yang terkait kualitas dosen?"
 → data_lookup

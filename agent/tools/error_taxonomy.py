@@ -57,6 +57,8 @@ _PATTERNS: list[tuple[str, ErrorCategory, str]] = [
         ErrorCategory.WRONG_AGGREGATION,
         "GROUP BY must include ALL non-aggregate columns in SELECT. "
         "Every column not inside COUNT/AVG/SUM/MAX/MIN must appear in GROUP BY. "
+        "ORDER BY must also use aggregate expressions or GROUP BY columns — never a raw column that is not grouped. "
+        "If you aggregate a column (e.g. AVG(pct_kehadiran_mahasiswa) AS avg_val), use the alias in ORDER BY: ORDER BY avg_val. "
         "For HAVING, filter on the aggregate expression (e.g. HAVING AVG(col) > 3.0).",
     ),
     # Ambiguous column (join inconsistency)
@@ -73,7 +75,14 @@ _PATTERNS: list[tuple[str, ErrorCategory, str]] = [
         "Wrap denominator in NULLIF(..., 0) to avoid division by zero. "
         "Example: COUNT(*) * 100.0 / NULLIF(total, 0).",
     ),
-    # Security
+    # Security — PII violation
+    (
+        r"PII Violation",
+        ErrorCategory.SECURITY_VIOLATION,
+        "Query was rejected: PII column in SELECT. Remove columns: nim, nip, tgl_lahir, email, no_hp, alamat, ip_address, password, token. "
+        "Use only non-sensitive columns for display.",
+    ),
+    # Security — general
     (
         r"Security Violation",
         ErrorCategory.SECURITY_VIOLATION,
@@ -87,14 +96,21 @@ _PATTERNS: list[tuple[str, ErrorCategory, str]] = [
         "Fix SQL syntax. Common causes: missing closing parenthesis, missing comma, "
         "incorrect use of aliases, or invalid keyword placement.",
     ),
-    # Answer invalid (from answer validator)
+    # Answer invalid — 0 rows (over-filtered)
     (
-        r"Answer (relevance )?validation failed|result (is )?empty|0 rows",
+        r"(Answer (relevance )?validation failed|result (is )?empty|0 rows|zero rows|no rows|returned 0)",
         ErrorCategory.NO_RESULTS,
-        "The query returned 0 rows. Try loosening filters: "
-        "(1) remove or widen time-period filter, "
-        "(2) use ILIKE '%%keyword%%' instead of exact match, "
-        "(3) check that the entity value matches the canonical DB value.",
+        "The query returned 0 rows. Diagnose before changing filters: "
+        "(1) Verify the entity value is the correct canonical DB value (e.g. kode_prodi='SBM' not a numeric). "
+        "(2) Remove the most restrictive filter and re-run. "
+        "(3) If filtering by no_prodi_diajar, try filtering by kode_fakultas_dosen instead. "
+        "(4) Do NOT add more filters — loosen or remove existing ones.",
+    ),
+    # Answer invalid — wrong columns
+    (
+        r"column.*not relevant|wrong column|irrelevant",
+        ErrorCategory.ANSWER_INVALID,
+        "The returned columns do not match what was asked. Re-read the question and select the correct columns from DATABASE SCHEMA.",
     ),
 ]
 

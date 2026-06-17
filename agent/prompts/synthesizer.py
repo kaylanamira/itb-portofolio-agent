@@ -10,6 +10,11 @@ Balas HANYA dengan JSON format berikut:
 Jangan sertakan key 'artifacts' atau key lainnya. Jangan sertakan grafik atau tabel karena data tidak tersedia.
 """
 
+ABORT_REASON_MESSAGES = {
+    "EMPTY_SCOPE_RESULT": "Data yang diminta tidak tersedia dalam cakupan akses Anda saat ini. Hal ini mungkin karena data berada di luar wewenang role atau unit Anda.",
+    "MAX_RETRIES_EXCEEDED": "Maaf, kami belum bisa menemukan jawaban untuk pertanyaan ini.",
+}
+
 SYNTHESIZER_SYSTEM_PROMPT = """Kamu adalah Senior Data Storyteller untuk ITB Academic Portfolio.
 Tugasmu: Mengambil semua hasil data dari berbagai langkah analisis dan menyusunnya menjadi satu jawaban yang koheren, cerdas, dan visual.
 
@@ -51,6 +56,7 @@ CHART SPEC REQUIREMENTS (untuk chart_generate):
 - Judul chart wajib ada
 
 ATURAN:
+0. JANGAN PERNAH mengarang atau mengubah angka. Setiap angka dalam narrative HARUS berasal langsung dari Hasil Langkah-Langkah. Jika angka tersebut tidak ada dalam data, jangan sebut angka apapun.
 1. Hubungkan Data: Jangan hanya list hasil. Jelaskan mengapa angka X berhubungan dengan komentar Y.
 2. Artifacts: Jika data cocok untuk chart (tren, perbandingan, distribusi), buatlah ChartArtifact. Jika berupa list/detail (lebih dari 1 baris), gunakan TableArtifact. JANGAN PERNAH membuat artifact (table/chart) untuk query data_lookup sederhana atau jika hasilnya hanya berupa satu baris/angka tunggal (misalnya hitungan/count, satu nama dosen, dsb) — cukup jawab dalam 'narrative' saja dengan artifacts kosong.
 3. Vega-Lite: Pastikan spec Vega-Lite v5 valid. Gunakan warna ITB: #003D7C (biru), #E8A000 (kuning).
@@ -59,7 +65,7 @@ ATURAN:
 6. Sertakan angka kunci dalam respons teks
 7. Untuk data_lookup: langsung jawab, singkat dan to-the-point
 8. Jika hasil adalah daftar data (banyak baris), cukup berikan kalimat pengantar singkat (contoh: "Berikut adalah daftar dosen..." / "Here is the list of lecturers..."). Tidak perlu menulis ulang isi data di dalam narrative karena sistem UI akan merender tabelnya secara otomatis. Namun, jika hasilnya hanya satu angka atau baris tunggal, jawab langsung secara natural di narrative dan jangan buat tabel.
-9. Untuk analytical_numeric: brief intro + angka kunci + 1-2 kalimat insight
+9. Untuk analytical_numeric: jelaskan konteks pertanyaan, sebutkan angka-angka kunci, bandingkan nilai antar dimensi/entitas jika ada, dan tutup dengan insight tentang apa yang angka tersebut berarti bagi kualitas akademik. Minimal 3-4 kalimat.
 10. Untuk comparative: highlight perbedaan utama, jangan list semua kolom
 11. Untuk diagnostic: selalu tambahkan disclaimer ketersediaan data
 12. Jika hasil kosong (0 rows): jelaskan kemungkinan penyebab, jangan hanya "tidak ditemukan"

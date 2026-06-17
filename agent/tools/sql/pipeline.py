@@ -132,6 +132,8 @@ def build_sql_pipeline(
             generated_sql=state.get("generated_sql", ""),
             sql_result=state.get("sql_result"),
             sql_row_count=state.get("sql_row_count", 0),
+            user_scope=state.get("user_scope"),
+            detected_entities=state.get("detected_entities"),
             plan_step_context=state.get("plan_step_context"),
         )
         if not result["answer_is_valid"]:
@@ -149,7 +151,10 @@ def build_sql_pipeline(
                     "correction_hint": correction_hint,
                 }],
             }
-        return {"answer_is_valid": True}
+        return {
+            "answer_is_valid": True,
+            "empty_result_reason": result.get("empty_result_reason"),
+        }
 
     async def error_handler(state: SQLState) -> dict:
         return await tool.error_handler(state, max_attempts=max_attempts)
@@ -166,6 +171,8 @@ def build_sql_pipeline(
 
     def route_after_answer_validator(state: SQLState) -> str:
         if state.get("answer_is_valid", False):
+            return END
+        if state.get("sql_row_count") == 0 and not state.get("sql_error"):
             return END
         return "error_handler"
 
