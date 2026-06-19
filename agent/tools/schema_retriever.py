@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_PATH = os.getenv("AGENT_SCHEMA_PATH", "db/DB_REFERENCE.md")
 SCHEMA_RETRIEVAL_MODE = os.getenv("SCHEMA_RETRIEVAL_MODE", "live").lower()
+MAX_TABLE_SCHEMA_CHARS = int(os.getenv("MAX_TABLE_SCHEMA_CHARS", "1500"))
 
 
 class FileSchemaRetriever:
@@ -164,7 +165,9 @@ file_retriever = FileSchemaRetriever()
 async def describe_tables(table_names: list[str]) -> str:
     """Returns concatenated schema descriptions for requested tables.
 
-    Tries live DB first, falls back to file-based schema if unavailable.
+    Tries live DB first. If the live description exceeds MAX_TABLE_SCHEMA_CHARS,
+    falls back to the file-based description from DB_REFERENCE.md, which is the
+    curated single source of truth with semantic context, scale mappings, and examples.
 
     Args:
         table_names: List of table names (schema-qualified or bare).
@@ -177,6 +180,9 @@ async def describe_tables(table_names: list[str]) -> str:
 
         if use_live:
             desc = await db_retriever.describe_table(t)
+            if desc and len(desc) > MAX_TABLE_SCHEMA_CHARS:
+                logger.warning("Live schema for '%s' is %d chars, falling back to file.", t, len(desc))
+                desc = file_retriever.describe_table(t) or desc[:MAX_TABLE_SCHEMA_CHARS]
 
         if not desc:
             if use_live:

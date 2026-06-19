@@ -2076,6 +2076,8 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY analitik_mv.mv_wisudawan_jawaban_responde
 
 ---
 
+### `analitik.v_wisudawan_distribusi_jawaban`
+
 ## MV 1: `analitik.v_wisudawan_distribusi_jawaban`
 
 **Tujuan:** Sumber tunggal untuk semua kebutuhan **distribusi & persentase jawaban** — bar chart, top-2-box, incidence rate. Mencakup pertanyaan ordinal (Likert) dan nominal (kategoris). Free-text otomatis dikecualikan.
@@ -2203,12 +2205,11 @@ ORDER BY periode_ijazah_id, kode_pertanyaan, nilai;
 
 ---
 
+### `analitik.v_wisudawan_statistik_pertanyaan`
+
 ## MV 2: `analitik.v_wisudawan_statistik_pertanyaan`
 
 **Tujuan:** Sumber untuk **grafik rata-rata skor**, ranking pertanyaan, dan perbandingan antar dimensi. Hanya mencakup pertanyaan **ordinal** (`tipe = 'O'`) — nominal tidak boleh di-AVG.
-
-**Alasan dibuat MV (bukan VIEW biasa):** Dashboard memerlukan respons cepat untuk query berulang dengan pola sama dari banyak user. Pre-computed lebih efisien daripada on-the-fly aggregation atas 7.500+ baris dengan JSONB.
-
 **Granularitas:** 1 baris per kombinasi `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan)`.
 
 ### Kolom
@@ -2262,14 +2263,6 @@ ORDER BY periode_ijazah_id, kode_pertanyaan, nilai;
 | `rata_rata` | `AVG((respons.jawaban ->> kd_pertanyaan)::NUMERIC)` |
 | `std_dev` | `STDDEV(...)` |
 | `skor_min` / `skor_max` | `MIN(...)` / `MAX(...)` |
-
-### Index
-
-| Index | Kolom | Tujuan |
-|-------|-------|--------|
-| UNIQUE | `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan)` | Identifikasi unik baris |
-| B-tree | `kode_grup_pertanyaan` | Filter per section |
-| B-tree | `(kd_strata, kd_fak)` | Filter komposit dashboard |
 
 ### Contoh Query
 
@@ -2347,6 +2340,8 @@ ORDER BY selisih;
 ```
 
 ---
+
+### `analitik.v_wisudawan_jawaban_responden`
 
 ## MV 3: `analitik.v_wisudawan_jawaban_responden`
 
