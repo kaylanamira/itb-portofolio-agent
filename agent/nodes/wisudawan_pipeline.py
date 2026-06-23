@@ -5,7 +5,7 @@ import logging
 from agent.state import AgentState, DetectedEntities, QueryType
 from agent.tools.sql import build_sql_pipeline
 from agent.tools.fuzzy_search import fuzzy_resolve_entities, FuzzyResolutionError
-from agent.tools.few_shot_retriever import retrieve_few_shots
+from agent.tools.few_shot_retriever import retrieve_few_shots, FEW_SHOTS_DIR
 from agent.tools.schema_retriever import describe_tables
 from agent.tools.academic_calendar import get_current_academic_period
 from agent.prompts.schema_linker import WISUDAWAN_SCHEMA_LINKER_PROMPT, build_schema_linker_human_message, WISUDAWAN_SQL_DOMAIN_RULES
@@ -36,10 +36,17 @@ async def _entity_resolver(entities_dict: dict):
 
 
 def _few_shot_examples(_query_type: str | None) -> str:
-    try:
-        return retrieve_few_shots(QueryType("wisudawan"))
-    except ValueError:
-        return "(no examples)"
+    def _loader(qt: QueryType, n: int) -> list[tuple[str, str]]:
+        import yaml
+        path = FEW_SHOTS_DIR / "wisudawan.yaml"
+        try:
+            data = yaml.safe_load(path.read_text())
+            examples = data.get("examples", [])
+            return [(ex["nl"], ex["sql"]) for ex in examples[:n] if "nl" in ex and "sql" in ex]
+        except Exception:
+            return []
+
+    return retrieve_few_shots(QueryType.DATA_LOOKUP, loader=_loader)
 
 
 def _human_message_builder(task: str, user_scope: UserScope, prior_steps_context: Optional[str]) -> str:

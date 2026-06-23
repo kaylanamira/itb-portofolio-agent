@@ -776,17 +776,6 @@ Must be refreshed first before `analitik.v_akademik_statistik_prodi` and `analit
 | `avg_skor_perilaku_mahasiswa` | `numeric` | Avg(Q35, Q37) |
 | `avg_skor_overall` | `numeric` | Avg of all Q with data |
 
-#### Indexes
-
-| Index | Columns |
-|-------|---------|
-| `idx_mv_kelas_pk` (UNIQUE) | `kelas_id` |
-| `idx_mv_kelas_prodi_sem` | `(no_prodi, semester, tahun)` |
-| `idx_mv_kelas_fak_sem` | `(kode_fakultas, semester, tahun)` |
-| `idx_mv_kelas_matkul_sem` | `(kode_matkul, semester, tahun)` |
-| `idx_mv_kelas_tahun_ajaran` | `(tahun_ajaran, no_prodi)` |
-| `idx_mv_kelas_dosen_arr` (GIN) | `semua_dosen_id` |
-| `idx_mv_kelas_skor_dosen_q2{5,6,7}` (GIN) | JSONB dosen score fields |
 
 #### Common query patterns
 
@@ -846,14 +835,6 @@ Pre-aggregated for prodi-level dashboard panels.
 
 Faculty-level aggregation: `GROUP BY kode_fakultas, nama_fakultas_id, semester, tahun` on this view — no separate MV needed.
 
-#### Indexes
-
-| Index | Columns |
-|-------|---------|
-| `idx_mv_prodi_pk` (UNIQUE) | `(no_prodi, semester, tahun)` |
-| `idx_mv_prodi_fak_sem` | `(kode_fakultas, semester, tahun)` |
-| `idx_mv_prodi_tahun_ajaran` | `(tahun_ajaran, no_prodi)` |
-
 ---
 
 ### `analitik.v_akademik_statistik_dosen`
@@ -894,16 +875,6 @@ Pre-aggregated for dosen-level dashboard panels.
 | `kode_matkul_list` | `varchar[]` | Unique course codes taught |
 | `no_prodi_diajar` | `integer[]` | Prodi where this dosen taught (may differ from home prodi) |
 | `kode_prodi_diajar` | `varchar[]` | |
-
-#### Indexes
-
-| Index | Columns |
-|-------|---------|
-| `idx_mv_dosen_pk` (UNIQUE) | `(dosen_id, semester, tahun)` |
-| `idx_mv_dosen_kk_sem` | `(kk_id, semester, tahun)` |
-| `idx_mv_dosen_fak_dosen_sem` | `(kode_fakultas_dosen, semester, tahun)` |
-| `idx_mv_dosen_no_ps_sem` | `(no_prodi, semester, tahun)` |
-| `idx_mv_dosen_tahun_ajaran` | `(tahun_ajaran, dosen_id)` |
 
 ### `analitik.v_akademik_komentar_mahasiswa` (under `analitik` schema)
 
@@ -1877,20 +1848,6 @@ Skala: `HARAPAN` — hanya diisi oleh yang pernah mengalami masalah
 - Responden FSRD punya key Section J (`FSRD01_SQ001` dst.), bukan Section K.
 - Responden SBM punya key Section K (`SBM01_SQ001` dst.), bukan Section J.
 
-### Index pada Tabel `respons`
-
-| Index | Tipe | Kolom | Tujuan |
-|-------|------|-------|--------|
-| Primary Key | B-tree | `response_id` | Lookup individual row |
-| Unique (partial) | B-tree | `survey_platform_response_id` WHERE NOT NULL | Cegah duplikasi import |
-| B-tree | — | `kd_strata` | Filter dashboard strata |
-| B-tree | — | `kd_fak` | Filter dashboard fakultas |
-| B-tree | — | `no_ps` | Filter dashboard prodi |
-| B-tree | — | `periode_ijazah_id` | Filter dashboard periode |
-| B-tree | — | `(kd_strata, kd_fak)` | Filter komposit |
-| B-tree | — | `(kd_strata, periode_ijazah_id)` | Filter komposit |
-| GIN | — | `jawaban` | Query key/value dalam JSONB |
-
 ---
 
 ## Panduan Penggunaan per Use Case
@@ -2116,18 +2073,6 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY analitik_mv.mv_wisudawan_jawaban_responde
 `persentase` dihitung sebagai window function dengan partisi `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan)`. Artinya:
 - `persentase` adalah **persentase dalam grup dimensi yang sama**, bukan persentase keseluruhan.
 - Row dengan `periode_ijazah_id = NULL` membentuk partisi sendiri — persentasenya dihitung di antara sesama responden "no-period".
-
-### Index
-
-| Index | Kolom | Tujuan |
-|-------|-------|--------|
-| UNIQUE | `(periode_ijazah_id, kd_strata, kd_fak, no_ps, kd_pertanyaan, nilai)` | Identifikasi unik baris |
-| B-tree | `(kode_grup_opsi, nilai)` | Filter per skala dan nilai tertentu |
-| B-tree | `kode_grup_pertanyaan` | Filter per section/grup pertanyaan |
-| B-tree | `tipe_opsi` | Filter ordinal vs nominal |
-| B-tree | `(kd_strata, kd_fak)` | Filter komposit dashboard |
-| B-tree | `no_ps` | Filter per prodi |
-| B-tree | `(kd_strata, kd_fak, no_ps)` | Filter komposit tiga dimensi |
 
 ### Contoh Query
 
@@ -2512,17 +2457,6 @@ Tipe: `TEXT`. `NULL` jika responden tidak mengisi. Ini adalah **sumber utama RAG
 `NULL` untuk semua fakultas selain SBM. Skala `PERKEMBANGAN_SBM` (1–5).
 
 `sbm01_sq001` – `sbm01_sq031` — 31 kompetensi outcomes program SBM (komunikasi, pengetahuan bisnis, analisis data, riset, jejaring, tanggung jawab profesional & etis, dll).
-
-### Index
-
-| Index | Kolom | Tujuan |
-|-------|-------|--------|
-| UNIQUE | `response_id` | Identifikasi unik baris (wajib untuk REFRESH CONCURRENTLY) |
-| B-tree | `jenjang` | Filter per jenjang |
-| B-tree | `kode_fakultas` | Filter per fakultas |
-| B-tree | `periode_ijazah_id` | Filter per periode |
-| B-tree | `(jenjang, kode_fakultas)` | Filter komposit |
-
 ### Contoh Query
 
 #### RAG — Ambil Semua Free-text Saran dari Satu Prodi

@@ -35,7 +35,7 @@ class FileSchemaRetriever:
         current_content: list[str] = []
 
         for line in content.split("\n"):
-            match = re.match(r"^###\s+([a-zA-Z0-9_\.]+)", line)
+            match = re.match(r"^###\s+`?([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)`?", line)
             if match:
                 if current_table:
                     tables[current_table] = "\n".join(current_content).strip()

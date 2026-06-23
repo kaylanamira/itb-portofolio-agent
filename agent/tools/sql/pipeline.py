@@ -83,6 +83,7 @@ def build_sql_pipeline(
             relevant_tables=state.get("relevant_tables", [default_table]),
             query_type=state.get("query_type"),
             plan_step_context=state.get("plan_step_context"),
+            prior_steps_context=state.get("prior_steps_context"),
             error_history=state.get("error_history", []),
             attempt_count=state.get("attempt_count", 0),
         )

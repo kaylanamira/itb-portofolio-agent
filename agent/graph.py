@@ -9,6 +9,7 @@ from agent.nodes.step_reasoner import step_reasoner
 from agent.nodes.synthesizer import synthesizer
 from agent.nodes.clarification_handler import clarification_handler
 from agent.nodes.rag_retriever import rag_retriever
+from agent.nodes.catalog_lookup import catalog_lookup
 
 def route_next_step(state: AgentState) -> str:
     if state.get("query_type") == QueryType.CLARIFICATION_NEEDED:
@@ -23,15 +24,16 @@ def route_next_step(state: AgentState) -> str:
     tool = plan[idx].get("tool", "sql")
     if tool == "rag":
         return "rag_retriever"
-    elif tool == "sql":
-        return "sql_pipeline"
+    if plan[idx].get("required"):
+        return "catalog_lookup"
+    return "sql_pipeline"
         
-    return "synthesizer"
 def build_portfolio_graph():
     graph = StateGraph(AgentState)
     graph.add_node("query_rewriter", query_rewriter)
     graph.add_node("planner", planner)
     graph.add_node("sql_pipeline", sql_pipeline)
+    graph.add_node("catalog_lookup", catalog_lookup)
     graph.add_node("rag_retriever", rag_retriever)
     graph.add_node("step_reasoner", step_reasoner)
     graph.add_node("synthesizer", synthesizer)
@@ -43,6 +45,7 @@ def build_portfolio_graph():
     graph.add_conditional_edges("planner", route_next_step, {
         "clarification_handler": "clarification_handler",
         "sql_pipeline": "sql_pipeline",
+        "catalog_lookup": "catalog_lookup",
         "rag_retriever": "rag_retriever",
         "synthesizer": "synthesizer"
     })
@@ -52,18 +55,18 @@ def build_portfolio_graph():
         "step_reasoner": "step_reasoner"
     })
 
+    graph.add_edge("catalog_lookup", "step_reasoner")
     graph.add_edge("rag_retriever", "step_reasoner")
 
     graph.add_conditional_edges("step_reasoner", route_next_step, {
         "sql_pipeline": "sql_pipeline",
+        "catalog_lookup": "catalog_lookup",
         "rag_retriever": "rag_retriever",
         "synthesizer": "synthesizer"
     })
 
     graph.add_edge("clarification_handler", END)
     graph.add_edge("synthesizer", END)
-    # graph.add_edge("synthesizer", "faithfulness_checker")
-    # graph.add_edge("faithfulness_checker", END)
 
     return graph.compile()
 

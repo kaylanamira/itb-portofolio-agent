@@ -137,6 +137,7 @@ class SQLTool:
         relevant_tables: list[str],
         query_type: Optional[str] = None,
         plan_step_context: Optional[dict] = None,
+        prior_steps_context: Optional[str] = None,
         error_history: Optional[list[dict]] = None,
         attempt_count: int = 0,
     ) -> str:
@@ -189,9 +190,10 @@ class SQLTool:
             )
 
         task = plan_step_context.get("task", question) if plan_step_context else question
+        prior = f"\n\nPrevious steps context:\n{prior_steps_context}" if prior_steps_context else ""
         messages = [
             SystemMessage(content=sys_prompt),
-            HumanMessage(content=f"Original Query: {question}\n\nTask for this step: {task}"),
+            HumanMessage(content=f"Original Query: {question}\n\nTask for this step: {task}{prior}"),
         ]
 
         response = await llm.ainvoke(messages)

@@ -8,6 +8,7 @@ from agent.nodes.step_reasoner import step_reasoner
 from agent.nodes.synthesizer import synthesizer
 from agent.nodes.clarification_handler import clarification_handler
 from agent.nodes.rag_retriever import rag_retriever
+from agent.nodes.catalog_lookup import catalog_lookup
 
 
 def route_next_step(state: AgentState) -> str:
@@ -23,6 +24,8 @@ def route_next_step(state: AgentState) -> str:
     tool = plan[idx].get("tool", "sql")
     if tool == "rag":
         return "rag_retriever"
+    if plan[idx].get("required"):
+        return "catalog_lookup"
     return "wisudawan_pipeline"
 
 
@@ -31,6 +34,7 @@ def build_wisudawan_graph():
     graph.add_node("query_rewriter", query_rewriter)
     graph.add_node("planner", planner)
     graph.add_node("wisudawan_pipeline", wisudawan_pipeline)
+    graph.add_node("catalog_lookup", catalog_lookup)
     graph.add_node("rag_retriever", rag_retriever)
     graph.add_node("step_reasoner", step_reasoner)
     graph.add_node("synthesizer", synthesizer)
@@ -42,6 +46,7 @@ def build_wisudawan_graph():
     graph.add_conditional_edges("planner", route_next_step, {
         "clarification_handler": "clarification_handler",
         "wisudawan_pipeline": "wisudawan_pipeline",
+        "catalog_lookup": "catalog_lookup",
         "rag_retriever": "rag_retriever",
         "synthesizer": "synthesizer",
     })
@@ -51,10 +56,12 @@ def build_wisudawan_graph():
         "step_reasoner": "step_reasoner",
     })
 
+    graph.add_edge("catalog_lookup", "step_reasoner")
     graph.add_edge("rag_retriever", "step_reasoner")
 
     graph.add_conditional_edges("step_reasoner", route_next_step, {
         "wisudawan_pipeline": "wisudawan_pipeline",
+        "catalog_lookup": "catalog_lookup",
         "rag_retriever": "rag_retriever",
         "synthesizer": "synthesizer",
     })

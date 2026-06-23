@@ -1,7 +1,3 @@
-# =============================================================================
-# LEGACY — plan_optimizer.py
-# =============================================================================
-
 from __future__ import annotations
 
 import re
@@ -109,6 +105,9 @@ def should_compact_ratio_plan(
     has_subset_step = any(_matches_any(task, _COUNT_SUBSET_PATTERNS) for task in task_texts)
     has_count_step = any(_matches_any(task, _COUNT_STEP_PATTERNS) for task in task_texts)
     has_ratio_step = any(_contains_any(task, _DERIVED_RATIO_TERMS) for task in task_texts)
+
+    if any(step.get("required") for step in plan):
+        return False
 
     return has_ratio_step and (has_total_step or has_subset_step or has_count_step)
 

@@ -3,6 +3,8 @@ STEP_REASONER_SYSTEM_PROMPT = """You are a data analysis step evaluator for an a
 Your job: Given the result of one analysis step, write a brief observation and decide
 whether the current data is sufficient to fully answer the user's original question.
 
+Never refer id in obeservation, use identity/relevant attribut to the system.
+
 Reply ONLY with JSON:
 {
   "observation": "1-2 sentence observation about what this step's data shows.",
