@@ -17,24 +17,18 @@ class FilterOption(BaseModel):
 
 class ProdiOption(BaseModel):
     """
-    Satu pilihan program studi — lebih kaya dari FilterOption biasa.
+    Satu pilihan program studi.
 
-    Mengapa value = str(no_ps), bukan kd_ps?
-    - no_ps adalah PK sejati di utama.program_studi (unik per baris)
-    - kd_ps TIDAK unik dalam satu fakultas: mis. "IF" bisa muncul untuk
-      Teknik Informatika S1 (no_ps=135) dan Teknik Informatika S2 (no_ps=136)
-    - Kaprodi IF S1 dan Kaprodi IF S2 punya kd_ps sama tapi no_ps berbeda
-    - Chart endpoints memfilter dengan WHERE no_ps = <angka>, bukan kd_ps
+    value = str(no_ps) karena kd_ps TIDAK unik dalam satu fakultas.
+    Contoh: di STEI, kd_ps="IF" ada untuk S1 (no_ps=135) dan S2 (no_ps=136).
 
-    kd_strata dibutuhkan frontend untuk:
-    - Filter dropdown prodi berdasarkan pilihan jenjang aktif
-    - Membedakan "Teknik Informatika (S1)" dari "Teknik Informatika (S2)"
-      saat dua prodi punya nama dasar yang sama
+    kd_strata dibutuhkan frontend untuk memfilter dropdown prodi
+    berdasarkan pilihan jenjang yang aktif.
     """
-    value:     str   # str(no_ps) — mis. "135"
+    value:     str   # str(no_ps) — mis. "135", unik per baris
     label:     str   # mis. "Teknik Informatika (S1)"
-    kd_ps:     str   # mis. "IF" — untuk referensi / grouping
-    kd_strata: str   # "S1", "S2", "S3", atau "Profesi" (sudah di-convert dari "PR")
+    kd_ps:     str   # mis. "IF" — untuk referensi
+    kd_strata: str   # "S1", "S2", "S3", "PR" — nilai DB, bukan label
 
 
 # ─── GET /akademik/filter-options ─────────────────────────────────────────────
@@ -42,20 +36,33 @@ class ProdiOption(BaseModel):
 class FilterOptionsLocked(BaseModel):
     """
     Dimensi filter yang terkunci oleh role user.
+    None  = user bebas memilih.
+    str   = nilai terkunci — frontend tampilkan sebagai label, bukan dropdown.
 
-    None  = user bebas memilih dimensi ini.
-    str   = nilai terkunci — frontend tampilkan sebagai label statis, bukan dropdown.
-
-    Nilai locked untuk prodi adalah str(no_ps), konsisten dengan ProdiOption.value.
+    locked.prodi berisi str(no_ps), konsisten dengan ProdiOption.value.
     """
     fakultas: str | None = None   # kd_fak jika locked, mis. "STEI"
     prodi:    str | None = None   # str(no_ps) jika locked, mis. "135"
 
 
 class AkademikFilterOptionsResponse(BaseModel):
-    """Response untuk GET /api/dashboard/akademik/filter-options."""
+    """
+    Response untuk GET /api/dashboard/akademik/filter-options.
+
+    Semua filter option dikembalikan backend — tidak ada nilai hardcoded
+    di frontend. Urutan field mengikuti urutan filter bar dari kiri ke kanan.
+
+    Catatan value format:
+      tahun_ajaran  → text, mis. "2024/2025"
+      semester      → text: "gasal" | "genap" | "pendek"  (dikonversi dari smallint DB)
+      jenjang       → kd_strata DB persis: "S1" | "S2" | "S3" | "PR"
+                      Label "PR" ditampilkan sebagai "Profesi" (lihat label field)
+      fakultas      → kd_fak, mis. "STEI"
+      prodi         → str(no_ps), mis. "135"
+    """
     locked:            FilterOptionsLocked
     tahun_ajaran:      list[FilterOption]
+    semester:          list[FilterOption]
+    jenjang:           list[FilterOption]
     fakultas:          list[FilterOption]
-    # Key = kd_fak; Value = list prodi di fakultas itu, sudah termasuk kd_strata
     prodi_by_fakultas: dict[str, list[ProdiOption]]

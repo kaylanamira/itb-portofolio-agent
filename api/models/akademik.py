@@ -2,13 +2,13 @@
 api/models/akademik.py
 
 Fungsi query untuk dashboard akademik.
-Berisi SQL dan logika pengambilan data — tidak ada HTTP / FastAPI di sini.
+Tidak ada HTTP / FastAPI di sini — murni data access layer.
 
 Konvensi:
-  - Query ke analitik.v_* (RLS-protected via SECURITY DEFINER)
-    → gunakan PsycopgExecutor supaya session variable RLS di-set otomatis.
+  - Query ke analitik.v_* (RLS via SECURITY DEFINER)
+    → gunakan PsycopgExecutor (otomatis set session variable sebelum query).
   - Query ke utama.* (master data, tanpa RLS)
-    → gunakan get_db_connection() langsung dengan WHERE eksplisit per scope.
+    → gunakan get_db_connection() dengan WHERE eksplisit per scope.
 """
 
 import logging
@@ -19,12 +19,29 @@ from core.sql_executor import PsycopgExecutor
 logger    = logging.getLogger(__name__)
 _executor = PsycopgExecutor()   # stateless, aman dipakai ulang lintas request
 
-# Mapping kd_strata DB → label yang ditampilkan di UI
+# Semester di DB: smallint (1=Ganjil, 2=Genap, 3=Pendek/SP)
+# value = text yang dikirim sebagai query param ke chart endpoints
+_SEMESTER_MAP: dict[int, tuple[str, str]] = {
+    1: ("ganjil",  "Ganjil"),
+    2: ("genap",  "Genap"),
+    3: ("pendek", "Pendek"),
+}
+
+# Jenjang (kd_strata) — value mengikuti nilai DB persis, label untuk tampilan
+# Tidak perlu query DB terpisah — diturunkan dari prodi_rows yang sudah di-fetch
 _STRATA_LABEL: dict[str, str] = {
     "S1": "S1",
     "S2": "S2",
     "S3": "S3",
-    "PR": "Profesi",
+    "PR": "Profesi",   # "PR" di DB, ditampilkan sebagai "Profesi"
+}
+
+# Urutan tampil di filter bar (S1 paling umum, Profesi paling jarang)
+_STRATA_ORDER: dict[str, int] = {
+    "S1": 0,
+    "S2": 1,
+    "S3": 2,
+    "PR": 3,
 }
 
 
@@ -32,14 +49,8 @@ _STRATA_LABEL: dict[str, str] = {
 
 async def get_tahun_ajaran_tersedia(scope: UserScope) -> list[str]:
     """
-    Ambil daftar tahun ajaran yang benar-benar punya data untuk scope ini.
-
-    Menggunakan analitik.v_akademik_statistik_prodi (SECURITY DEFINER — RLS aktif),
-    sehingga PsycopgExecutor sudah otomatis set session variable sebelum query.
-
-    Satu tahun ajaran bisa span dua nilai `tahun` berbeda
-    (mis. 2024/2025: tahun=2024 untuk gasal, tahun=2025 untuk genap),
-    maka GROUP BY + ORDER BY MAX(tahun) DESC untuk urutan yang benar.
+    Daftar tahun ajaran yang punya data untuk scope ini, urutan terbaru dulu.
+    Menggunakan v_akademik_statistik_prodi (SECURITY DEFINER — RLS aktif).
     """
     sql = """
         SELECT   tahun_ajaran,
@@ -60,13 +71,44 @@ async def get_tahun_ajaran_tersedia(scope: UserScope) -> list[str]:
     return [row["tahun_ajaran"] for row in result.rows]
 
 
+async def get_semester_tersedia(scope: UserScope) -> list[dict]:
+    """
+    Daftar semester yang punya data untuk scope ini, urutan kalender.
+    Semester DB (smallint) dikonversi ke text untuk konsistensi query param.
+    """
+    sql = """
+        SELECT DISTINCT semester
+        FROM   analitik.v_akademik_statistik_prodi
+        ORDER  BY semester
+    """
+    result = await _executor.execute(sql, scope)
+
+    if result.error:
+        logger.error(
+            "get_semester_tersedia error (user_id=%s role=%s): %s",
+            scope.user_id, scope.role, result.error,
+        )
+        return []
+
+    options = []
+    for row in result.rows:
+        sem_int = row["semester"]
+        if sem_int in _SEMESTER_MAP:
+            value, label = _SEMESTER_MAP[sem_int]
+            options.append({"value": value, "label": label})
+        else:
+            logger.warning(
+                "get_semester_tersedia: semester=%s tidak dikenal", sem_int,
+            )
+            options.append({"value": str(sem_int), "label": f"Semester {sem_int}"})
+
+    return options
+
+
 async def get_fakultas_options(scope: UserScope) -> list[dict]:
     """
-    Ambil daftar fakultas yang visible untuk scope ini.
-
-    utama.fakultas TIDAK punya RLS → filter eksplisit berdasarkan role:
-      admin / direktorat → semua fakultas aktif
-      role lain          → hanya fakultas dari scope.active_role.kd_fak
+    Daftar fakultas yang visible untuk scope ini.
+    utama.fakultas tidak punya RLS → filter eksplisit.
     """
     role   = scope.role
     kd_fak = scope.active_role.kd_fak or ""
@@ -102,23 +144,11 @@ async def get_fakultas_options(scope: UserScope) -> list[dict]:
 
 async def get_prodi_options(scope: UserScope) -> list[dict]:
     """
-    Ambil daftar prodi yang visible untuk scope ini.
+    Daftar prodi yang visible untuk scope ini.
+    utama.program_studi tidak punya RLS → filter eksplisit.
 
-    utama.program_studi TIDAK punya RLS → filter eksplisit:
-      admin / direktorat      → semua prodi aktif
-      dekan / jajaran_dekanat → prodi dalam kd_fak scope
-      lainnya (kaprodi, dll.) → hanya prodi scope sendiri (filter by no_ps)
-
-    Kolom yang dikembalikan:
-      no_ps      → dipakai sebagai `value` (unik, tidak ambigu)
-      kd_ps      → untuk referensi / grouping di frontend
-      kd_fak     → untuk mengelompokkan ke prodi_by_fakultas
-      kd_strata  → untuk filter jenjang di frontend ("S1"/"S2"/"S3"/"PR")
-      nama_id    → nama prodi dalam bahasa Indonesia
-
-    PENTING: kd_ps TIDAK unik dalam satu fakultas.
-    Contoh: di STEI, kd_ps="IF" ada untuk S1 (no_ps=X) dan S2 (no_ps=Y).
-    Maka nilai yang dikirim ke chart endpoint harus no_ps, bukan kd_ps.
+    PENTING: kd_ps tidak unik dalam satu fakultas (contoh: "IF" bisa S1 & S2).
+    Gunakan no_ps sebagai identifier, bukan kd_ps.
     """
     role   = scope.role
     kd_fak = scope.active_role.kd_fak or ""
@@ -154,7 +184,6 @@ async def get_prodi_options(scope: UserScope) -> list[dict]:
                 [kd_fak],
             )
         else:
-            # kaprodi, jajaran_prodi, dosen — hanya prodi sendiri
             if no_ps is None:
                 logger.warning(
                     "get_prodi_options: no_ps is None untuk role=%s user_id=%s",
@@ -183,11 +212,41 @@ async def get_prodi_options(scope: UserScope) -> list[dict]:
 
 def build_prodi_label(nama_id: str, kd_strata: str) -> str:
     """
-    Bangun label prodi yang ditampilkan di dropdown.
-    Contoh: "Teknik Informatika (S1)", "Teknik Informatika (S2)"
-
-    Ini penting supaya dua prodi dengan nama dasar yang sama tapi jenjang berbeda
-    bisa dibedakan oleh user di UI.
+    Label prodi untuk dropdown: "Teknik Informatika (S1)", "Sains Manajemen (S2)"
+    Membedakan prodi dengan nama dasar sama tapi jenjang berbeda.
     """
     strata = _STRATA_LABEL.get(kd_strata, kd_strata)
     return f"{nama_id} ({strata})"
+
+
+def derive_jenjang_options(prodi_rows: list[dict]) -> list[dict]:
+    """
+    Turunkan opsi jenjang dari prodi_rows yang sudah di-fetch.
+    Tidak perlu query database tambahan.
+
+    Mengapa dari prodi_rows, bukan query terpisah?
+      - Data kd_strata sudah ada di setiap baris prodi
+      - Hasilnya scope-aware secara otomatis: kaprodi S1 hanya punya
+        prodi S1 di prodi_rows, maka jenjang yang muncul hanya "S1"
+      - Nol additional round-trip ke database
+
+    Value menggunakan kd_strata DB persis ("S1"/"S2"/"S3"/"PR") supaya
+    chart endpoints tidak perlu konversi saat menerima query param.
+    Label "PR" ditampilkan sebagai "Profesi" untuk kejelasan.
+    """
+    seen: set[str] = set()
+    strata_found: list[str] = []
+
+    for row in prodi_rows:
+        ks = row["kd_strata"]
+        if ks not in seen and ks in _STRATA_LABEL:
+            seen.add(ks)
+            strata_found.append(ks)
+
+    # Sort berdasarkan urutan tampil yang sudah didefinisikan
+    strata_found.sort(key=lambda x: _STRATA_ORDER.get(x, 99))
+
+    return [
+        {"value": ks, "label": _STRATA_LABEL[ks]}
+        for ks in strata_found
+    ]
