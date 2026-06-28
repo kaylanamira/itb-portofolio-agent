@@ -8,9 +8,10 @@ import os
 from core.database import init_db_pool, close_db_pool
 from core.redis_client import close_redis, init_redis
 
-from api.middleware.scope_middleware import ScopeMiddleware
+from api.middlewares.scope_middleware import ScopeMiddleware
 from api.routers import chat
-from api.routers import auth as auth_router   
+from api.routers import auth as auth_router 
+from api.routers import dashboard_akademik  
 from api.limiter import limiter
 
 from slowapi.errors import RateLimitExceeded
@@ -45,8 +46,9 @@ app.add_middleware(
 app.add_middleware(ScopeMiddleware)
 
 # Router
-app.include_router(chat.router)
+app.include_router(chat.router) # nanti tambahin (..., prefix="/api")
 app.include_router(auth_router.router)
+app.include_router(dashboard_akademik.router)
 
 @app.get("/")
 async def root():
