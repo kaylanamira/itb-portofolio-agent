@@ -5,7 +5,7 @@ Pydantic response models untuk seluruh endpoint dashboard akademik.
 """
 
 from pydantic import BaseModel
-
+from typing import Literal
 
 # ─── Primitif ─────────────────────────────────────────────────────────────────
 
@@ -66,3 +66,27 @@ class AkademikFilterOptionsResponse(BaseModel):
     jenjang:           list[FilterOption]
     fakultas:          list[FilterOption]
     prodi_by_fakultas: dict[str, list[ProdiOption]]
+
+# ─── GET /akademik/stats-overview ─────────────────────────────────────────────
+
+class StatsOverviewResponse(BaseModel):
+    """
+    Response untuk GET /api/dashboard/akademik/stats-overview.
+    Semua angka adalah agregat sesuai filter aktif (tahun_ajaran, semester,
+    jenjang, fakultas, prodi) dan scope user.
+    """
+    jumlah_kelas:                int
+    jumlah_matkul_aktif:         int
+    jumlah_dosen_aktif:          int
+    jumlah_mahasiswa_aktif:      int
+    avg_pct_kehadiran_dosen:     float | None
+    avg_pct_kehadiran_mahasiswa: float | None
+    avg_ip_akhir_mahasiswa:      float | None
+
+class AkademikQueryFilters(BaseModel):
+    tahun_ajaran: str | None = None
+    semester:     Literal["ganjil", "genap", "pendek"] | None = None
+    jenjang:      list[str] | None = None
+    fakultas:     str | None = None
+    no_ps:        str | None = None
+

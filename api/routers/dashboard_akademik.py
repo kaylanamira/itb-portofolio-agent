@@ -15,6 +15,8 @@ from api.schemas.dashboard_akademik import (
     FilterOption,
     FilterOptionsLocked,
     ProdiOption,
+    StatsOverviewResponse,
+    AkademikQueryFilters
 )
 from api.models.akademik import (
     build_prodi_label,
@@ -23,6 +25,7 @@ from api.models.akademik import (
     get_semester_tersedia,
     get_fakultas_options,
     get_prodi_options,
+    get_stats_overview
 )
 from core.scope import UserRole, UserScope
 
@@ -140,4 +143,47 @@ def _resolve_locked(scope: UserScope) -> FilterOptionsLocked:
     return FilterOptionsLocked(
         fakultas = scope.active_role.kd_fak,
         prodi    = locked_prodi,
+    )
+
+@router.get(
+    "/akademik/stats-overview",
+    response_model=StatsOverviewResponse,
+    summary="Ringkasan statistik akademik (kartu angka atas dashboard)",
+)
+async def get_akademik_stats_overview(
+    filters: AkademikQueryFilters = Depends(),
+    scope:   UserScope            = Depends(get_user_scope),
+) -> StatsOverviewResponse:
+    resolved = _resolve_spatial_filter(scope, filters.fakultas, filters.no_ps)
+
+    row = await get_stats_overview(
+        scope,
+        filters.model_copy(update={
+            "fakultas": resolved.fakultas,
+            "no_ps":    resolved.prodi,
+        }),
+    )
+
+    if row is None:
+        return StatsOverviewResponse(
+            jumlah_kelas=0, jumlah_matkul_aktif=0, jumlah_dosen_aktif=0,
+            jumlah_mahasiswa_aktif=0, avg_pct_kehadiran_dosen=None,
+            avg_pct_kehadiran_mahasiswa=None, avg_ip_akhir_mahasiswa=None,
+        )
+
+    return StatsOverviewResponse(**row)
+
+
+def _resolve_spatial_filter(
+    scope: UserScope, fakultas: str | None, no_ps: str | None,
+) -> FilterOptionsLocked:
+    """
+    Scope-locking: param spasial dari client dipercaya hanya untuk
+    ADMIN/DIREKTORAT. Role lain dipaksa pakai scope.active_role,
+    RLS jadi jaring pengaman terakhir.
+    """
+    locked = _resolve_locked(scope)  # fungsi yang sudah ada dari Phase 0.5
+    return FilterOptionsLocked(
+        fakultas = locked.fakultas if locked.fakultas else fakultas,
+        prodi    = locked.prodi    if locked.prodi    else no_ps,
     )

@@ -15,6 +15,8 @@ import logging
 from core.database     import get_db_connection
 from core.scope        import UserScope, UserRole
 from core.sql_executor import PsycopgExecutor
+from api.schemas.dashboard_akademik import AkademikQueryFilters
+
 
 logger    = logging.getLogger(__name__)
 _executor = PsycopgExecutor()   # stateless, aman dipakai ulang lintas request
@@ -25,6 +27,10 @@ _SEMESTER_MAP: dict[int, tuple[str, str]] = {
     1: ("ganjil",  "Ganjil"),
     2: ("genap",  "Genap"),
     3: ("pendek", "Pendek"),
+}
+
+_SEMESTER_VALUE_TO_DB: dict[str, int] = {
+    value: db_int for db_int, (value, _label) in _SEMESTER_MAP.items()
 }
 
 # Jenjang (kd_strata) — value mengikuti nilai DB persis, label untuk tampilan
@@ -250,3 +256,82 @@ def derive_jenjang_options(prodi_rows: list[dict]) -> list[dict]:
         {"value": ks, "label": _STRATA_LABEL[ks]}
         for ks in strata_found
     ]
+
+# ─── Shared: filter clause builder ─────────────────────────────────────────────
+
+def build_filter_clause(
+    tahun_ajaran: str | None,
+    semester:     str | None,
+    jenjang:      list[str] | None,
+    fakultas:     str | None,
+    no_ps:        str | None,
+) -> tuple[str, list]:
+    """
+    Bangun klausa WHERE dinamis + parameter list dari filter query param.
+    Param spasial (fakultas, no_ps) di sini HANYA dipakai untuk role yang
+    boleh memilih bebas — enforcement scope-locking tetap di scope.active_role
+    + RLS session variable, bukan di sini. Fungsi ini murni menerjemahkan
+    filter dimensi yang sudah lolos validasi/locking di layer atasnya.
+    """
+    clauses: list[str] = []
+    params:  list = []
+
+    if tahun_ajaran:
+        clauses.append("tahun_ajaran = %s")
+        params.append(tahun_ajaran)
+
+    if semester:
+        clauses.append("semester = %s")
+        params.append(_SEMESTER_VALUE_TO_DB[semester])  # "ganjil" → 1, dst
+
+    if jenjang:
+        clauses.append("jenjang = ANY(%s)")
+        params.append(jenjang)
+
+    if fakultas:
+        clauses.append("kode_fakultas = %s")
+        params.append(fakultas)
+
+    if no_ps:
+        clauses.append("no_prodi = %s")
+        params.append(int(no_ps))
+
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    return where_sql, params
+
+
+# ─── Phase 1: Stats overview ───────────────────────────────────────────────────
+
+async def get_stats_overview(scope: UserScope, filters: "AkademikQueryFilters") -> dict | None:
+    """
+    Agregat lintas prodi/semester yang lolos filter — satu baris hasil.
+    RLS aktif via PsycopgExecutor; filter spasial dari client hanya relevan
+    untuk role yang tidak locked (lihat resolve_spatial_filter di router).
+    """
+    where_sql, params = build_filter_clause(
+        filters.tahun_ajaran, filters.semester, filters.jenjang,
+        filters.fakultas, filters.no_ps,
+    )
+
+    sql = f"""
+        SELECT
+            COALESCE(SUM(jumlah_kelas), 0)               AS jumlah_kelas,
+            COALESCE(SUM(jumlah_matkul_aktif), 0)         AS jumlah_matkul_aktif,
+            COALESCE(SUM(jumlah_dosen_aktif), 0)          AS jumlah_dosen_aktif,
+            COALESCE(SUM(jumlah_mahasiswa_aktif), 0)      AS jumlah_mahasiswa_aktif,
+            ROUND(AVG(avg_pct_kehadiran_dosen)::numeric, 2)     AS avg_pct_kehadiran_dosen,
+            ROUND(AVG(avg_pct_kehadiran_mahasiswa)::numeric, 2) AS avg_pct_kehadiran_mahasiswa,
+            ROUND(AVG(avg_ip_akhir_mahasiswa)::numeric, 2)      AS avg_ip_akhir_mahasiswa
+        FROM analitik.v_akademik_statistik_prodi
+        {where_sql}
+    """
+    result = await _executor.execute(sql, scope, params)
+
+    if result.error:
+        logger.error(
+            "get_stats_overview error (user_id=%s role=%s): %s",
+            scope.user_id, scope.role, result.error,
+        )
+        return None
+
+    return result.rows[0] if result.rows else None

@@ -32,6 +32,7 @@ class QueryExecutor(Protocol):
         self,
         sql: str,
         user_scope: UserScope,
+        params: list | tuple | None = None,
     ) -> QueryResult: ...
 
 
@@ -42,6 +43,7 @@ class PsycopgExecutor:
         self,
         sql: str,
         user_scope: UserScope,
+        params: list | tuple | None = None,
     ) -> QueryResult:
         """Execute SQL with RLS session vars set for the current user.
 
@@ -64,7 +66,7 @@ class PsycopgExecutor:
                             )
                         )
 
-                    cursor = await conn.execute(sql)
+                    cursor = await conn.execute(sql, params)
                     rows = await cursor.fetchall()
 
                     if cursor.description:
