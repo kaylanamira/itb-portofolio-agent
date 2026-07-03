@@ -1,0 +1,17 @@
+.env
+.env.*
+!package.json
+.git
+.gitignore
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+dist/
+build/
+*.md
+tests/
+.vscode/
+.idea/
