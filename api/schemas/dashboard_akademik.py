@@ -17,10 +17,7 @@ class FilterOption(BaseModel):
 
 
 class ProdiOption(BaseModel):
-    """
-    value = str(no_ps) — kd_ps TIDAK unik dalam satu fakultas.
-    kd_strata dibutuhkan frontend untuk filter dropdown prodi by jenjang.
-    """
+    """value = str(no_ps) — kd_ps TIDAK unik dalam satu fakultas."""
     value:     str
     label:     str
     kd_ps:     str
@@ -30,8 +27,8 @@ class ProdiOption(BaseModel):
 # ─── Phase 0.5: GET /akademik/filter-options ──────────────────────────────────
 
 class FilterOptionsLocked(BaseModel):
-    fakultas: str | None = None   # kd_fak jika locked
-    prodi:    str | None = None   # str(no_ps) jika locked
+    fakultas: str | None = None
+    prodi:    str | None = None
 
 
 class AkademikFilterOptionsResponse(BaseModel):
@@ -48,26 +45,18 @@ class AkademikFilterOptionsResponse(BaseModel):
 class AkademikQueryFilters(BaseModel):
     """
     Query param filter untuk semua endpoint chart dashboard akademik.
-
-    jenjang WAJIB memakai Annotated[..., Query()] agar FastAPI menerima
-    multi-value: ?jenjang=S1&jenjang=S2 → ["S1", "S2"].
-    Tanpa Query(), FastAPI tidak menangani list dari repeated params.
+    jenjang memakai Annotated[..., Query()] untuk multi-value: ?jenjang=S1&jenjang=S2.
     """
     tahun_ajaran: str | None                                  = None
     semester:     Literal["ganjil", "genap", "pendek"] | None = None
     jenjang:      Annotated[list[str] | None, Query()]        = None
     fakultas:     str | None                                  = None
-    no_ps:        str | None                                  = None   # str(no_prodi)
+    no_ps:        str | None                                  = None
 
 
 # ─── Phase 1: GET /akademik/stats-overview ────────────────────────────────────
 
 class StatsOverviewResponse(BaseModel):
-    """
-    4 stat card baris atas dashboard.
-    avg_kelas_per_matkul = SUM(kelas)/SUM(matkul), None jika tidak ada data.
-    Kolom attendance ada di endpoint /attendance terpisah.
-    """
     jumlah_kelas:          int
     jumlah_matkul_aktif:   int
     jumlah_dosen_aktif:    int
@@ -84,7 +73,7 @@ class AttendanceItem(BaseModel):
     kehadiran_mahasiswa:      float | None
     prev_kehadiran_dosen:     float | None
     prev_kehadiran_mahasiswa: float | None
-    prev_period_label:        str | None   # mis. "2023/2024 Ganjil"
+    prev_period_label:        str | None
 
 
 class AttendanceResponse(BaseModel):
@@ -113,7 +102,6 @@ class SkorPertanyaanResponse(BaseModel):
 class GradeDistItem(BaseModel):
     label:              str
     kode:               str
-    # Grade ABCDE + T (tidak hadir) + PassFail
     dist_pct_a:         float | None
     dist_pct_ab:        float | None
     dist_pct_b:         float | None
@@ -124,9 +112,10 @@ class GradeDistItem(BaseModel):
     dist_pct_t:         float | None
     dist_pct_pass:      float | None
     dist_pct_fail:      float | None
-    dist_pct_lulus_a_c: float | None   # % lulus (>=C atau Pass)
-    dist_pct_lulus_a_d: float | None   # % lulus (>=D atau Pass)
+    dist_pct_lulus_a_c: float | None
+    dist_pct_lulus_a_d: float | None
     total_mahasiswa:    int
+    avg_ip:             float | None   # avg_ip_akhir_mahasiswa per entitas
 
 
 class GradeDistResponse(BaseModel):
@@ -137,20 +126,20 @@ class GradeDistResponse(BaseModel):
 # ─── Phase 4b: GET /akademik/grade-trend ─────────────────────────────────────
 
 class GradeTrendPoint(BaseModel):
-    period_label:       str      # mis. "2024/2025 Ganjil"
-    tahun_ajaran:       str
-    semester:           int
-    avg_skor_overall:   float | None
-    dist_pct_a:         float | None
-    dist_pct_lulus_a_c: float | None
-    total_mahasiswa:    int
+    period_label:         str
+    tahun_ajaran:         str
+    semester:             int
+    avg_skor_overall:     float | None
+    avg_skor_capaian:     float | None   # Q1-Q3, untuk garis q1q3 di line chart
+    avg_skor_pelaksanaan: float | None   # Q4-Q7, untuk garis q4q7 di line chart
+    avg_skor_q28: float | None  # Q8, untuk line chart tren beban kerja
+    dist_pct_a:           float | None
+    dist_pct_lulus_a_c:   float | None
+    total_mahasiswa:      int
 
 
 class GradeTrendResponse(BaseModel):
-    """
-    trend diurutkan dari semester tertua ke terbaru (untuk x-axis line chart).
-    n_semester = jumlah titik data yang dikembalikan.
-    """
+    """trend diurutkan kronologis (terlama → terbaru) untuk x-axis line chart."""
     granularity: Literal["fakultas", "prodi"]
     n_semester:  int
     trend:       list[GradeTrendPoint]
@@ -182,7 +171,6 @@ class CourseRankingResponse(BaseModel):
 class HeatmapRow(BaseModel):
     label:        str
     kode:         str
-    # 12 Q scores yang ada di v_akademik_statistik_prodi
     avg_skor_q21: float | None
     avg_skor_q22: float | None
     avg_skor_q23: float | None
@@ -200,3 +188,83 @@ class HeatmapRow(BaseModel):
 class SkorHeatmapResponse(BaseModel):
     granularity: Literal["fakultas", "prodi"]
     items:       list[HeatmapRow]
+
+
+# ─── Phase B: GET /akademik/grading-comp ─────────────────────────────────────
+
+class GradingCompItem(BaseModel):
+    """
+    Rata-rata bobot komponen penilaian per entitas.
+    Nilai None = komponen tidak dipakai sama sekali (avg = 0, disaring di endpoint).
+    Frontend menampilkan hanya komponen dengan nilai > 0.
+    """
+    label:              str
+    kode:               str
+    jumlah_kelas:       int
+    avg_bobot_uts:          float | None
+    avg_bobot_uas:          float | None
+    avg_bobot_tugas:        float | None
+    avg_bobot_kuis:         float | None
+    avg_bobot_praktikum:    float | None
+    avg_bobot_projek:       float | None
+    avg_bobot_partisipatif: float | None
+
+
+class GradingCompResponse(BaseModel):
+    granularity: Literal["fakultas", "prodi"]
+    items:       list[GradingCompItem]
+
+
+# ─── Phase C: GET /akademik/skor-by-sks ──────────────────────────────────────
+
+class SkorBySksBucket(BaseModel):
+    """
+    Skor Q8 (beban kerja) per kelompok SKS.
+    sks_label: "1-2 SKS", "3 SKS", atau "4+ SKS".
+    """
+    sks_label:    str
+    jumlah_kelas: int
+    avg_skor_q8:  float | None
+
+
+class SkorBySksResponse(BaseModel):
+    """items diurutkan dari SKS terkecil ke terbesar."""
+    items: list[SkorBySksBucket]
+
+
+# ─── Phase D: GET /akademik/komentar-mentah ───────────────────────────────────
+
+class KomentarItem(BaseModel):
+    """
+    Satu komentar teks dari kuesioner/portofolio.
+    Untuk sumber=mahasiswa: bisa ada banyak item per kelas_id (satu per mahasiswa).
+    Untuk sumber=dosen/itb: satu item per kelas_id (dari portofolio dosen).
+    """
+    kelas_id:       int
+    kode_matkul:    str
+    nama_matkul_id: str
+    kode_prodi:     str
+    nama_prodi_id:  str
+    kode_fakultas:  str
+    tahun_ajaran:   str
+    semester:       int
+    teks:           str
+
+
+class KomentarPagination(BaseModel):
+    page:        int
+    page_size:   int
+    total_items: int
+    total_pages: int
+
+
+class KomentarResponse(BaseModel):
+    """
+    sumber: mahasiswa = kuesioner mahasiswa (komentar_teks, banyak per kelas)
+            dosen     = usulan perbaikan dosen (satu per kelas, dari portofolio)
+            itb       = rekomendasi dosen ke ITB (satu per kelas, dari portofolio)
+    isu_dominan tidak ada di endpoint ini — tunggu pipeline RAG.
+    """
+    sumber:     Literal["mahasiswa", "dosen", "itb"]
+    pagination: KomentarPagination
+    items:      list[KomentarItem]
