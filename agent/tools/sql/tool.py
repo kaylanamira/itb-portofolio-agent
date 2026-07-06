@@ -225,16 +225,6 @@ class SQLTool:
             if not (is_select or is_cte):
                 raise ValueError("Query must be a SELECT statement.")
                 
-            # AST Scope Validation: ensuring {SCOPE_FILTER} is used if any protected table is queried
-            # tables = [t.name.lower() for t in parsed.find_all(exp.Table) if t.name]
-            # protected_tables = [t for t in tables if t not in UserScope.LOOKUP_TABLES]
-            
-            # if protected_tables and "{SCOPE_FILTER}" not in generated_sql:
-            #     return {
-            #         "validation_status": "fail", 
-            #         "error": "Missing {SCOPE_FILTER} placeholder for protected tables.", 
-            #         "error_type": "security_violation"
-            #     }
         except Exception as e:
             return {"validation_status": "fail", "error": f"SQL Parse Error: {str(e)}", "error_type": "parse_error"}
 

@@ -52,6 +52,6 @@ def route_after_intent(state: AgentState) -> str:
     logger.info(f"Routing logic determined domain is: {domain}")
     if domain == "portfolio":
         return "portfolio_agent"
-    elif domain == "wisudawan":
-        return "wisudawan_agent"
+    # elif domain == "wisudawan":
+    #     return "wisudawan_agent"
     return "out_of_scope"

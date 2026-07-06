@@ -4,7 +4,7 @@ from enum import Enum
 import operator
 from pydantic import BaseModel, Field
 from langgraph.graph import MessagesState
-from core.scope import UserScope, UserRole
+from core.scope import UserScope
 
 class QueryType(str, Enum):
     DATA_LOOKUP          = "data_lookup"
@@ -102,18 +102,18 @@ class AgentState(MessagesState):
     effective_query: str
     domain: Optional[AgentDomain]
     query_type: Optional[QueryType]
-    plan: list[dict] = Field(default_factory=list)
-    current_step_index: int = 0
-    steps_completed: Annotated[list[StepResult], operator.add] = Field(default_factory=list)
-    reasoning_history: Annotated[list[str], operator.add] = Field(default_factory=list)
+    plan: list[dict]
+    current_step_index: int
+    steps_completed: Annotated[list[StepResult], operator.add]
+    reasoning_history: Annotated[list[str], operator.add]
 
     # -- Memory --
-    conversation_summary: Optional[str] = None
-    session_entities: Optional[dict] = None
+    conversation_summary: Optional[str]
+    session_entities: Optional[dict]
 
     # -- Input Processing --
-    content_filter_result: Optional[str] = None
-    extracted_keywords: Optional[list[str]] = None
+    content_filter_result: Optional[str]
+    extracted_keywords: Optional[list[str]]
 
     # -- Data Context --
     chart_context: Optional[ChartContext]
@@ -121,30 +121,30 @@ class AgentState(MessagesState):
     relevant_tables: Optional[list[str]]
     schema_context: Optional[str]
 
-    generated_sql: Optional[str] = None
-    validation_status: Optional[ValidationStatus] = None
-    validation_errors: Annotated[list[str], operator.add] = Field(default_factory=list)
-    sql_result: Optional[list[dict]] = None
-    sql_error: Optional[str] = None
-    sql_row_count: Optional[int] = None
+    generated_sql: Optional[str]
+    validation_status: Optional[ValidationStatus]
+    validation_errors: Annotated[list[str], operator.add]
+    sql_result: Optional[list[dict]]
+    sql_error: Optional[str]
+    sql_row_count: Optional[int]
 
     # -- RAG Execution --
-    rag_query: Optional[str] = None
-    rag_chunks: Optional[list[dict]] = None
-    rag_source_types: Optional[list[str]] = None
-    rag_tipe_konten: Optional[list[str]] = None
-    rag_scope_override: Optional[dict] = None
-    rag_attempt_count: int = 0
-    rag_confidence: Optional[float] = None
-    rag_action: Optional[str] = None
-    rag_refined_query: Optional[str] = None
+    rag_query: Optional[str]
+    rag_chunks: Optional[list[dict]]
+    rag_source_types: Optional[list[str]]
+    rag_tipe_konten: Optional[list[str]]
+    rag_scope_override: Optional[dict]
+    rag_attempt_count: int
+    rag_confidence: Optional[float]
+    rag_action: Optional[str]
+    rag_refined_query: Optional[str]
 
     # -- Faithfulness --
-    faithfulness_score: Optional[float] = None
-    faithfulness_action: Optional[str] = None
+    faithfulness_score: Optional[float]
+    faithfulness_action: Optional[str]
 
-    answer_is_valid: Optional[bool] = None
-    next_step: Optional[str] = None
+    answer_is_valid: Optional[bool]
+    next_step: Optional[str]
 
     # -- Final Output --
     formatted_response: Optional[FormattedResponse]
