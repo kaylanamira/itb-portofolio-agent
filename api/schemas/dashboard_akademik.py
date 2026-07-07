@@ -155,13 +155,15 @@ class CourseRankingItem(BaseModel):
     nama_prodi_id:     str
     kode_fakultas:     str
     jumlah_kelas:      int
-    avg_skor:          float | None
+    jumlah_mahasiswa:  int
+    skor:              float | None
     prev_skor:         float | None
     prev_period_label: str | None
 
 
 class CourseRankingResponse(BaseModel):
     limit:  int
+    metric: str
     top:    list[CourseRankingItem]
     bottom: list[CourseRankingItem]
 

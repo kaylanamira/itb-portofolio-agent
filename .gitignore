@@ -25,7 +25,7 @@ EOF
 
 # Database and Data Folders
 data/mock
-docs/
+
 # OS generated files
 .DS_Store
 

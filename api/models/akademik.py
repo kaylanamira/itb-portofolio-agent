@@ -39,6 +39,18 @@ _KODE_GRUP_TO_COL: dict[str, str] = {
 }
 VALID_KODE_GRUP: frozenset[str] = frozenset(_KODE_GRUP_TO_COL)
 
+# ─── Course ranking by metric ──────────────────────────────────────────────
+_METRIC_TO_EXPR: dict[str, str] = {
+    "overall":            "AVG(avg_skor_overall)",
+    "capaian":            "AVG(avg_skor_capaian)",              # Q1-Q3
+    "sarana_prasarana":   "AVG(avg_skor_sarana_prasarana)",     # Q9-Q10
+    "perilaku_mahasiswa": "AVG(avg_skor_perilaku_mahasiswa)",   # Q11-Q12
+    "avg_ip":             "AVG(avg_ip_akhir_mahasiswa)",
+    "q4_q7": "(AVG(skor_q24) + AVG(skor_q25) + AVG(skor_q26) + AVG(skor_q27)) / 4.0",
+    **{f"q{n}": f"AVG(skor_q{n})" for n in (21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 37)},
+}
+VALID_RANKING_METRIC: frozenset[str] = frozenset(_METRIC_TO_EXPR)
+
 # Sumber komentar: view + kolom teks + kolom ordering + filter null
 _KOMENTAR_SOURCE: dict[str, dict] = {
     "mahasiswa": {
@@ -111,6 +123,35 @@ def _temporal_clauses(filters: AkademikQueryFilters) -> tuple[list[str], list]:
             clauses.append("semester = %s"); params.append(db_val)
     return clauses, params
 
+async def resolve_default_period(
+    scope: UserScope, fakultas: str | None, no_ps: str | None,
+) -> tuple[str, int] | None:
+    """
+    Cari periode (tahun_ajaran, semester) TERBARU yang tersedia dalam scope
+    spasial ini. Dipakai satu-satunya titik resolusi filter periode di
+    seluruh endpoint snapshot (bukan trend) — supaya tanpa filter eksplisit
+    dari user, backend tidak diam-diam mengembalikan data lintas semua
+    periode historis (baik sebagai baris ganda per entitas, maupun sebagai
+    rata-rata yang membaur lintas tahun).
+    """
+    b_cls, b_prm = [], []
+    if fakultas: b_cls.append("kode_fakultas = %s"); b_prm.append(fakultas)
+    if no_ps:    b_cls.append("no_prodi = %s"); b_prm.append(int(no_ps))
+    where = _build_where(b_cls)
+
+    sql = f"""
+        SELECT tahun_ajaran, semester
+        FROM analitik.v_akademik_statistik_prodi {where}
+        ORDER BY tahun DESC, semester DESC
+        LIMIT 1
+    """
+    result = await _executor.execute(sql, scope, b_prm)
+    if result.error or not result.rows:
+        if result.error:
+           logger.error("resolve_default_period (user=%s): %s", scope.user_id, result.error)
+        return None
+    row = result.rows[0]
+    return row["tahun_ajaran"], row["semester"]
 
 # ─── Phase 0.5: Filter options ────────────────────────────────────────────────
 
@@ -226,6 +267,7 @@ def build_filter_clause(
 
 
 async def get_stats_overview(scope: UserScope, filters: AkademikQueryFilters) -> dict | None:
+    
     where_sql, params = build_filter_clause(
         filters.tahun_ajaran, filters.semester, filters.jenjang,
         filters.fakultas, filters.no_ps,
@@ -468,29 +510,36 @@ async def get_grade_trend(
 
 async def get_course_ranking_top(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, limit: int,
+    fakultas: str | None, no_ps: str | None, limit: int, metric: str = "overall",
 ) -> list[dict]:
-    return await _course_ranking_query(scope, filters, fakultas, no_ps, limit, desc=True)
+    return await _course_ranking_query(scope, filters, fakultas, no_ps, limit, desc=True, metric=metric)
 
 
 async def get_course_ranking_bottom(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, limit: int,
+    fakultas: str | None, no_ps: str | None, limit: int, metric: str = "overall",
 ) -> list[dict]:
-    return await _course_ranking_query(scope, filters, fakultas, no_ps, limit, desc=False)
+    return await _course_ranking_query(scope, filters, fakultas, no_ps, limit, desc=False, metric=metric)
 
 
 async def _course_ranking_query(
     scope: UserScope, filters: AkademikQueryFilters,
     fakultas: str | None, no_ps: str | None, limit: int, desc: bool,
+    metric: str = "overall",
 ) -> list[dict]:
+    if metric not in VALID_RANKING_METRIC:
+        raise ValueError(f"metric tidak valid: {metric}")
+    skor_expr = _METRIC_TO_EXPR[metric]
+
     b_cls, b_prm = [], []
     if filters.jenjang: b_cls.append("jenjang = ANY(%s)"); b_prm.append(filters.jenjang)
     if fakultas:        b_cls.append("kode_fakultas = %s"); b_prm.append(fakultas)
     if no_ps:           b_cls.append("no_prodi = %s"); b_prm.append(int(no_ps))
 
-    base_where  = _build_where(["avg_skor_overall IS NOT NULL"] + b_cls)
+    base_where = _build_where(b_cls)
     t_cls, t_prm = _temporal_clauses(filters)
+    t_cls = t_cls + ["skor IS NOT NULL"]
+
     outer_where = _build_where(t_cls)
     order = "DESC" if desc else "ASC"
     all_params = b_prm + t_prm + [limit]
@@ -500,22 +549,24 @@ async def _course_ranking_query(
             SELECT kode_matkul, nama_matkul_id, MAX(sks) AS sks,
                    kode_prodi, nama_prodi_id, kode_fakultas,
                    tahun_ajaran, tahun, semester,
-                   COUNT(*)                                 AS jumlah_kelas,
-                   ROUND(AVG(avg_skor_overall)::numeric, 2) AS avg_skor
+                   COUNT(*)::integer AS jumlah_kelas,
+                    SUM(jumlah_mahasiswa)::integer AS jumlah_mahasiswa,
+                    ROUND(({skor_expr})::numeric, 2) AS skor
             FROM analitik.v_akademik_kelas {base_where}
             GROUP BY kode_matkul, nama_matkul_id, kode_prodi, nama_prodi_id,
                      kode_fakultas, tahun_ajaran, tahun, semester
         ),
         with_lag AS (
             SELECT *,
-                LAG(avg_skor)     OVER w AS prev_skor,
+                LAG(skor)     OVER w AS prev_skor,
                 LAG(tahun_ajaran) OVER w AS prev_tahun_ajaran,
                 LAG(semester)     OVER w AS prev_semester
             FROM all_periods
             WINDOW w AS (PARTITION BY kode_matkul ORDER BY tahun, semester)
         )
         SELECT * FROM with_lag {outer_where}
-        ORDER BY avg_skor {order} NULLS LAST LIMIT %s
+        ORDER BY skor {order}
+        LIMIT %s
     """
 
     result = await _executor.execute(sql, scope, all_params)
