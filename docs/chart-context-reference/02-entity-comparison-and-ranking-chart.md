@@ -324,7 +324,7 @@ Kalau entitas ini baru pertama kali punya data (tidak ada periode sebelumnya unt
 
 ### 4d. Metric `q4_q7` — TIDAK ADA kolom tunggal
 
-Lihat §3.1.1.
+Menggunakan field "rata_rata_dari_kolom": ["skor_q24", "skor_q25", "skor_q26", "skor_q27"] karena nilai tidak dapat diambil langsung dari regular view.
 
 ---
 
