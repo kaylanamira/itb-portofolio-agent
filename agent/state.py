@@ -29,13 +29,29 @@ class ValidationStatus(str, Enum):
     FAIL    = "fail"
     PENDING = "pending"
 
+# format: {konten}_{bentuk_visual}_{output: chart|list|value}
+# konten: entity_comparison, course_ranking, single_entity, grade_distribution, score_trend, score_heatmap, grading_composition, score_by_sks_bucket
+# bentuk visual: bar_chart, list, percentage_value, stacked_bar_chart, single_entity_bar_chart, line_chart, matrix_chart
+# output: chart, list, value
+ChartType = Literal[
+    "entity_comparison_bar_chart",
+    "course_ranking_top_bottom_list",
+    "single_entity_percentage_value",
+    "grade_distribution_stacked_bar_chart",
+    "grade_distribution_single_entity_bar_chart",
+    "score_trend_line_chart",
+    "score_heatmap_matrix_chart",
+    "grading_composition_stacked_bar_chart",
+    "grading_composition_single_entity_bar_chart",
+]
+
 class ChartContext(BaseModel):
-    chart_type: str
+    chart_type: ChartType
     title: str
     x_axis_label: Optional[str] = None
     y_axis_label: Optional[str] = None
     series: list[dict]
-    filters_applied: dict = Field(default_factory=dict)
+    filters_applied: dict = {}
 
 class DetectedEntities(BaseModel):
     kode_matkul: Optional[str] = None

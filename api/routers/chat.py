@@ -4,8 +4,8 @@ from api.routers.schemas import ChatRequest, ChatResponse
 from api.dependencies import get_user_scope
 from api.limiter import limiter
 from core.scope import UserScope
-from agent.state import AgentState
 from agent.orchestrator import main_graph
+from api.services.chat_service import build_initial_state, save_conversation_turn, to_chat_response
 from core.config import settings
 import json
 import logging
@@ -21,48 +21,14 @@ async def chat_endpoint(
     payload: ChatRequest,
     user_scope: UserScope = Depends(get_user_scope)
 ):
-    """
-    Standard synchronous chat endpoint.
-    Runs the agent pipeline to completion and returns the final response.
-    """
-    initial_state = AgentState(
-        user_scope=user_scope,
-        session_id=payload.session_id,
-        messages=[{"role": "user", "content": payload.query}],
-        chart_context=payload.chart_context,
-        raw_query=payload.query,
-        rewritten_query=None,
-        effective_query=payload.query,
-        domain=None,
-        query_type=None,
-        plan=[],
-        current_step_index=0,
-        steps_completed=[],
-        reasoning_history=[],
-        detected_entities=None,
-        relevant_tables=None,
-        schema_context=None,
-        formatted_response=None,
-        attempt_count=0,
-        max_attempts=settings.MAX_SQL_ATTEMPTS,
-        error_history=[],
-        is_aborted=False,
-        abort_reason=None
-    )
-    
+    initial_state = await build_initial_state(payload, user_scope)
     logger.info("Executing chat query synchronously: %s", payload.query)
     final_state = await main_graph.ainvoke(initial_state)
     
     resp = final_state.get("formatted_response")
     if resp:
-        return ChatResponse(
-            response_type=resp.response_type,
-            narrative=resp.narrative,
-            artifacts=[a.model_dump() if hasattr(a, 'model_dump') else a for a in resp.artifacts],
-            follow_up_suggestions=resp.follow_up_suggestions,
-            clarification_question=resp.clarification_question,
-            disclaimer=resp.disclaimer
-        )
+        await save_conversation_turn(payload, user_scope, final_state)
+        return to_chat_response(resp)
         
     return ChatResponse(
         response_type="error",
@@ -77,34 +43,7 @@ async def chat_stream_endpoint(
     payload: ChatRequest,
     user_scope: UserScope = Depends(get_user_scope)
 ):
-    """
-    Real-time streaming chat endpoint.
-    Streams server-sent events (SSE) detailing the plan, intermediate tools, and agent thoughts.
-    """
-    initial_state = AgentState(
-        user_scope=user_scope,
-        session_id=payload.session_id,
-        messages=[{"role": "user", "content": payload.query}],
-        chart_context=payload.chart_context,
-        raw_query=payload.query,
-        rewritten_query=None,
-        effective_query=payload.query,
-        domain=None,
-        query_type=None,
-        plan=[],
-        current_step_index=0,
-        steps_completed=[],
-        reasoning_history=[],
-        detected_entities=None,
-        relevant_tables=None,
-        schema_context=None,
-        formatted_response=None,
-        attempt_count=0,
-        max_attempts=settings.MAX_SQL_ATTEMPTS,
-        error_history=[],
-        is_aborted=False,
-        abort_reason=None
-    )
+    initial_state = await build_initial_state(payload, user_scope)
     
     async def event_generator():
         final_state = initial_state
@@ -135,19 +74,16 @@ async def chat_stream_endpoint(
                     logger.error(f"SQL ERROR: {err}")
                     update_payload["error"] = err
                 
-                # Keep track of latest state
                 final_state = {**final_state, **state_update}
-                
-                # Yield streaming update to client
                 yield f"data: {json.dumps(update_payload)}\n\n"
         
-        # When graph finishes, yield final response
         resp = final_state.get("formatted_response")
         if resp:
+            await save_conversation_turn(payload, user_scope, final_state)
             final_data = {
                 "response_type": resp.response_type,
                 "narrative": resp.narrative,
-                "artifacts": [a.model_dump() if hasattr(a, 'model_dump') else a for a in resp.artifacts],
+                "artifacts": [a.model_dump() if hasattr(a, "model_dump") else a for a in resp.artifacts],
                 "follow_up_suggestions": resp.follow_up_suggestions,
                 "clarification_question": resp.clarification_question,
                 "disclaimer": resp.disclaimer
