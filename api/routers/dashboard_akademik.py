@@ -28,7 +28,7 @@ from api.schemas.dashboard_akademik import (
     SkorItem,          SkorPertanyaanResponse,
     StatsOverviewResponse,
 )
-from api.models.akademik import (
+from api.services.akademik import (
     VALID_KODE_GRUP,
     VALID_RANKING_METRIC,
     _period_label,
