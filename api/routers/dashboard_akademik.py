@@ -31,8 +31,8 @@ from api.schemas.dashboard_akademik import (
 from api.services.akademik import (
     VALID_KODE_GRUP,
     VALID_RANKING_METRIC,
-    _period_label,
-    _is_faculty_level,
+    period_label,
+    is_faculty_level,
     build_prodi_label,
     derive_jenjang_options,
     get_attendance,
@@ -179,14 +179,14 @@ async def get_akademik_attendance(
     resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_attendance(scope, filters, resolved.fakultas, resolved.no_ps)
-    granularity = "fakultas" if _is_faculty_level(scope) else "prodi"
+    granularity = "fakultas" if is_faculty_level(scope) else "prodi"
     items = [
         AttendanceItem(
             label=r["label"], kode=r["kode"],
             kehadiran_dosen=r["kehadiran_dosen"], kehadiran_mahasiswa=r["kehadiran_mahasiswa"],
             prev_kehadiran_dosen=r["prev_kehadiran_dosen"],
             prev_kehadiran_mahasiswa=r["prev_kehadiran_mahasiswa"],
-            prev_period_label=_period_label(r["prev_tahun_ajaran"], r["prev_semester"]),
+            prev_period_label=period_label(r["prev_tahun_ajaran"], r["prev_semester"]),
         ) for r in rows
     ]
     return AttendanceResponse(granularity=granularity, items=items)
@@ -207,10 +207,10 @@ async def get_akademik_skor_pertanyaan(
     resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_skor_pertanyaan(scope, filters, resolved.fakultas, resolved.no_ps, kode_grup)
-    granularity = "fakultas" if _is_faculty_level(scope) else "prodi"
+    granularity = "fakultas" if is_faculty_level(scope) else "prodi"
     items = [
         SkorItem(label=r["label"], kode=r["kode"], skor=r["skor"], prev_skor=r["prev_skor"],
-                 prev_period_label=_period_label(r["prev_tahun_ajaran"], r["prev_semester"]))
+                 prev_period_label=period_label(r["prev_tahun_ajaran"], r["prev_semester"]))
         for r in rows
     ]
     return SkorPertanyaanResponse(granularity=granularity, kode_grup=kode_grup, items=items)
@@ -227,7 +227,7 @@ async def get_akademik_grade_distribution(
     resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_grade_distribution(scope, filters, resolved.fakultas, resolved.no_ps)
-    granularity = "fakultas" if _is_faculty_level(scope) else "prodi"
+    granularity = "fakultas" if is_faculty_level(scope) else "prodi"
     items = [GradeDistItem(**r) for r in rows]
     return GradeDistResponse(granularity=granularity, items=items)
 
@@ -244,10 +244,10 @@ async def get_akademik_grade_trend(
 ) -> GradeTrendResponse:
     resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
     rows        = await get_grade_trend(scope, filters, resolved.fakultas, resolved.no_ps, n_semester)
-    granularity = "fakultas" if _is_faculty_level(scope) else "prodi"
+    granularity = "fakultas" if is_faculty_level(scope) else "prodi"
     trend = [
         GradeTrendPoint(
-            period_label         = _period_label(r["tahun_ajaran"], r["semester"]) or "",
+            period_label         = period_label(r["tahun_ajaran"], r["semester"]) or "",
             tahun_ajaran         = r["tahun_ajaran"],
             semester             = r["semester"],
             avg_skor_overall     = r["avg_skor_overall"],
@@ -289,7 +289,7 @@ async def get_akademik_course_ranking(
             kode_fakultas=r["kode_fakultas"], jumlah_kelas=r["jumlah_kelas"],
             jumlah_mahasiswa=r["jumlah_mahasiswa"],
             skor=r["skor"], prev_skor=r["prev_skor"],
-            prev_period_label=_period_label(r["prev_tahun_ajaran"], r["prev_semester"]),
+            prev_period_label=period_label(r["prev_tahun_ajaran"], r["prev_semester"]),
         )
 
     return CourseRankingResponse(limit=limit,
@@ -309,7 +309,7 @@ async def get_akademik_skor_heatmap(
     resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_skor_heatmap(scope, filters, resolved.fakultas, resolved.no_ps)
-    granularity = "fakultas" if _is_faculty_level(scope) else "prodi"
+    granularity = "fakultas" if is_faculty_level(scope) else "prodi"
     items = [HeatmapRow(**r) for r in rows]
     return SkorHeatmapResponse(granularity=granularity, items=items)
 
@@ -327,7 +327,7 @@ async def get_akademik_grading_comp(
     resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_grading_comp(scope, filters, resolved.fakultas, resolved.no_ps)
-    granularity = "fakultas" if _is_faculty_level(scope) else "prodi"
+    granularity = "fakultas" if is_faculty_level(scope) else "prodi"
 
     items = [
         GradingCompItem(
