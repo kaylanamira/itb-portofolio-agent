@@ -2,9 +2,11 @@
 
 Dokumen ini untuk **pengembang** dan sebagai **referensi agen** tentang keseluruhan dashboard, sebelum masuk ke detail per-chart di file lain dalam folder ini.
 
+> Untuk definisi lengkap tipe `ChartContext` (struktur field, enum `chart_type`, tabel padanan nama lama→baru), lihat **`01-chart-context-type.md`** — file ini **tidak** mengulang definisi itu.
+
 ---
 
-## 1. Apa dashboard ini
+## 1. Apa isi dashboard ini
 
 Dashboard analitik portofolio & kuesioner akademik ITB. Menampilkan hasil evaluasi perkuliahan (skor kuesioner mahasiswa, kehadiran, distribusi nilai, komposisi penilaian) untuk 4 level pengguna:
 
@@ -25,20 +27,27 @@ Scope ditegakkan di level RLS database — **tidak pernah** dikontrol dari front
 |---|---|
 | **Informasi Umum** | Ranking 12 pertanyaan kuesioner dengan informasi top-5 pertanyaan (5 pertanyaan peraih skor tertinggi) dan bottom-5 pertanyaan (5 pertanyaan peraih skor terendah), heatmap skor per entitas × pertanyaan, tren skor keseluruhan, perbandingan skor per fakultas/prodi, isu dominan komentar (placeholder, menunggu RAG) |
 | **Luaran Mata Kuliah** | Distribusi nilai A-E, tren rata-rata IP, ranking Q1-Q3 (capaian pembelajaran) |
-| **Pelaksanaan Perkuliahan** | 4 sub-tab: Rancangan (Q8/beban kerja & komposisi penilaian), Performa Dosen (Q4-Q7 & kehadiran dosen), Performa Mahasiswa (Q11-Q12 & kehadiran mahasiswa), Sarana Prasarana (Q9-Q10) |
+| **Pelaksanaan Perkuliahan** | 4 sub-tab: Rancangan Perkuliahan (Q8/beban kerja & komposisi penilaian), Performa Dosen (Q4-Q7 & kehadiran dosen), Performa Mahasiswa (Q11-Q12 & kehadiran mahasiswa), Sarana Prasarana (Q9-Q10) |
 | **Ringkasan Komentar** | Top Isu dan Komentar mentah mahasiswa/dosen/ITB (paginated, teks bebas) — **di luar scope fitur chart-interpret** |
 
 ---
 
-## 3. Perilaku khusus: chart "collapse" jadi ranking mata kuliah
+## 3. Perilaku khusus: chart perbandingan "collapse" jadi bentuk 1-entitas ketika hanya ada 1 entitas
 
 Ini **pola arsitektur terpenting** untuk dipahami sebelum baca file chart lain di folder ini.
 
 Banyak chart di dashboard ini berupa **perbandingan antar-entitas** (bar chart fakultas/prodi). Misalnya, membandingkan skor Q5 antar-prodi.
 
- Tapi begitu data yang tersisa cuma **1 entitas** (karena scope Kaprodi hanya dapat mengamati 1 entitas program studi, atau karena Direktorat drill-down ke 1 fakultas), chart itu **otomatis berubah bentuk** — bukan lagi bar 1 batang yang percuma, tapi jadi **list top-5/bottom-5 mata kuliah** dalam entitas tersebut.
+Tapi begitu data yang tersisa cuma **1 entitas** (karena scope Kaprodi hanya dapat mengamati 1 entitas program studi, atau karena Direktorat/Dekan drill-down manual ke 1 entitas), chart itu **otomatis berubah bentuk** — bentuk penggantinya berbeda-beda tergantung chart:
 
-**Implikasi untuk `chart_context`:** `chart_type` yang dikirim akan **berbeda** tergantung kondisi ini — bisa `"bar_horizontal"` (mode perbandingan banyak entitas menggunakan format bar chart) atau `"ranking_top_bottom"` (mode top/bottom matkul menggunakan format list, saat sudah collapse ke 1 entitas). Detail lengkap ada di file `01-entity-aware-comparison-chart.md`.
+| Chart | Mode banyak entitas (`chart_type`) | Mode 1 entitas (`chart_type`) |
+|---|---|---|
+| Skor kuesioner per fakultas/prodi | `entity_comparison_bar_chart` | `course_ranking_top_bottom_list` (list top/bottom-5 matkul) |
+| Kehadiran dosen/mahasiswa | `entity_comparison_bar_chart` | `single_entity_percentage_value` (1 angka + delta) |
+| Distribusi nilai | `grade_distribution_stacked_bar_chart` | `grade_distribution_single_entity_bar_chart` |
+| Komposisi penilaian | `grading_composition_stacked_bar_chart` | `grading_composition_single_entity_bar_chart` |
+
+Detail lengkap tiap chart ada di file masing-masing (§6).
 
 ---
 
@@ -61,19 +70,25 @@ UI menampilkan **Q1 sampai Q12**, tapi ini **bukan** nama kolom database. Kolom 
 | Q11 | `q35` | Mahasiswa berusaha dengan sungguh-sungguh mengikuti mata kuliah |
 | Q12 | `q37` | Mahasiswa memperoleh pengalaman belajar yang positif |
 
-**Semua field di request payload pada field `chart_context.series` di seluruh dashboard memakai nama kolom database asli** (`skor_q28`, bukan `skor_q8`) — bukan alias UI. Ini disengaja, supaya agen bisa mencocokkan nama field langsung ke `COMMENT ON COLUMN` di database (lihat `agent/tools/schema_retriever.py`), tanpa perlu tabel terjemahan tambahan.
+**Semua field di `chart_context.series` di seluruh dashboard memakai nama kolom database asli** (`skor_q28`, bukan `skor_q8`) — bukan alias UI. Ini disengaja, supaya agen bisa mencocokkan nama field langsung ke `COMMENT ON COLUMN` di database (lihat `agent/tools/schema_retriever.py`), tanpa perlu tabel terjemahan tambahan.
 
 ### Kelompok gabungan (composite)
 
 | Kolom komposit | Cakupan |
 |---|---|
 | `avg_skor_capaian` | Q1-Q3 |
+| `avg_skor_pelaksanaan` | Q4-Q8 (**bukan** Q4-Q7 — lihat catatan di bawah) |
 | `avg_skor_sarana_prasarana` | Q9-Q10 |
 | `avg_skor_perilaku_mahasiswa` | Q11-Q12 |
 | `avg_skor_overall` | Semua Q1-Q12 |
 
-**Perhatian khusus:** card dashboard "Performa Dosen (Q4-Q7)" **sengaja tidak** memakai `avg_skor_pelaksanaan` (yang mencakup Q8 juga). 
-Nilai dashboard "Performa Dosen (Q4-Q7)" dihitung manual dari `skor_q24`+`skor_q25`+`skor_q26`+`skor_q27` saja. Kalau agen melihat metric ini di `chart_context`, field-nya akan berupa `rata_rata_dari_kolom: ["skor_q24","skor_q25","skor_q26","skor_q27"]`, bukan `avg_skor_pelaksanaan` — **ini bukan kesalahan data**, ini keputusan desain yang disengaja.
+**Perhatian khusus:**
+Card dashboard "Performa Dosen (Q4-Q7)" **sengaja tidak** memakai kolom `avg_skor_pelaksanaan` karena kolom itu mencakup Q8.
+
+Nilai dashboard "Performa Dosen (Q4-Q7)" dihitung manual dari merata-ratakan `skor_q24`+`skor_q25`+`skor_q26`+`skor_q27`.
+
+Kalau agen melihat metric ini di `chart_context`, field-nya akan berupa:
+`rata_rata_dari_kolom: ["skor_q24","skor_q25","skor_q26","skor_q27"]`, bukan `avg_skor_pelaksanaan`. Detail lengkap ada di `02-entity-comparison-and-ranking-chart.md` §3.1.1.
 
 ---
 
@@ -89,31 +104,19 @@ Nilai dashboard "Performa Dosen (Q4-Q7)" dihitung manual dari `skor_q24`+`skor_q
 
 | File | Chart yang dijelaskan |
 |---|---|
-| `01-comparison-bar-chart.md` | Semua bar chart perbandingan entitas + semua varian ranking top/bottom matkul (16 metric) — **paling sering dipakai** |
-| `02-attendance-chart.md` | Kehadiran dosen & mahasiswa |
-| `03-grade-distribution-chart.md` | Distribusi nilai A-E + rata-rata IP |
-| `04-grade-trend-chart.md` | Tren skor & IP antar-semester |
-| `05-score-heatmap-chart.md` | Matrix 12 skor pertanyaan × entitas |
+| `01-chart-context-type.md` | Definisi tipe `ChartContext` & enum `chart_type` (rujukan tunggal) |
+| `02-entity-comparison-and-ranking-chart.md` | Semua bar chart perbandingan entitas + semua varian ranking top/bottom matkul (16 metric, termasuk rata-rata IP) — **paling sering dipakai** |
+| `03-attendance-chart.md` | Kehadiran dosen & mahasiswa |
+| `04-grade-distribution-chart.md` | Distribusi nilai A-E |
+| `05-grade-trend-chart.md` | Tren skor antar-semester |
+| `06-score-heatmap-chart.md` | Matrix 12 skor pertanyaan × entitas |
+| `07-grading-composition-chart.md` | Komposisi bobot komponen penilaian |
+| `08-skor-by-sks-chart.md` | Rata-rata skor Q8 per kelompok SKS |
 
 ---
 
-## 7. Kontrak umum `chart_context` (berlaku semua file)
+## 7. Kontrak umum `chart_context`
 
-```ts
-interface ChartContext {
-  chart_type: string;
-  title: string;
-  x_axis_label?: string;
-  y_axis_label?: string;
-  series: Record<string, unknown>[];
-  filters_applied: Record<string, string>;
-}
-```
+Lihat `01-chart-context-type.md` untuk definisi tipe TypeScript/Python lengkap dan aturan field umum (`filters_applied`, field yang tidak pernah dikirim, dll).
 
-`filters_applied` **selalu** dibangun dengan pola yang sama di seluruh dashboard — hanya berisi filter yang **aktif** :
-```json
-{ "tahun_ajaran": "2024/2025", "semester": 1, "fakultas": "STEI", "no_prodi": "135" }
-```
-Kalau tidak ada filter aktif sama sekali, `filters_applied` adalah objek kosong `{}`.
-
-**Field yang TIDAK pernah dikirim** (sengaja dihilangkan dari semua chart untuk hemat token & hindari noise): `page`, `total_pages`
+`chart_context` sendiri dikirim sebagai bagian dari body request ke `/api/chat` bersama `query` dan `session_id`. **`query` pada trigger tombol "tanya insight" selalu berupa string tetap yang sama untuk semua chart** ("Insight apa yang bisa saya ambil dari grafik ini?") — bukan pertanyaan bebas user. Detail lengkap & implikasinya untuk agent ada di `01-chart-context-type.md` §7.
