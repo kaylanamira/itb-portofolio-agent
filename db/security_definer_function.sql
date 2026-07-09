@@ -39,9 +39,12 @@ CREATE SCHEMA IF NOT EXISTS analitik;
 -- A. VIEW PUBLIK (tanpa Security Definer, semua role bisa akses)
 -- ================================================================
 
--- ── A1. Jenis dan sifat mata kuliah ──────────────────────────────
+-- ── A1. Jenis dan sifat mata kuliah serta komponen penilaian mata kuliah ──────────────────────────────
 CREATE VIEW analitik.v_akademik_jenis_dan_sifat_matkul AS
 SELECT * FROM analitik_mv.mv_akademik_jenis_dan_sifat_matkul;
+
+CREATE VIEW analitik.v_akademik_komponen_evaluasi_kelas AS
+SELECT * FROM analitik_mv.mv_akademik_komponen_evaluasi_kelas;
 
 -- ── A2. Info umum mata kuliah (non-sensitif, dari mv_akademik_kelas) ─
 CREATE VIEW analitik.v_info_umum_kelas_matkul AS
@@ -111,6 +114,7 @@ SELECT
     jumlah_kelas,
     jumlah_matkul,
     total_sks_diajar,
+    kelas_id_list,
     kode_matkul_list,
     no_prodi_diajar,
     kode_prodi_diajar
@@ -198,6 +202,7 @@ RETURNS TABLE (
     dist_jumlah_c               bigint,
     dist_jumlah_d               bigint,
     dist_jumlah_e               bigint,
+    dist_jumlah_t               bigint,
     dist_jumlah_pass            bigint,
     dist_jumlah_fail            bigint,
     dist_pct_a                  numeric,
@@ -207,6 +212,7 @@ RETURNS TABLE (
     dist_pct_c                  numeric,
     dist_pct_d                  numeric,
     dist_pct_e                  numeric,
+    dist_pct_t                  numeric,
     dist_pct_pass               numeric,
     dist_pct_fail               numeric,
     dist_pct_lulus_a_c          numeric,
@@ -262,9 +268,9 @@ BEGIN
         k.is_distribusi_nilai_sah, k.jumlah_mahasiswa,
         k.dist_jumlah_a, k.dist_jumlah_ab, k.dist_jumlah_b,
         k.dist_jumlah_bc, k.dist_jumlah_c, k.dist_jumlah_d,
-        k.dist_jumlah_e, k.dist_jumlah_pass, k.dist_jumlah_fail,
+        k.dist_jumlah_e, k.dist_jumlah_t, k.dist_jumlah_pass, k.dist_jumlah_fail,
         k.dist_pct_a, k.dist_pct_ab, k.dist_pct_b, k.dist_pct_bc,
-        k.dist_pct_c, k.dist_pct_d, k.dist_pct_e,
+        k.dist_pct_c, k.dist_pct_d, k.dist_pct_e, k.dist_pct_t,
         k.dist_pct_pass, k.dist_pct_fail,
         k.dist_pct_lulus_a_c, k.dist_pct_lulus_a_d,
         k.skor_q21, k.skor_q22, k.skor_q23, k.skor_q24,
@@ -301,8 +307,8 @@ BEGIN
         WHEN 'dekan'           THEN k.kode_fakultas = v_kd_fak
         WHEN 'jajaran_dekanat' THEN k.kode_fakultas = v_kd_fak
         WHEN 'kaprodi'         THEN k.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN k.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN k.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN (v_no_ps IS NULL OR k.no_prodi = v_no_ps)
+        WHEN 'dosen' THEN true
         ELSE false
     END;
 END;
@@ -338,8 +344,8 @@ BEGIN
         WHEN 'dekan'           THEN k.kode_fakultas = v_kd_fak
         WHEN 'jajaran_dekanat' THEN k.kode_fakultas = v_kd_fak
         WHEN 'kaprodi'         THEN k.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN k.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN v_dosen_id = ANY(k.semua_dosen_id)
+        WHEN 'jajaran_prodi'   THEN (v_no_ps IS NULL OR k.no_prodi = v_no_ps)
+        WHEN 'dosen'           THEN (v_dosen_id IS NOT NULL AND v_dosen_id = ANY(k.semua_dosen_id))
         ELSE false
     END;
 END;
@@ -373,8 +379,8 @@ BEGIN
         WHEN 'dekan'           THEN p.kode_fakultas = v_kd_fak
         WHEN 'jajaran_dekanat' THEN p.kode_fakultas = v_kd_fak
         WHEN 'kaprodi'         THEN p.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN p.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN p.no_prodi = v_no_ps --dosen_id ada di p.semua_dosen_id
+        WHEN 'jajaran_prodi'   THEN (v_no_ps IS NULL OR p.no_prodi = v_no_ps)
+        WHEN 'dosen' THEN true
         ELSE false
     END;
 END;
@@ -392,10 +398,12 @@ CREATE OR REPLACE FUNCTION analitik.fn_get_akademik_statistik_prodi()
 RETURNS SETOF analitik_mv.mv_akademik_statistik_prodi AS $$
 DECLARE
     v_role     text;
+    v_dosen_id integer;
     v_no_ps integer;
     v_kd_fak   character varying;
 BEGIN
     v_role     := NULLIF(current_setting('app.role',     true), '');
+    v_dosen_id := NULLIF(current_setting('app.dosen_id', true), '')::integer;
     v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
     v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
     IF v_role IS NULL THEN RETURN; END IF;
@@ -408,8 +416,8 @@ BEGIN
         WHEN 'dekan'           THEN sp.kode_fakultas = v_kd_fak
         WHEN 'jajaran_dekanat' THEN sp.kode_fakultas = v_kd_fak
         WHEN 'kaprodi'         THEN sp.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN sp.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN sp.no_prodi = v_no_ps
+        WHEN 'jajaran_prodi'   THEN (v_no_ps IS NULL OR sp.no_prodi = v_no_ps)
+        WHEN 'dosen' THEN true
         ELSE false
     END;
 END;
@@ -469,7 +477,7 @@ RETURNS TABLE (
     jumlah_kelas_dengan_skor    bigint,
     avg_nilai_akhir             numeric,
     -- Info mengajar: selalu tampil (info profesional umum)
-    kelas_ids                   integer[],
+    kelas_id_list                   integer[],
     kode_matkul_list            character(6)[],
     no_prodi_diajar             integer[],
     kode_prodi_diajar           character varying[]
@@ -513,8 +521,7 @@ BEGIN
              THEN sd.avg_pct_kehadiran_dosen     ELSE NULL END,
         -- avg_pct_kehadiran_mahasiswa: tidak di-mask (tentang mahasiswa, bukan dosen)
         sd.avg_pct_kehadiran_mahasiswa,
-        CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
-             THEN sd.avg_ip_mhs                  ELSE NULL END,
+        sd.avg_ip_mhs,
         CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_skor_q25                ELSE NULL END,
         CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
@@ -536,7 +543,7 @@ BEGIN
         CASE WHEN v_role != 'dosen' OR sd.dosen_id = v_dosen_id
              THEN sd.avg_nilai_akhir             ELSE NULL END,
         -- Info prodi yang diajar (selalu tampil)
-        sd.kelas_ids,
+        sd.kelas_id_list,
         sd.kode_matkul_list,
         sd.no_prodi_diajar,
         sd.kode_prodi_diajar::character varying[]
@@ -548,8 +555,8 @@ BEGIN
         WHEN 'jajaran_dekanat' THEN sd.kode_fakultas_dosen = v_kd_fak
         -- KAPRODI/JAJARAN_PRODI/DOSEN: berdasarkan prodi yang sedang diajar
         WHEN 'kaprodi'         THEN v_no_ps = ANY(sd.no_prodi_diajar)
-        WHEN 'jajaran_prodi'   THEN v_no_ps = ANY(sd.no_prodi_diajar)
-        WHEN 'dosen'           THEN v_no_ps = ANY(sd.no_prodi_diajar)
+        WHEN 'jajaran_prodi'   THEN (v_no_ps IS NULL OR v_no_ps = ANY(sd.no_prodi_diajar))
+        WHEN 'dosen'           THEN (v_dosen_id IS NOT NULL AND sd.dosen_id = v_dosen_id)
         ELSE false
     END;
 END;
@@ -557,135 +564,3 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE VIEW analitik.v_akademik_statistik_dosen AS
 SELECT * FROM analitik.fn_get_akademik_statistik_dosen();
-
-
--- ── B6. mv_wisudawan_distribusi_jawaban ──────────────────────────
-
-CREATE OR REPLACE FUNCTION analitik.fn_get_wisudawan_distribusi_jawaban()
-RETURNS SETOF analitik_mv.mv_wisudawan_distribusi_jawaban AS $$
-DECLARE
-    v_role     text;
-    v_no_ps integer;
-    v_kd_fak   character varying;
-BEGIN
-    v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
-    IF v_role IS NULL THEN RETURN; END IF;
-
-    RETURN QUERY
-    SELECT * FROM analitik_mv.mv_wisudawan_distribusi_jawaban w
-    WHERE CASE v_role
-        WHEN 'admin'           THEN true
-        WHEN 'direktorat'      THEN true
-        WHEN 'dekan'           THEN w.kode_fakultas = v_kd_fak
-        WHEN 'jajaran_dekanat' THEN w.kode_fakultas = v_kd_fak
-        WHEN 'kaprodi'         THEN w.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN w.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN w.no_prodi = v_no_ps
-        ELSE false
-    END;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
-
-CREATE VIEW analitik.v_wisudawan_distribusi_jawaban AS
-SELECT * FROM analitik.fn_get_wisudawan_distribusi_jawaban();
-
-
--- ── B7. mv_wisudawan_statistik_pertanyaan ────────────────────────
-
-CREATE OR REPLACE FUNCTION analitik.fn_get_wisudawan_statistik_pertanyaan()
-RETURNS SETOF analitik_mv.mv_wisudawan_statistik_pertanyaan AS $$
-DECLARE
-    v_role     text;
-    v_no_ps integer;
-    v_kd_fak   character varying;
-BEGIN
-    v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
-    IF v_role IS NULL THEN RETURN; END IF;
-
-    RETURN QUERY
-    SELECT * FROM analitik_mv.mv_wisudawan_statistik_pertanyaan w
-    WHERE CASE v_role
-        WHEN 'admin'           THEN true
-        WHEN 'direktorat'      THEN true
-        WHEN 'dekan'           THEN w.kode_fakultas = v_kd_fak
-        WHEN 'jajaran_dekanat' THEN w.kode_fakultas = v_kd_fak
-        WHEN 'kaprodi'         THEN w.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN w.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN w.no_prodi = v_no_ps
-        ELSE false
-    END;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
-
-CREATE VIEW analitik.v_wisudawan_statistik_pertanyaan AS
-SELECT * FROM analitik.fn_get_wisudawan_statistik_pertanyaan();
-
-
--- ── B8. mv_wisudawan_jawaban_responden ───────────────────────────
--- Wide table (138+ kolom) — gunakan SETOF karena tidak ada masking
-
-CREATE OR REPLACE FUNCTION analitik.fn_get_wisudawan_jawaban_responden()
-RETURNS SETOF analitik_mv.mv_wisudawan_jawaban_responden AS $$
-DECLARE
-    v_role     text;
-    v_no_ps integer;
-    v_kd_fak   character varying;
-BEGIN
-    v_role     := NULLIF(current_setting('app.role',     true), '');
-    v_no_ps := NULLIF(current_setting('app.no_ps', true), '')::integer;
-    v_kd_fak   := NULLIF(current_setting('app.kd_fak',   true), '');
-    IF v_role IS NULL THEN RETURN; END IF;
-
-    RETURN QUERY
-    SELECT * FROM analitik_mv.mv_wisudawan_jawaban_responden w
-    WHERE CASE v_role
-        WHEN 'admin'           THEN true
-        WHEN 'direktorat'      THEN true
-        WHEN 'dekan'           THEN w.kode_fakultas = v_kd_fak
-        WHEN 'jajaran_dekanat' THEN w.kode_fakultas = v_kd_fak
-        WHEN 'kaprodi'         THEN w.no_prodi = v_no_ps
-        WHEN 'jajaran_prodi'   THEN w.no_prodi = v_no_ps
-        WHEN 'dosen'           THEN w.no_prodi = v_no_ps
-        ELSE false
-    END;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
-
-CREATE VIEW analitik.v_wisudawan_jawaban_responden AS
-SELECT * FROM analitik.fn_get_wisudawan_jawaban_responden();
-
--- ================================================================
--- E. RINGKASAN OBJEK YANG DIBUAT
--- ================================================================
---
--- Schema analitik.*
--- ├── View publik (5):
--- │   ├── v_akademik_jenis_dan_sifat_matkul  [A1] semua role
--- │   ├── v_info_umum_matkul                  [A2] semua role
--- │   ├── v_info_umum_institusi               [A3] semua role
--- │   ├── v_info_umum_dosen                   [A4] semua role
--- │   └── v_info_umum_wisuda                  [A5] semua role
--- │
--- ├── Security Definer Functions (8):
--- │   ├── fn_get_akademik_kelas()             [B1] + masking JSONB DOSEN
--- │   ├── fn_get_akademik_komentar_mahasiswa() [B2]
--- │   ├── fn_get_akademik_portofolio()        [B3]
--- │   ├── fn_get_akademik_statistik_prodi()   [B4]
--- │   ├── fn_get_akademik_statistik_dosen()   [B5] + masking kolom DOSEN
--- │   ├── fn_get_wisudawan_distribusi_jawaban() [B6]
--- │   ├── fn_get_wisudawan_statistik_pertanyaan() [B7]
--- │   └── fn_get_wisudawan_jawaban_responden() [B8]
--- │
--- └── View wrappers (8):
---     ├── v_akademik_kelas
---     ├── v_akademik_komentar_mahasiswa
---     ├── v_akademik_portofolio
---     ├── v_akademik_statistik_prodi
---     ├── v_akademik_statistik_dosen
---     ├── v_wisudawan_distribusi_jawaban
---     ├── v_wisudawan_statistik_pertanyaan
---     └── v_wisudawan_jawaban_responden

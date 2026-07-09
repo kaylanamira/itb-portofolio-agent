@@ -1,18 +1,32 @@
 -- ================================================================
 -- COMMENT ON — Schema analitik.*
 -- Konteks untuk agen text-to-SQL dan agen RAG
+-- Versi ini disesuaikan dengan schema_mv_portofolio_kuesioner.sql
+-- dan security_definer_function.sql terbaru.
 --
 -- Konvensi penamaan kolom:
---   no_prodi    = integer ID program studi (dari utama.program_studi.no_ps)
---   kode_prodi  = kode string singkat prodi, 2 karakter (dari kd_ps), contoh: IF, EL
---   kode_matkul = kode mata kuliah 6 karakter (dari kd_kuliah), contoh: IF2210
---   kode_fakultas = kode string fakultas/sekolah (dari kd_fak), contoh: STEI, SBM
+--   no_prodi      = integer ID program studi (utama.program_studi.no_ps)
+--   kode_prodi    = kode string singkat prodi 2 karakter (kd_ps), contoh: IF, EL
+--   kode_matkul   = kode mata kuliah 6 karakter (kd_kuliah), contoh: IF2210
+--   kode_fakultas = kode string fakultas/sekolah (kd_fak), contoh: STEI, SBM
 --   tahun_ajaran  = format 'YYYY/YYYY', contoh: '2023/2024'
 --   semester      = 1=ganjil, 2=genap, 3=pendek
 --   jenjang       = S1/S2/S3/PR (dari kd_strata)
 --
--- Security: semua view di schema ini di-filter otomatis per user role.
+-- Skala kuesioner mahasiswa: 1=Sangat Tidak Setuju/Tidak Pernah,
+--   2=Tidak Setuju/Jarang, 3=Setuju/Sering, 4=Sangat Setuju/Selalu.
+--   Pertanyaan Q21-Q37 diisi oleh mahasiswa saat evaluasi kelas.
+--   Pertanyaan Q25/Q26/Q27 bersifat per-dosen (kd_kategori='D').
+--   Pertanyaan lainnya bersifat per-kelas (kd_kategori='K').
+--
+-- Portofolio dosen (kd_pertanyaan 12-19):
+--   Diisi dosen setelah perkuliahan selesai.
+--   Dikelompokkan dalam 4 grup aktif (kd_grup 6-9).
+--   Teks sudah distrip HTML via analitik_mv.strip_html().
+--
+-- Security: semua view di schema ini difilter otomatis per user role.
 -- Agen tidak perlu menambahkan filter role — sudah ditangani Security Definer Function.
+-- Periode data: 2018/2019 semester 1 s.d. terkini.
 -- ================================================================
 
 
@@ -36,8 +50,16 @@ COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.kode_prodi
     IS 'Kode singkat prodi 2 karakter, contoh: IF, EL, MA. Dari utama.program_studi.kd_ps.';
 COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.jenjang
     IS 'Jenjang program studi: S1, S2, S3, PR. Dari utama.program_studi.kd_strata.';
+COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.nama_prodi_id
+    IS 'Nama program studi Bahasa Indonesia.';
+COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.nama_prodi_en
+    IS 'Nama program studi Bahasa Inggris.';
 COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.kode_fakultas
     IS 'Kode fakultas/sekolah, contoh: STEI, SBM, FSRD. Dari utama.program_studi.kd_fak.';
+COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.nama_fakultas_id
+    IS 'Nama fakultas/sekolah Bahasa Indonesia.';
+COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.nama_fakultas_en
+    IS 'Nama fakultas/sekolah Bahasa Inggris.';
 COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.tahun_kurikulum
     IS 'Tahun berlakunya kurikulum, contoh: 2003, 2013, 2024.';
 COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.sumber
@@ -65,7 +87,8 @@ COMMENT ON COLUMN analitik.v_akademik_jenis_dan_sifat_matkul.is_wajib_itb
 COMMENT ON VIEW analitik.v_info_umum_kelas_matkul IS
     'Informasi umum kelas dan mata kuliah — tanpa data nilai, kehadiran, atau skor kuesioner. '
     'Grain: 1 baris = 1 kelas. Gunakan untuk lookup kelas, matkul, dosen, prodi, dan jenis/sifat. '
-    'Aman diakses semua role tanpa restriction tambahan.';
+    'Aman diakses semua role tanpa restriction tambahan. '
+    'Periode: 2018/2019 semester 1 s.d. terkini.';
 
 COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.kelas_id
     IS 'PK. ID kelas (FK ke kelas.kelas).';
@@ -108,7 +131,8 @@ COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.nama_fakultas_id
 COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.nama_fakultas_en
     IS 'Nama fakultas/sekolah Bahasa Inggris.';
 COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.semua_dosen_id
-    IS 'Array integer dosen_id semua pengajar kelas, urut dosen utama di indeks 0. ';
+    IS 'Array integer dosen_id semua pengajar kelas, urut dosen utama di indeks 0. '
+       'Gunakan @> untuk cek dosen tertentu: WHERE semua_dosen_id @> ARRAY[123].';
 COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.semua_dosen_nama_gelar
     IS 'Array nama lengkap dengan gelar semua pengajar, urut sama dengan semua_dosen_id.';
 COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.kode_jenis_list
@@ -127,10 +151,11 @@ COMMENT ON COLUMN analitik.v_info_umum_kelas_matkul.is_wajib_itb
 COMMENT ON VIEW analitik.v_info_umum_institusi IS
     'Ringkasan aktivitas institusi per prodi per semester — jumlah kelas, dosen, mahasiswa aktif. '
     'Grain: 1 baris = 1 (no_prodi, semester, tahun). '
-    'Tidak mengandung data nilai atau skor kuesioner. Aman diakses semua role.';
+    'Tidak mengandung data nilai atau skor kuesioner. Aman diakses semua role. '
+    'Periode: 2018/2019 semester 1 s.d. terkini.';
 
 COMMENT ON COLUMN analitik.v_info_umum_institusi.no_prodi
-    IS 'ID numerik program studi (FK ke utama.program_studi.no_ps).';
+    IS 'ID numerik program studi (FK ke utama.program_studi.no_ps). PK bersama semester dan tahun.';
 COMMENT ON COLUMN analitik.v_info_umum_institusi.kode_prodi
     IS 'Kode singkat prodi 2 karakter, contoh: IF, EL, MA.';
 COMMENT ON COLUMN analitik.v_info_umum_institusi.nama_prodi_id
@@ -166,7 +191,8 @@ COMMENT ON COLUMN analitik.v_info_umum_institusi.jumlah_mahasiswa_aktif
 COMMENT ON VIEW analitik.v_info_umum_dosen IS
     'Informasi umum dosen per semester — beban mengajar dan daftar prodi/MK yang diajar. '
     'Grain: 1 baris = 1 (dosen_id, semester, tahun). '
-    'Tidak mengandung skor kuesioner atau kehadiran. Aman diakses semua role.';
+    'Tidak mengandung skor kuesioner atau kehadiran. Aman diakses semua role. '
+    'Periode: 2018/2019 semester 1 s.d. terkini.';
 
 COMMENT ON COLUMN analitik.v_info_umum_dosen.dosen_id
     IS 'ID dosen (FK ke utama.dosen). PK bersama semester dan tahun.';
@@ -197,6 +223,8 @@ COMMENT ON COLUMN analitik.v_info_umum_dosen.jumlah_matkul
 COMMENT ON COLUMN analitik.v_info_umum_dosen.total_sks_diajar
     IS 'Total SKS seluruh kelas yang diajar (termasuk paralel). '
        'Berbeda dari SKS unik per MK — mencerminkan beban mengajar total.';
+COMMENT ON COLUMN analitik.v_info_umum_dosen.kelas_id_list
+    IS 'Array kelas_id semua kelas yang diajar dosen semester ini.';
 COMMENT ON COLUMN analitik.v_info_umum_dosen.kode_matkul_list
     IS 'Array kode MK unik yang diajar dosen semester tersebut, contoh: {IF2210,IF3110}.';
 COMMENT ON COLUMN analitik.v_info_umum_dosen.no_prodi_diajar
@@ -206,63 +234,19 @@ COMMENT ON COLUMN analitik.v_info_umum_dosen.kode_prodi_diajar
     IS 'Array kode singkat prodi yang diajar, paralel dengan no_prodi_diajar.';
 
 
--- ── A5. v_info_umum_wisuda ────────────────────────────────────────
-COMMENT ON VIEW analitik.v_info_umum_wisuda IS
-    'Ringkasan jumlah responden survey wisudawan per prodi per periode. '
-    'Grain: 1 baris = 1 (no_prodi, periode_ijazah_id_final, periode_seremoni_id). '
-    'Tidak mengandung jawaban individual. Aman diakses semua role. '
-    'Filter is_seremoni_asumtif=FALSE untuk hanya melihat data seremoni final.';
-
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.no_prodi
-    IS 'ID numerik program studi wisudawan.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.kode_prodi
-    IS 'Kode singkat prodi wisudawan.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.nama_prodi_id
-    IS 'Nama program studi Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.nama_prodi_en
-    IS 'Nama program studi Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.jenjang
-    IS 'Jenjang studi: S1, S2, S3, PR.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.kode_fakultas
-    IS 'Kode fakultas/sekolah wisudawan.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.nama_fakultas_id
-    IS 'Nama fakultas Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.nama_fakultas_en
-    IS 'Nama fakultas Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.periode_ijazah_id_final
-    IS 'Periode ijazah final format YYYYMM, contoh: 202502=Februari 2025. '
-       'Sudah diimputasi jika data asli NULL.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.tahun_ijazah
-    IS 'Tahun ijazah, diekstrak dari periode_ijazah_id_final.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.bulan_ijazah
-    IS 'Bulan ijazah (1–12), diekstrak dari periode_ijazah_id_final.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.periode_seremoni_id
-    IS 'ID seremoni wisuda format YYYYMM. NULL jika mapping belum tersedia.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.tahun_seremoni
-    IS 'Tahun pelaksanaan seremoni wisuda.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.bulan_seremoni
-    IS 'Bulan pelaksanaan seremoni wisuda (1–12).';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.nama_seremoni
-    IS 'Nama seremoni wisuda Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.is_seremoni_asumtif
-    IS 'TRUE = seremoni masih dummy/asumtif (data periode belum final). '
-       'Filter WHERE is_seremoni_asumtif = FALSE untuk data final saja.';
-COMMENT ON COLUMN analitik.v_info_umum_wisuda.jumlah_responden
-    IS 'Jumlah wisudawan unik yang mengisi survey pada prodi dan periode tersebut.';
-
-
 -- ================================================================
 -- B. VIEW WRAPPER — Difilter otomatis per role user
 -- ================================================================
 
 -- ── B1. v_akademik_kelas ─────────────────────────────────────────
 COMMENT ON VIEW analitik.v_akademik_kelas IS
-    'Data lengkap per kelas: kehadiran, distribusi nilai, skor kuesioner, dan dimensi evaluasi. '
-    'Grain: 1 baris = 1 kelas. '
-    'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
-    'KAPRODI/JAJ.PRODI/DOSEN=filter no_prodi. '
-    'COLUMN SECURITY: kolom skor_dosen_q25/26/27 (JSONB) di-mask untuk role DOSEN '
-    '— hanya berisi entry dosen tersebut saja, bukan skor dosen lain dalam kelas.';
+    'Data lengkap per kelas: kehadiran, distribusi nilai (termasuk T/incomplete), '
+    'skor kuesioner mahasiswa (Q21-Q37), dan dimensi evaluasi. '
+    'Grain: 1 baris = 1 kelas. Periode: 2018/2019 semester 1 s.d. terkini. '
+    'ROW SECURITY: ADMIN/DIREKTORAT=semua kelas; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
+    'KAPRODI/JAJ.PRODI/DOSEN=semua kelas di prodinya (no_prodi). '
+    'COLUMN SECURITY: skor_dosen_q25/26/27 (JSONB) di-mask untuk role DOSEN '
+    '— hanya berisi entry dosen tersebut saja, bukan skor dosen lain.';
 
 COMMENT ON COLUMN analitik.v_akademik_kelas.kelas_id
     IS 'PK. ID kelas (FK ke kelas.kelas).';
@@ -320,11 +304,14 @@ COMMENT ON COLUMN analitik.v_akademik_kelas.kode_sifat_list
 COMMENT ON COLUMN analitik.v_akademik_kelas.is_wajib_itb
     IS 'TRUE jika MK adalah matakuliah wajib ITB lintas prodi.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.pct_kehadiran_mahasiswa
-    IS 'Persentase kehadiran mahasiswa (0–100). Sumber: evaluasi.nilai_kelas.hadir_mhs. NULL jika belum ada data evaluasi.';
+    IS 'Persentase kehadiran mahasiswa (0–100). Sumber: evaluasi.nilai_kelas.hadir_mhs. '
+       'NULL jika belum ada data evaluasi.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.pct_kehadiran_dosen
-    IS 'Persentase kehadiran dosen (0–100). Sumber: evaluasi.nilai_kelas.hadir_dosen. NULL jika belum ada data evaluasi.';
+    IS 'Persentase kehadiran dosen (0–100). Sumber: evaluasi.nilai_kelas.hadir_dosen. '
+       'NULL jika belum ada data evaluasi.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.avg_ip_akhir_mahasiswa
-    IS 'Rata-rata IP akhir mahasiswa yang mengikuti kelas ini. Sumber: evaluasi.nilai_kelas.ip_mhs. NULL jika belum ada data.';
+    IS 'Rata-rata IP akhir mahasiswa yang mengikuti kelas ini. '
+       'Sumber: evaluasi.nilai_kelas.ip_mhs. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_dna
     IS 'Skor DNA (Did Not Attend) kelas. NULL jika tidak ada.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.ts_dna
@@ -337,7 +324,9 @@ COMMENT ON COLUMN analitik.v_akademik_kelas.is_distribusi_nilai_sah
        '(bukan berarti semua mahasiswa tidak mendapat nilai, data belum masuk). '
        'Selalu filter WHERE is_distribusi_nilai_sah = TRUE sebelum menggunakan data distribusi nilai.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.jumlah_mahasiswa
-    IS 'Jumlah mahasiswa dengan nilai sah (exclude T/incomplete). NULL jika is_distribusi_nilai_sah=FALSE.';
+    IS 'Total mahasiswa dengan nilai apapun (termasuk T/incomplete). '
+       'NULL jika is_distribusi_nilai_sah=FALSE. '
+       'Gunakan dist_jumlah_t untuk mengetahui jumlah yang masih pending.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_a
     IS 'Jumlah mahasiswa mendapat nilai A. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_ab
@@ -352,14 +341,19 @@ COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_d
     IS 'Jumlah mahasiswa mendapat nilai D. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_e
     IS 'Jumlah mahasiswa mendapat nilai E (tidak lulus). NULL jika is_distribusi_nilai_sah=FALSE.';
+COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_t
+    IS 'Jumlah mahasiswa dengan nilai T (tunda/incomplete — nilai belum final). '
+       'NULL jika is_distribusi_nilai_sah=FALSE. '
+       'Mahasiswa T ikut dihitung di jumlah_mahasiswa dan dist_pct_*.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_pass
     IS 'Jumlah mahasiswa lulus (nilai P, untuk kelas PassFail). NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_jumlah_fail
     IS 'Jumlah mahasiswa tidak lulus (nilai F, untuk kelas PassFail). NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_a
-    IS 'Persentase mahasiswa mendapat nilai A (0–100). NULL jika is_distribusi_nilai_sah=FALSE.';
+    IS 'Persentase mahasiswa mendapat nilai A dari total mahasiswa (termasuk T). '
+       'NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_ab
-    IS 'Persentase mahasiswa mendapat nilai AB. NULL jika is_distribusi_nilai_sah=FALSE.';
+    IS 'Persentase mahasiswa mendapat nilai AB dari total mahasiswa. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_b
     IS 'Persentase mahasiswa mendapat nilai B. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_bc
@@ -370,107 +364,132 @@ COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_d
     IS 'Persentase mahasiswa mendapat nilai D. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_e
     IS 'Persentase mahasiswa mendapat nilai E. NULL jika is_distribusi_nilai_sah=FALSE.';
+COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_t
+    IS 'Persentase mahasiswa dengan nilai T (tunda/incomplete) dari total mahasiswa. '
+       'Nilai tinggi menandakan banyak nilai yang belum final. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_pass
     IS 'Persentase mahasiswa lulus (nilai P). NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_fail
     IS 'Persentase mahasiswa tidak lulus (nilai F). NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_lulus_a_c
-    IS 'Persentase mahasiswa lulus ≥C (A+AB+B+BC+C) untuk ABCDE, atau P untuk PassFail. '
-       'Metrik utama tingkat kelulusan. NULL jika is_distribusi_nilai_sah=FALSE.';
-COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_lulus_a_d
-    IS 'Persentase mahasiswa lulus ≥D (A+AB+B+BC+C+D) untuk ABCDE, atau P untuk PassFail. '
+    IS 'Persentase mahasiswa lulus ≥C (A+AB+B+BC+C) untuk ABCDE, atau P untuk PassFail, '
+       'dari total mahasiswa termasuk T. Metrik utama tingkat kelulusan. '
        'NULL jika is_distribusi_nilai_sah=FALSE.';
+COMMENT ON COLUMN analitik.v_akademik_kelas.dist_pct_lulus_a_d
+    IS 'Persentase mahasiswa lulus ≥D (A+AB+B+BC+C+D) untuk ABCDE, atau P untuk PassFail, '
+       'dari total mahasiswa termasuk T. NULL jika is_distribusi_nilai_sah=FALSE.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q21
-    IS 'Skor kuesioner mahasiswa Q21 (rata-rata kelas, skala 1–4): '
-       '"Saya memperoleh informasi yang cukup tentang luaran matakuliah." '
+    IS 'Skor kuesioner mahasiswa Q21 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Saya memperoleh informasi yang cukup tentang hal-hal tertentu yang '
+       'harus saya capai atau kuasai (luaran matakuliah) sesudah mengikuti matakuliah ini." '
+       'Kelompok: Outcome (luaran) matakuliah. Kategori: K (per kelas). '
        'NULL jika belum ada data kuesioner untuk kelas ini.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q22
-    IS 'Skor kuesioner mahasiswa Q22 (rata-rata kelas, skala 1–4): '
-       '"Pelaksanaan perkuliahan diarahkan agar mahasiswa mencapai luaran matakuliah." '
+    IS 'Skor kuesioner mahasiswa Q22 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Pelaksanaan perkuliahan diarahkan agar mahasiswa dapat mencapai '
+       'atau menguasai luaran matakuliah ini." '
+       'Kelompok: Outcome (luaran) matakuliah. Kategori: K (per kelas). '
        'NULL jika belum ada data kuesioner.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q23
-    IS 'Skor kuesioner mahasiswa Q23 (rata-rata kelas, skala 1–4): '
-       '"Saya mencapai atau menguasai luaran matakuliah ini." '
+    IS 'Skor kuesioner mahasiswa Q23 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Saya mencapai atau menguasai luaran matakuliah ini." '
+       'Kelompok: Outcome (luaran) matakuliah. Kategori: K (per kelas). '
        'NULL jika belum ada data kuesioner.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q24
-    IS 'Skor kuesioner mahasiswa Q24 (rata-rata kelas, skala 1–4): '
-       '"Pelaksanaan perkuliahan terorganisir dengan baik." '
+    IS 'Skor kuesioner mahasiswa Q24 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Pelaksanaan perkuliahan terorganisir dengan baik." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: K (per kelas). '
        'NULL jika belum ada data kuesioner.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q25
-    IS 'Skor kuesioner mahasiswa Q25 (rata-rata dari semua dosen dalam kelas, skala 1–4): '
-       '"Dosen berkomunikasi dengan efektif." '
+    IS 'Skor kuesioner mahasiswa Q25 (rata-rata dari semua dosen dalam kelas, skala 1–4). '
+       'Pertanyaan: "Dosen berkomunikasi dengan efektif." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: D (per dosen, dirata-rata antar dosen). '
        'Rata-rata lintas dosen jika kelas tim-teaching. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q26
-    IS 'Skor kuesioner mahasiswa Q26 (rata-rata dari semua dosen, skala 1–4): '
-       '"Dosen peduli terhadap pencapaian mahasiswa akan luaran matakuliah." '
+    IS 'Skor kuesioner mahasiswa Q26 (rata-rata dari semua dosen dalam kelas, skala 1–4). '
+       'Pertanyaan: "Dosen peduli terhadap pencapaian atau penguasaan mahasiswa '
+       'akan luaran matakuliah ini." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: D (per dosen, dirata-rata antar dosen). '
        'NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q27
-    IS 'Skor kuesioner mahasiswa Q27 (rata-rata dari semua dosen, skala 1–4): '
-       '"Dosen berlaku adil (fair) kepada mahasiswa." '
+    IS 'Skor kuesioner mahasiswa Q27 (rata-rata dari semua dosen dalam kelas, skala 1–4). '
+       'Pertanyaan: "Dosen berlaku adil (fair) kepada mahasiswa." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: D (per dosen, dirata-rata antar dosen). '
        'NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q28
-    IS 'Skor kuesioner mahasiswa Q28 (rata-rata kelas, skala 1–4): '
-       '"Beban kerja untuk matakuliah ini sesuai dengan SKS-nya." '
+    IS 'Skor kuesioner mahasiswa Q28 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Beban kerja untuk matakuliah ini sesuai dengan SKS-nya." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: K (per kelas). '
        'NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q29
-    IS 'Skor kuesioner mahasiswa Q29 (rata-rata kelas, skala 1–4): '
-       '"Sarana prasarana untuk matakuliah tersedia dengan memadai." '
+    IS 'Skor kuesioner mahasiswa Q29 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Sarana prasarana untuk matakuliah tersedia dengan memadai." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: K (per kelas). '
        'Komponen dari avg_skor_sarana_prasarana. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q30
-    IS 'Skor kuesioner mahasiswa Q30 (rata-rata kelas, skala 1–4): '
-       '"Tersedia cukup fasilitas pendukung di luar kuliah." '
+    IS 'Skor kuesioner mahasiswa Q30 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Tersedia cukup fasilitas pendukung di luar kuliah yang '
+       'memungkinkan saya mengikuti matakuliah ini dengan baik." '
+       'Kelompok: Pelaksanaan perkuliahan. Kategori: K (per kelas). '
        'Komponen dari avg_skor_sarana_prasarana. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q35
-    IS 'Skor kuesioner mahasiswa Q35 (rata-rata kelas, skala 1–4): '
-       '"Saya berusaha dengan sungguh-sungguh mengikuti matakuliah ini." '
-       'Mengukur keterlibatan mahasiswa. NULL jika belum ada data.';
+    IS 'Skor kuesioner mahasiswa Q35 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Saya berusaha dengan sungguh-sungguh mengikuti matakuliah ini." '
+       'Kelompok: Perilaku mahasiswa. Kategori: K (per kelas). '
+       'Mengukur keterlibatan/engagement mahasiswa. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_q37
-    IS 'Skor kuesioner mahasiswa Q37 (rata-rata kelas, skala 1–4): '
-       '"Saya memperoleh pengalaman belajar yang positif dalam matakuliah ini." '
-       'Mengukur kepuasan belajar mahasiswa. NULL jika belum ada data.';
+    IS 'Skor kuesioner mahasiswa Q37 (rata-rata kelas, skala 1–4). '
+       'Pertanyaan: "Saya memperoleh pengalaman belajar yang positif dalam matakuliah ini." '
+       'Kelompok: Perilaku mahasiswa. Kategori: K (per kelas). '
+       'Mengukur kepuasan belajar mahasiswa secara keseluruhan. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_dosen_q25
-    IS '[JSONB] Skor Q25 per dosen dalam kelas: {"dosen_id": skor, ...}. '
-       'Contoh: {"123": 3.67, "456": 4.00}. Key = dosen_id::TEXT. '
-       'SECURITY: role DOSEN hanya melihat entry miliknya sendiri; role lain melihat semua. '
+    IS '[JSONB] Skor Q25 ("Dosen berkomunikasi dengan efektif") per dosen dalam kelas: '
+       '{"dosen_id": skor, ...}. Contoh: {"123": 3.67, "456": 4.00}. Key = dosen_id::TEXT. '
+       'SECURITY: role DOSEN hanya melihat entry miliknya; role lain melihat semua. '
        'NULL jika tidak ada data kuesioner per dosen.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_dosen_q26
-    IS '[JSONB] Skor Q26 per dosen dalam kelas: {"dosen_id": skor, ...}. '
+    IS '[JSONB] Skor Q26 ("Dosen peduli terhadap pencapaian mahasiswa") per dosen: '
+       '{"dosen_id": skor, ...}. '
        'SECURITY: di-mask untuk role DOSEN — hanya berisi entry miliknya.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.skor_dosen_q27
-    IS '[JSONB] Skor Q27 per dosen dalam kelas: {"dosen_id": skor, ...}. '
+    IS '[JSONB] Skor Q27 ("Dosen berlaku adil kepada mahasiswa") per dosen: '
+       '{"dosen_id": skor, ...}. '
        'SECURITY: di-mask untuk role DOSEN — hanya berisi entry miliknya.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.avg_skor_capaian
     IS 'Rata-rata skor dimensi Capaian Pembelajaran dari evaluasi.nilai_dosen.skor_kues (key "1"). '
-       'Rata-rata dari skor semua dosen dalam kelas. NULL jika belum ada data format baru.';
+       'Rata-rata dari skor semua dosen dalam kelas. NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.avg_skor_pelaksanaan
     IS 'Rata-rata skor dimensi Pelaksanaan Perkuliahan dari evaluasi.nilai_dosen.skor_kues (key "2"). '
-       'NULL jika belum ada data format baru.';
+       'NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.avg_skor_sarana_prasarana
     IS 'Rata-rata skor dimensi Sarana & Prasarana, dihitung dari (skor_q29 + skor_q30) / 2. '
        'NULL jika belum ada data kuesioner.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.avg_skor_perilaku_mahasiswa
     IS 'Rata-rata skor dimensi Perilaku Mahasiswa dari evaluasi.nilai_dosen.skor_kues (key "3"). '
-       'NULL jika belum ada data format baru.';
+       'NULL jika belum ada data.';
 COMMENT ON COLUMN analitik.v_akademik_kelas.avg_skor_overall
     IS 'Rata-rata skor keseluruhan dari semua pertanyaan kuesioner yang tersedia (Q21–Q37). '
-       'Hanya mempertimbangkan pertanyaan yang tidak NULL. NULL jika tidak ada data kuesioner sama sekali.';
+       'Hanya mempertimbangkan pertanyaan yang tidak NULL. NULL jika tidak ada data kuesioner.';
 
 
 -- ── B2. v_akademik_komentar_mahasiswa ────────────────────────────
 COMMENT ON VIEW analitik.v_akademik_komentar_mahasiswa IS
-    'Komentar teks bebas mahasiswa per kelas dari kuesioner (pertanyaan 103). '
+    'Komentar teks bebas mahasiswa per kelas dari kuesioner (pertanyaan Q103). '
+    'Q103: "Berikan komentar Anda tentang matakuliah ini (opsional)." '
     'Grain: 1 baris = 1 jawaban komentar per mahasiswa per kelas. '
     'Satu kelas bisa memiliki banyak komentar (1 per mahasiswa yang mengisi). '
     'Teks sudah distrip HTML via analitik_mv.strip_html(). '
+    'Periode: 2018/2019 semester 1 s.d. terkini. '
     'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
-    'KAPRODI/JAJ.PRODI/DOSEN=filter no_prodi; DOSEN=hanya kelas yang ia ajarkan (semua_dosen_id).';
+    'KAPRODI/JAJ.PRODI=filter no_prodi; '
+    'DOSEN=hanya kelas yang ia ajarkan (filter semua_dosen_id).';
 
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.jawaban_id
     IS 'PK. ID jawaban kuesioner (FK ke evaluasi.jwb_kuesioner).';
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.kelas_id
     IS 'ID kelas (FK ke kelas.kelas).';
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.tahun
-    IS 'Tahun akademik.';
+    IS 'Tahun akademik 4 digit.';
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.semester
     IS '1=ganjil, 2=genap, 3=pendek.';
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.tahun_ajaran
@@ -502,35 +521,178 @@ COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.semua_dosen_id
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.semua_dosen_nama_gelar
     IS 'Array nama dengan gelar semua pengajar kelas.';
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.komentar_teks
-    IS 'Isi komentar teks bebas dari mahasiswa. Sudah distrip HTML. '
+    IS 'Isi komentar teks bebas dari mahasiswa untuk matakuliah ini. '
+       'Sudah distrip HTML via analitik_mv.strip_html(). '
        'Diambil dari evaluasi.jwb_kuesioner.jawaban key ''103''. '
+       'Q103: pertanyaan terbuka opsional — mahasiswa dapat menuliskan '
+       'pendapat, saran, atau masukan apapun tentang matakuliah. '
        'Sumber utama untuk analisis RAG/sentimen komentar mahasiswa.';
 COMMENT ON COLUMN analitik.v_akademik_komentar_mahasiswa.ts_jawaban
     IS 'Timestamp saat mahasiswa mengisi kuesioner.';
 
 
 -- ── B3. v_akademik_portofolio ─────────────────────────────────────
--- (Comments dari beberapa_informasi_comment.sql — sudah di-apply ke view ini)
--- Tambahan comment pada view-level:
 COMMENT ON VIEW analitik.v_akademik_portofolio IS
     'Portofolio dosen per kelas — refleksi, analisis, dan rekomendasi pengajaran. '
     'Grain: 1 baris = 1 kelas (hanya kelas yang memiliki portofolio terisi). '
-    'Dua era: skema_pertanyaan=''baru'' (kd_pertanyaan 12–19, sejak 2018) dan '
-    '''lama'' (kd_pertanyaan 1–11, sebelum 2018). Semua teks sudah distrip HTML. '
+    'Hanya skema pertanyaan baru (kd_pertanyaan 12–19, berlaku sejak 2017/2018 semester 2). '
+    'Periode data: 2018/2019 semester 1 s.d. terkini. '
+    'Semua teks sudah distrip HTML via analitik_mv.strip_html(). '
+    'NULL pada kolom isian = dosen tidak mengisi pertanyaan tersebut. '
+    'Gunakan kolom lengkap dan nilai_portofolio sebagai sinyal kualitas kelengkapan. '
     'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
-    'KAPRODI/JAJ.PRODI=filter no_prodi; DOSEN=filter no_prodi (portofolio kelas di prodinya).';
+    'KAPRODI/JAJ.PRODI/DOSEN=semua portofolio di prodinya (no_prodi).';
 
+-- Identitas kelas
+COMMENT ON COLUMN analitik.v_akademik_portofolio.kelas_id
+    IS 'PK. ID kelas (FK ke kelas.kelas).';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_matkul
+    IS 'Kode mata kuliah 6 karakter, contoh: MA1101.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_matkul_id
+    IS 'Nama mata kuliah Bahasa Indonesia.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_matkul_en
+    IS 'Nama mata kuliah Bahasa Inggris.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.sks
+    IS 'Jumlah SKS mata kuliah.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.no_kelas
+    IS 'Nomor urut kelas dalam satu mata kuliah per semester.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.semester
+    IS '1=ganjil, 2=genap, 3=pendek.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun
+    IS 'Tahun akademik 4 digit.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun_ajaran
+    IS 'Format YYYY/YYYY, contoh: 2022/2023.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun_kurikulum
+    IS 'Tahun kurikulum yang berlaku untuk mata kuliah ini.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.jenis_nilai
+    IS 'Sistem penilaian kelas: ''ABCDE'' atau ''PassFail''.';
 COMMENT ON COLUMN analitik.v_akademik_portofolio.no_prodi
-    IS 'ID numerik program studi penyelenggara kelas.';
+    IS 'ID numerik program studi penyelenggara kelas (no_ps).';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_prodi
+    IS 'Kode singkat prodi 2 karakter, contoh: IF, EL.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_prodi_id
+    IS 'Nama program studi Bahasa Indonesia.';
 COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_prodi_en
     IS 'Nama program studi Bahasa Inggris.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.jenjang
+    IS 'Jenjang studi: S1, S2, S3, PR.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_fakultas
+    IS 'Kode fakultas/sekolah, contoh: STEI, SBM.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_fakultas_id
+    IS 'Nama fakultas/sekolah Bahasa Indonesia.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_fakultas_en
+    IS 'Nama fakultas/sekolah Bahasa Inggris.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.semua_dosen_id
+    IS 'Array dosen_id semua pengajar kelas (dari kelas.pengajar).';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.semua_dosen_nama_gelar
+    IS 'Array nama lengkap dengan gelar semua pengajar kelas.';
+
+-- Metadata portofolio
+COMMENT ON COLUMN analitik.v_akademik_portofolio.tanggal_entri
+    IS 'Tanggal dosen pertama kali mengisi/menyimpan portofolio (dari evaluasi.portofolio.tgl_entri).';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.lengkap
+    IS 'TRUE jika portofolio sudah dinyatakan lengkap dan diverifikasi. '
+       'FALSE = belum lengkap atau masih dalam pengisian. '
+       'Gunakan sebagai sinyal kualitas bersama nilai_portofolio.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.nilai_portofolio
+    IS 'Nilai numerik portofolio hasil verifikasi (NULL jika belum dinilai). '
+       'Gunakan sebagai sinyal kualitas bersama kolom lengkap.';
+
+-- ── Isian Portofolio Skema Baru (kd_pertanyaan 12–19) ────────────
+-- Grup 6: Penyelenggaraan Perkuliahan (kd_pertanyaan 12, 13)
+COMMENT ON COLUMN analitik.v_akademik_portofolio.metode_perkuliahan
+    IS '[kd_pertanyaan=12 | Grup 6: Penyelenggaraan Perkuliahan] '
+       'Pertanyaan: "Metode Perkuliahan" '
+       'Deskripsi: Uraian metode yang digunakan dalam pembelajaran, misalnya diskusi, '
+       'collaborative learning, kuliah tamu, maupun project. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.sistem_penilaian
+    IS '[kd_pertanyaan=13 | Grup 6: Penyelenggaraan Perkuliahan] '
+       'Pertanyaan: "Sistem Penilaian" '
+       'Deskripsi: Komponen-komponen penilaian yang digunakan dalam menghasilkan nilai akhir '
+       'mata kuliah (UTS, UAS, kuis, tugas, praktikum, presentasi, dll.), '
+       'bobot setiap komponen, dan standar konversi nilai ke indeks. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+
+-- Grup 7: Ketercapaian Outcomes (kd_pertanyaan 14, 15)
+COMMENT ON COLUMN analitik.v_akademik_portofolio.statistik_kelas
+    IS '[kd_pertanyaan=14 | Grup 7: Ketercapaian Outcomes] '
+       'Pertanyaan: "Statistik Kelas" '
+       'Deskripsi: Distribusi nilai ujian, PR, kuis dan bentuk penilaian lainnya, '
+       'serta data penting lainnya tentang kelas. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.analisis_terhadap_statistik_kelas_dan_ketercapaian_outcomes
+    IS '[kd_pertanyaan=15 | Grup 7: Ketercapaian Outcomes] '
+       'Pertanyaan: "Analisis terhadap Statistik Kelas dan Ketercapaian Outcomes" '
+       'Deskripsi: Uraian tentang tingkat keberhasilan pembelajaran dan ketercapaian outcomes '
+       'beserta faktor-faktor yang mempengaruhinya, berdasarkan data yang terkumpul. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+
+-- Grup 8: Refleksi Dosen (kd_pertanyaan 16, 17)
+COMMENT ON COLUMN analitik.v_akademik_portofolio.komentar_terhadap_hasil_kuesioner_mahasiswa
+    IS '[kd_pertanyaan=16 | Grup 8: Refleksi Dosen] '
+       'Pertanyaan: "Komentar terhadap Hasil Kuesioner Mahasiswa" '
+       'Deskripsi: Tanggapan dosen terhadap penilaian mahasiswa yang diberikan '
+       'melalui pengisian kuesioner evaluasi matakuliah. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.refleksi_pelaksanaan_perkuliahan
+    IS '[kd_pertanyaan=17 | Grup 8: Refleksi Dosen] '
+       'Pertanyaan: "Refleksi Pelaksanaan Perkuliahan" '
+       'Deskripsi: Uraian tentang pelaksanaan perkuliahan, meliputi aspek keberhasilan '
+       'dan kegagalan rencana, masalah belajar mahasiswa, persoalan yang dihadapi dosen, '
+       'serta temuan penting lainnya selama perkuliahan berlangsung. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+
+-- Grup 9: Rekomendasi Tindak Lanjut (kd_pertanyaan 18, 19)
+COMMENT ON COLUMN analitik.v_akademik_portofolio.usulan_perbaikan_oleh_dosen_berikutnya
+    IS '[kd_pertanyaan=18 | Grup 9: Rekomendasi Tindak Lanjut] '
+       'Pertanyaan: "Usulan Perbaikan oleh Dosen Berikutnya" '
+       'Deskripsi: Hal-hal yang perlu dan dapat dilakukan oleh dosen pengampu pada '
+       'perkuliahan mendatang untuk meningkatkan kualitas dan keberhasilan pembelajaran. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.usulan_perbaikan_oleh_itb
+    IS '[kd_pertanyaan=19 | Grup 9: Rekomendasi Tindak Lanjut] '
+       'Pertanyaan: "Usulan Perbaikan oleh ITB" '
+       'Deskripsi: Hal-hal yang perlu dilakukan oleh ITB (institut, fakultas/sekolah, prodi) '
+       'untuk mendukung keberhasilan perkuliahan, meliputi aspek kurikulum, '
+       'sarana prasarana, dan fasilitas lainnya. '
+       'NULL jika dosen tidak mengisi pertanyaan ini.';
+
+-- ── Komentar Verifikator/Reviewer ────────────────────────────────
+COMMENT ON COLUMN analitik.v_akademik_portofolio.verifikator_penyelenggaraan_perkuliahan
+    IS '[Komentar verifikator | Grup 6: Penyelenggaraan Perkuliahan] '
+       'Komentar reviewer/verifikator terhadap isian dosen pada grup Penyelenggaraan Perkuliahan, '
+       'yang mencakup metode_perkuliahan (r12) dan sistem_penilaian (r13). '
+       'NULL jika verifikator tidak memberikan komentar.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.verifikator_ketercapaian_outcomes
+    IS '[Komentar verifikator | Grup 7: Ketercapaian Outcomes] '
+       'Komentar reviewer/verifikator terhadap isian dosen pada grup Ketercapaian Outcomes, '
+       'yang mencakup statistik_kelas (r14) dan '
+       'analisis_terhadap_statistik_kelas_dan_ketercapaian_outcomes (r15). '
+       'NULL jika verifikator tidak memberikan komentar.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.verifikator_refleksi_dosen
+    IS '[Komentar verifikator | Grup 8: Refleksi Dosen] '
+       'Komentar reviewer/verifikator terhadap isian dosen pada grup Refleksi Dosen, '
+       'yang mencakup komentar_terhadap_hasil_kuesioner_mahasiswa (r16) dan '
+       'refleksi_pelaksanaan_perkuliahan (r17). '
+       'NULL jika verifikator tidak memberikan komentar.';
+COMMENT ON COLUMN analitik.v_akademik_portofolio.verifikator_rekomendasi_tindak_lanjut
+    IS '[Komentar verifikator | Grup 9: Rekomendasi Tindak Lanjut] '
+       'Komentar reviewer/verifikator terhadap isian dosen pada grup Rekomendasi Tindak Lanjut, '
+       'yang mencakup usulan_perbaikan_oleh_dosen_berikutnya (r18) dan '
+       'usulan_perbaikan_oleh_itb (r19). '
+       'NULL jika verifikator tidak memberikan komentar.';
 
 
 -- ── B4. v_akademik_statistik_prodi ───────────────────────────────
 COMMENT ON VIEW analitik.v_akademik_statistik_prodi IS
     'Statistik agregat per program studi per semester: kehadiran, distribusi nilai, dan skor kuesioner. '
     'Grain: 1 baris = 1 (no_prodi, semester, tahun). '
-    'Distribusi nilai dihitung dari akumulasi absolut (weighted by class size), bukan rata-rata persentase per kelas. '
+    'Distribusi nilai dihitung dari akumulasi absolut (weighted by class size), '
+    'bukan rata-rata persentase per kelas. '
+    'Mahasiswa dengan nilai T (pending) ikut dihitung di total_mahasiswa_dinilai '
+    'dan denominator dist_pct_* — konsisten dengan v_akademik_kelas. '
+    'Periode: 2018/2019 semester 1 s.d. terkini. '
     'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
     'KAPRODI/JAJ.PRODI/DOSEN=hanya prodinya sendiri.';
 
@@ -565,84 +727,112 @@ COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.jumlah_dosen_aktif
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.jumlah_mahasiswa_aktif
     IS 'Jumlah mahasiswa aktif (FRS selesai, tidak nonaktif) di prodi pada semester tersebut.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_pct_kehadiran_dosen
-    IS 'Rata-rata persentase kehadiran dosen lintas kelas (rata-rata tidak tertimbang per kelas). NULL jika belum ada data evaluasi.';
+    IS 'Rata-rata persentase kehadiran dosen lintas kelas (rata-rata tidak tertimbang per kelas). '
+       'NULL jika belum ada data evaluasi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_pct_kehadiran_mahasiswa
     IS 'Rata-rata persentase kehadiran mahasiswa lintas kelas. NULL jika belum ada data evaluasi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_ip_akhir_mahasiswa
     IS 'Rata-rata IP akhir mahasiswa lintas kelas. NULL jika belum ada data evaluasi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_a
     IS 'Total akumulasi mahasiswa mendapat nilai A di seluruh kelas prodi semester ini. '
-       'Mengabaikan kelas yang belum ada nilai sah (NULL dikecualikan dari SUM).';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_ab IS 'Total mahasiswa nilai AB.';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_b  IS 'Total mahasiswa nilai B.';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_bc IS 'Total mahasiswa nilai BC.';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_c  IS 'Total mahasiswa nilai C.';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_d  IS 'Total mahasiswa nilai D.';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_e  IS 'Total mahasiswa nilai E (tidak lulus).';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_pass IS 'Total mahasiswa lulus (nilai P, untuk kelas PassFail).';
-COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_fail IS 'Total mahasiswa tidak lulus (nilai F, untuk kelas PassFail).';
+       'Kelas tanpa nilai sah (NULL) tidak ikut dihitung (SUM mengabaikan NULL).';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_ab  IS 'Total mahasiswa nilai AB di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_b   IS 'Total mahasiswa nilai B di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_bc  IS 'Total mahasiswa nilai BC di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_c   IS 'Total mahasiswa nilai C di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_d   IS 'Total mahasiswa nilai D di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_e   IS 'Total mahasiswa nilai E (tidak lulus) di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_t
+    IS 'Total mahasiswa dengan nilai T (tunda/incomplete) di prodi semester ini. '
+       'Ikut dihitung di total_mahasiswa_dinilai dan denominator dist_pct_*.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_pass IS 'Total mahasiswa lulus (nilai P, kelas PassFail) di prodi semester ini.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_jumlah_fail IS 'Total mahasiswa tidak lulus (nilai F, kelas PassFail) di prodi semester ini.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.total_mahasiswa_dinilai
     IS 'Total mahasiswa yang sudah memiliki nilai sah di seluruh kelas prodi semester ini. '
-       'Penyebut untuk perhitungan dist_pct_* tingkat prodi.';
+       'Termasuk mahasiswa dengan nilai T. Penyebut untuk perhitungan dist_pct_* tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_a
     IS 'Persentase mahasiswa nilai A di tingkat prodi = total_jumlah_a / total_mahasiswa_dinilai * 100. '
-       'Tertimbang berdasarkan ukuran kelas (kelas besar memiliki bobot lebih besar).';
+       'Tertimbang berdasarkan ukuran kelas. Denominator termasuk mahasiswa nilai T.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_ab  IS 'Persentase mahasiswa nilai AB di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_b   IS 'Persentase mahasiswa nilai B di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_bc  IS 'Persentase mahasiswa nilai BC di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_c   IS 'Persentase mahasiswa nilai C di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_d   IS 'Persentase mahasiswa nilai D di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_e   IS 'Persentase mahasiswa nilai E di tingkat prodi.';
+COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_t
+    IS 'Persentase mahasiswa dengan nilai T (tunda/incomplete) di tingkat prodi. '
+       'Nilai tinggi menandakan banyak nilai yang belum final di prodi tersebut.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_pass IS 'Persentase mahasiswa lulus (P) di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_fail IS 'Persentase mahasiswa tidak lulus (F) di tingkat prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_lulus_a_c
-    IS 'Persentase lulus ≥C (A+AB+B+BC+C) di tingkat prodi. Metrik utama kelulusan.';
+    IS 'Persentase lulus ≥C (A+AB+B+BC+C) di tingkat prodi. '
+       'Denominator termasuk mahasiswa nilai T. Metrik utama kelulusan prodi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.dist_pct_lulus_a_d
-    IS 'Persentase lulus ≥D (A+AB+B+BC+C+D) di tingkat prodi.';
+    IS 'Persentase lulus ≥D (A+AB+B+BC+C+D) di tingkat prodi. '
+       'Denominator termasuk mahasiswa nilai T.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q21
-    IS 'Rata-rata skor Q21 lintas kelas prodi: "Informasi luaran matakuliah." Skala 1–4.';
+    IS 'Rata-rata skor Q21 lintas kelas prodi (skala 1–4): '
+       '"Saya memperoleh informasi yang cukup tentang luaran matakuliah."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q22
-    IS 'Rata-rata skor Q22 lintas kelas prodi: "Perkuliahan diarahkan ke luaran." Skala 1–4.';
+    IS 'Rata-rata skor Q22 lintas kelas prodi (skala 1–4): '
+       '"Pelaksanaan perkuliahan diarahkan agar mahasiswa mencapai luaran matakuliah."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q23
-    IS 'Rata-rata skor Q23 lintas kelas prodi: "Mahasiswa mencapai luaran matakuliah." Skala 1–4.';
+    IS 'Rata-rata skor Q23 lintas kelas prodi (skala 1–4): '
+       '"Saya mencapai atau menguasai luaran matakuliah ini."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q24
-    IS 'Rata-rata skor Q24 lintas kelas prodi: "Perkuliahan terorganisir dengan baik." Skala 1–4.';
+    IS 'Rata-rata skor Q24 lintas kelas prodi (skala 1–4): '
+       '"Pelaksanaan perkuliahan terorganisir dengan baik."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q25
-    IS 'Rata-rata skor Q25 lintas kelas prodi: "Dosen berkomunikasi dengan efektif." Skala 1–4.';
+    IS 'Rata-rata skor Q25 lintas kelas prodi (skala 1–4): '
+       '"Dosen berkomunikasi dengan efektif." (rata-rata per dosen, lalu per kelas, lalu per prodi).';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q26
-    IS 'Rata-rata skor Q26 lintas kelas prodi: "Dosen peduli terhadap pencapaian mahasiswa." Skala 1–4.';
+    IS 'Rata-rata skor Q26 lintas kelas prodi (skala 1–4): '
+       '"Dosen peduli terhadap pencapaian mahasiswa akan luaran matakuliah."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q27
-    IS 'Rata-rata skor Q27 lintas kelas prodi: "Dosen berlaku adil kepada mahasiswa." Skala 1–4.';
+    IS 'Rata-rata skor Q27 lintas kelas prodi (skala 1–4): '
+       '"Dosen berlaku adil (fair) kepada mahasiswa."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q28
-    IS 'Rata-rata skor Q28 lintas kelas prodi: "Beban kerja sesuai SKS." Skala 1–4.';
+    IS 'Rata-rata skor Q28 lintas kelas prodi (skala 1–4): '
+       '"Beban kerja untuk matakuliah ini sesuai dengan SKS-nya."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q29
-    IS 'Rata-rata skor Q29 lintas kelas prodi: "Sarana prasarana memadai." Skala 1–4.';
+    IS 'Rata-rata skor Q29 lintas kelas prodi (skala 1–4): '
+       '"Sarana prasarana untuk matakuliah tersedia dengan memadai."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q30
-    IS 'Rata-rata skor Q30 lintas kelas prodi: "Fasilitas pendukung di luar kuliah memadai." Skala 1–4.';
+    IS 'Rata-rata skor Q30 lintas kelas prodi (skala 1–4): '
+       '"Tersedia cukup fasilitas pendukung di luar kuliah yang memungkinkan '
+       'saya mengikuti matakuliah ini dengan baik."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q35
-    IS 'Rata-rata skor Q35 lintas kelas prodi: "Mahasiswa berusaha sungguh-sungguh." Skala 1–4.';
+    IS 'Rata-rata skor Q35 lintas kelas prodi (skala 1–4): '
+       '"Saya berusaha dengan sungguh-sungguh mengikuti matakuliah ini."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_q37
-    IS 'Rata-rata skor Q37 lintas kelas prodi: "Mahasiswa memperoleh pengalaman belajar positif." Skala 1–4.';
+    IS 'Rata-rata skor Q37 lintas kelas prodi (skala 1–4): '
+       '"Saya memperoleh pengalaman belajar yang positif dalam matakuliah ini."';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_capaian
-    IS 'Rata-rata skor dimensi Capaian Pembelajaran lintas kelas prodi (dari skor_kues dosen). Skala 1–4.';
+    IS 'Rata-rata skor dimensi Capaian Pembelajaran lintas kelas prodi '
+       '(dari evaluasi.nilai_dosen.skor_kues key "1"). Skala 1–4.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_pelaksanaan
-    IS 'Rata-rata skor dimensi Pelaksanaan Perkuliahan lintas kelas prodi. Skala 1–4.';
+    IS 'Rata-rata skor dimensi Pelaksanaan Perkuliahan lintas kelas prodi '
+       '(dari evaluasi.nilai_dosen.skor_kues key "2"). Skala 1–4.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_sarana_prasarana
-    IS 'Rata-rata skor dimensi Sarana & Prasarana lintas kelas prodi (dari Q29 dan Q30). Skala 1–4.';
+    IS 'Rata-rata skor dimensi Sarana & Prasarana lintas kelas prodi '
+       '(dari rata-rata Q29 dan Q30). Skala 1–4.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_perilaku_mahasiswa
-    IS 'Rata-rata skor dimensi Perilaku Mahasiswa lintas kelas prodi. Skala 1–4.';
+    IS 'Rata-rata skor dimensi Perilaku Mahasiswa lintas kelas prodi '
+       '(dari evaluasi.nilai_dosen.skor_kues key "3"). Skala 1–4.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_prodi.avg_skor_overall
-    IS 'Rata-rata skor keseluruhan (all questions) lintas kelas prodi. Skala 1–4.';
+    IS 'Rata-rata skor keseluruhan (semua pertanyaan Q21-Q37) lintas kelas prodi. Skala 1–4.';
 
 
 -- ── B5. v_akademik_statistik_dosen ───────────────────────────────
 COMMENT ON VIEW analitik.v_akademik_statistik_dosen IS
     'Statistik kinerja dosen per semester: beban mengajar, kehadiran, dan skor evaluasi. '
     'Grain: 1 baris = 1 (dosen_id, semester, tahun). '
+    'Periode: 2018/2019 semester 1 s.d. terkini. '
     'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas_dosen (homebase); '
-    'KAPRODI/JAJ.PRODI/DOSEN=filter berdasarkan prodi yang sedang diajar (no_prodi_diajar). '
-    'COLUMN SECURITY: kolom evaluasi (avg_skor_*, avg_pct_kehadiran_dosen, avg_ip_mhs, dll.) '
-    'di-mask (NULL) untuk role DOSEN ketika melihat data dosen lain; '
+    'KAPRODI/JAJ.PRODI=filter berdasarkan prodi yang sedang diajar (no_prodi_diajar); '
+    'DOSEN=hanya data dirinya sendiri (dosen_id = v_dosen_id). '
+    'COLUMN SECURITY: kolom evaluasi sensitif (avg_skor_*, avg_pct_kehadiran_dosen, '
+    'avg_ip_mhs, dll.) di-mask (NULL) untuk role DOSEN ketika melihat dosen lain; '
     'hanya data diri sendiri yang tampil penuh.';
 
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.dosen_id
@@ -682,34 +872,36 @@ COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_pct_kehadiran_dosen
        'Di-mask (NULL) untuk role DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_pct_kehadiran_mahasiswa
     IS 'Rata-rata persentase kehadiran mahasiswa di kelas-kelas yang diajar dosen ini. '
-       'Tidak di-mask — ini informasi tentang mahasiswa, bukan evaluasi dosen pribadi.';
+       'Tidak di-mask — informasi tentang mahasiswa, bukan evaluasi dosen pribadi.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_ip_mhs
     IS '[SENSITIF] Rata-rata IP akhir mahasiswa di kelas yang diajar dosen ini. '
        'Di-mask (NULL) untuk role DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_q25
-    IS '[SENSITIF] Rata-rata skor Q25 ("Dosen berkomunikasi efektif") lintas kelas dosen ini. '
-       'Dari evaluasi.nilai_dosen.kuesioner (per-dosen). Skala 1–4. '
+    IS '[SENSITIF] Rata-rata skor Q25 ("Dosen berkomunikasi dengan efektif") '
+       'lintas kelas dosen ini. Dari evaluasi.nilai_dosen.kuesioner (per-dosen). Skala 1–4. '
        'Di-mask (NULL) untuk role DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_q26
-    IS '[SENSITIF] Rata-rata skor Q26 ("Dosen peduli terhadap pencapaian mahasiswa") lintas kelas. '
-       'Skala 1–4. Di-mask untuk role DOSEN ketika melihat dosen lain.';
+    IS '[SENSITIF] Rata-rata skor Q26 ("Dosen peduli terhadap pencapaian mahasiswa") '
+       'lintas kelas. Skala 1–4. Di-mask untuk role DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_q27
-    IS '[SENSITIF] Rata-rata skor Q27 ("Dosen berlaku adil kepada mahasiswa") lintas kelas. '
-       'Skala 1–4. Di-mask untuk role DOSEN ketika melihat dosen lain.';
+    IS '[SENSITIF] Rata-rata skor Q27 ("Dosen berlaku adil kepada mahasiswa") '
+       'lintas kelas. Skala 1–4. Di-mask untuk role DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_capaian
-    IS '[SENSITIF] Rata-rata skor dimensi Capaian Pembelajaran dosen (dari evaluasi.nilai_dosen.skor_kues key "1"). '
-       'Skala 1–4. NULL jika data format baru belum tersedia. Di-mask untuk DOSEN ketika melihat dosen lain.';
+    IS '[SENSITIF] Rata-rata skor dimensi Capaian Pembelajaran dosen '
+       '(dari evaluasi.nilai_dosen.skor_kues key "1"). Skala 1–4. '
+       'NULL jika data format baru belum tersedia. Di-mask untuk DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_pelaksanaan
     IS '[SENSITIF] Rata-rata skor dimensi Pelaksanaan Perkuliahan dosen (key "2"). '
-       'Skala 1–4. Di-mask untuk DOSEN ketika melihat dosen lain.';
+       '/Skala 1–4. Di-mask untuk DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_sarana_prasarana
-    IS '[SENSITIF] Rata-rata skor Sarana & Prasarana dari kelas yang diajar dosen ini (Q29+Q30)/2. '
-       'Di-mask untuk DOSEN ketika melihat dosen lain.';
+    IS '[SENSITIF] Rata-rata skor Sarana & Prasarana dari kelas yang diajar dosen ini '
+       '((Q29+Q30)/2). Di-mask untuk DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_perilaku_mahasiswa
     IS '[SENSITIF] Rata-rata skor dimensi Perilaku Mahasiswa dosen (key "3"). '
        'Skala 1–4. Di-mask untuk DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_skor_overall
-    IS '[SENSITIF] Rata-rata skor keseluruhan dosen, dihitung dari (capaian + pelaksanaan + perilaku) / N-dimensi-tersedia. '
+    IS '[SENSITIF] Rata-rata skor keseluruhan dosen, dihitung dari '
+       '(capaian + pelaksanaan + perilaku) / N-dimensi-tersedia. '
        'Di-mask untuk DOSEN ketika melihat dosen lain.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.jumlah_kelas_dengan_skor
     IS '[SENSITIF] Jumlah kelas dosen yang sudah memiliki data evaluasi (skor_kues terisi). '
@@ -717,507 +909,170 @@ COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.jumlah_kelas_dengan_skor
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.avg_nilai_akhir
     IS '[SENSITIF] Rata-rata nilai akhir dosen dari evaluasi.nilai_dosen.nilai_akhir. '
        'Sering NULL karena kolom ini tidak konsisten diisi. Di-mask untuk DOSEN ketika melihat dosen lain.';
-COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.kelas_ids
+COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.kelas_id_list
     IS 'Array kelas_id semua kelas yang diajar dosen semester ini.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.kode_matkul_list
     IS 'Array kode MK unik yang diajar dosen semester ini.';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.no_prodi_diajar
     IS 'Array ID numerik prodi yang kelas-kelasnya diajar dosen (bisa berbeda dari homebase). '
-       'Digunakan sebagai filter KAPRODI/JAJ.PRODI/DOSEN: WHERE no_prodi_diajar @> ARRAY[v_no_prodi].';
+       'Digunakan sebagai filter KAPRODI/JAJ.PRODI: WHERE no_prodi_diajar @> ARRAY[v_no_prodi].';
 COMMENT ON COLUMN analitik.v_akademik_statistik_dosen.kode_prodi_diajar
     IS 'Array kode singkat prodi yang diajar, paralel dengan no_prodi_diajar.';
 
-
--- ── B6. v_wisudawan_distribusi_jawaban ───────────────────────────
-COMMENT ON VIEW analitik.v_wisudawan_distribusi_jawaban IS
-    'Distribusi jawaban survey wisudawan per pertanyaan, per nilai jawaban, per prodi, per periode. '
-    'Grain: 1 baris = 1 (periode_ijazah_id_final, no_prodi, kode_pertanyaan, nilai). '
-    'Mencakup pertanyaan ordinal (Likert, tipe_opsi=O) dan nominal/kategoris (tipe_opsi=N). '
-    'Untuk analisis statistik (rata-rata, median), gunakan v_wisudawan_statistik_pertanyaan '
-    'yang hanya mencakup pertanyaan ordinal. '
-    'Filter is_seremoni_asumtif=FALSE untuk hanya data seremoni final. '
-    'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
-    'KAPRODI/JAJ.PRODI/DOSEN=filter no_prodi.';
-
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.periode_ijazah_id_final
-    IS 'Periode ijazah final format YYYYMM (sudah diimputasi). Gunakan kolom ini untuk filter periode.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.tahun_ijazah
-    IS 'Tahun ijazah.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.bulan_ijazah
-    IS 'Bulan ijazah (1–12).';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.periode_seremoni_id
-    IS 'ID seremoni format YYYYMM. NULL jika mapping belum tersedia.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.tahun_seremoni
-    IS 'Tahun pelaksanaan seremoni wisuda.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.bulan_seremoni
-    IS 'Bulan pelaksanaan seremoni wisuda (1–12).';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.nama_seremoni
-    IS 'Nama seremoni wisuda Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.is_seremoni_asumtif
-    IS 'TRUE = seremoni masih dummy/asumtif. Filter FALSE untuk data final.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.no_prodi
-    IS 'ID numerik program studi wisudawan.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.kode_prodi
-    IS 'Kode singkat prodi wisudawan.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.nama_prodi_id
-    IS 'Nama program studi Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.nama_prodi_en
-    IS 'Nama program studi Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.jenjang
-    IS 'Jenjang studi: S1, S2, S3, PR.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.kode_fakultas
-    IS 'Kode fakultas/sekolah wisudawan.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.nama_fakultas_id
-    IS 'Nama fakultas Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.nama_fakultas_en
-    IS 'Nama fakultas Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.kode_pertanyaan
-    IS 'Kode pertanyaan survey wisudawan, contoh: U03_SQ001, U02, G01Q23. '
-       'Format: [Section][Nomor][SQ_Subpertanyaan].';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.kode_grup_pertanyaan
-    IS 'Kode grup pertanyaan (FK ke evaluasi_wisudawan.pertanyaan.kd_grup_pertanyaan). '
-       'Mengelompokkan pertanyaan dalam satu section.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.kode_grup_opsi
-    IS 'Kode grup opsi jawaban (FK ke evaluasi_wisudawan.ref_grup_opsi). '
-       'Menentukan skala jawaban yang digunakan.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.tipe_opsi
-    IS 'Tipe skala jawaban: O=Ordinal/Likert (bisa di-AVG), N=Nominal/Kategoris (jangan di-AVG).';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.nilai
-    IS 'Nilai jawaban (sebagai teks, sudah di-decode): contoh "Setuju", "Kualitas dosen", dll. '
-       'Sumber: CASE expression decode dari nilai numerik di JSONB jawaban.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.jumlah_responden
-    IS 'Jumlah wisudawan yang memilih nilai jawaban ini untuk pertanyaan ini pada prodi dan periode tersebut.';
-COMMENT ON COLUMN analitik.v_wisudawan_distribusi_jawaban.persentase
-    IS 'Persentase responden yang memilih nilai ini terhadap total responden yang menjawab pertanyaan ini '
-       'pada prodi dan periode tersebut (0–100).';
-
-
--- ── B7. v_wisudawan_statistik_pertanyaan ─────────────────────────
-COMMENT ON VIEW analitik.v_wisudawan_statistik_pertanyaan IS
-    'Statistik deskriptif jawaban survey wisudawan per pertanyaan ordinal (Likert) per prodi per periode. '
-    'Grain: 1 baris = 1 (periode_ijazah_id_final, no_prodi, kode_pertanyaan). '
-    'HANYA mencakup pertanyaan ordinal (tipe_opsi=O, skala Likert). '
-    'Pertanyaan nominal (U02 = alasan rekomendasi, dll.) TIDAK ada di sini — gunakan v_wisudawan_distribusi_jawaban. '
-    'Filter is_seremoni_asumtif=FALSE untuk hanya data seremoni final. '
-    'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
-    'KAPRODI/JAJ.PRODI/DOSEN=filter no_prodi.';
-
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.periode_ijazah_id_final
-    IS 'Periode ijazah final format YYYYMM. Gunakan kolom ini untuk filter periode.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.tahun_ijazah
-    IS 'Tahun ijazah.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.bulan_ijazah
-    IS 'Bulan ijazah (1–12).';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.periode_seremoni_id
-    IS 'ID seremoni format YYYYMM.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.tahun_seremoni
-    IS 'Tahun pelaksanaan seremoni wisuda.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.bulan_seremoni
-    IS 'Bulan pelaksanaan seremoni wisuda (1–12).';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.nama_seremoni
-    IS 'Nama seremoni wisuda Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.is_seremoni_asumtif
-    IS 'TRUE = seremoni masih dummy/asumtif. Filter FALSE untuk data final.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.no_prodi
-    IS 'ID numerik program studi wisudawan.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.kode_prodi
-    IS 'Kode singkat prodi wisudawan.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.nama_prodi_id
-    IS 'Nama program studi Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.nama_prodi_en
-    IS 'Nama program studi Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.jenjang
-    IS 'Jenjang studi: S1, S2, S3, PR.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.kode_fakultas
-    IS 'Kode fakultas/sekolah wisudawan.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.nama_fakultas_id
-    IS 'Nama fakultas Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.nama_fakultas_en
-    IS 'Nama fakultas Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.kode_pertanyaan
-    IS 'Kode pertanyaan ordinal (Likert), contoh: U03_SQ001, U01_SQ005. '
-       'Hanya pertanyaan dengan tipe_opsi=O.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.kode_grup_pertanyaan
-    IS 'Kode grup pertanyaan — mengelompokkan pertanyaan dalam satu section survey.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.kode_grup_opsi
-    IS 'Kode grup opsi — menentukan skala Likert yang digunakan (1–4 atau 1–5).';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.jumlah_responden
-    IS 'Jumlah wisudawan yang menjawab pertanyaan ini pada prodi dan periode tersebut.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.rata_rata
-    IS 'Rata-rata nilai jawaban (valid karena hanya skala ordinal). '
-       'Contoh: 3.42 pada skala 1–4 berarti "Cenderung Setuju".';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.median
-    IS 'Median nilai jawaban pada pertanyaan ini.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.std_dev
-    IS 'Standar deviasi jawaban — mengukur variasi/konsensus. Nilai rendah = lebih konsensus.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.skor_min
-    IS 'Nilai jawaban terendah yang diberikan oleh responden.';
-COMMENT ON COLUMN analitik.v_wisudawan_statistik_pertanyaan.skor_max
-    IS 'Nilai jawaban tertinggi yang diberikan oleh responden.';
-
-
--- ── B8. v_wisudawan_jawaban_responden ────────────────────────────
-COMMENT ON VIEW analitik.v_wisudawan_jawaban_responden IS
-    'Jawaban individual setiap wisudawan — wide table dengan semua pertanyaan sebagai kolom. '
-    'Grain: 1 baris = 1 responden wisudawan (response_id). '
-    'Nilai jawaban sudah di-decode dari numerik ke label teks via CASE expression. '
-    'Semua teks bebas sudah distrip HTML via analitik_mv.strip_html(). '
-    'Kolom section-spesifik (s101, m01, d01, fsrd01, sbm01) akan NULL untuk prodi/strata yang tidak relevan. '
-    'ROW SECURITY: ADMIN/DIREKTORAT=semua; DEKAN/JAJ.DEKANAT=filter kode_fakultas; '
-    'KAPRODI/JAJ.PRODI/DOSEN=filter no_prodi.';
-
-
 -- ================================================================
--- COMMENTS DARI beberapa_informasi_comment.sql
--- (kolom v_wisudawan_jawaban_responden + v_akademik_portofolio)
+-- COMMENT ON — analitik.v_akademik_komponen_evaluasi_kelas
+-- Konteks untuk agen text-to-SQL dan agen RAG
 -- ================================================================
 
 
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.response_id IS 'Surrogate primary key internal database';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.survey_platform_response_id IS 'ID response asli dari LimeSurvey (bisa NULL jika tidak tercatat)';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.periode_ijazah_id IS 'Periode wisuda format YYYYMM asli dari data sumber, contoh: 202502=Februari 2025. Nullable (66% terisi). FK ke wisuda.periode_ijazah';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.periode_ijazah_id_final IS 'periode_ijazah_id siap pakai: asli jika not null, diimputasi dari submit_date jika null. Gunakan kolom ini untuk filtering per periode';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.tahun_ijazah IS 'Tahun ijazah diekstrak dari lower(tgl_ijazah) di periode_ijazah_sementara (LEFT JOIN). NULL jika periode_ijazah_id_final belum dipetakan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.bulan_ijazah IS 'Bulan ijazah (1–12) diekstrak dari lower(tgl_ijazah) di periode_ijazah_sementara (LEFT JOIN). NULL jika periode_ijazah_id_final belum dipetakan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.periode_seremoni_id IS 'ID seremoni wisuda dari ijazah_to_seremoni (LEFT JOIN). Format YYYYMM, contoh: 202504=Seremoni April 2025. NULL jika periode belum dipetakan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.tahun_seremoni IS 'Tahun pelaksanaan seremoni wisuda, diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.bulan_seremoni IS 'Bulan pelaksanaan seremoni wisuda (1–12), diekstrak dari lower(tgl_seremoni). NULL jika mapping belum ada atau tgl_seremoni belum diisi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_seremoni IS 'Nama seremoni wisuda dalam Bahasa Indonesia dari periode_seremoni_sementara.nama->>''id''. NULL jika mapping belum ada';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.jenjang IS 'Jenjang pendidikan kode: S1=Sarjana, S2=Magister, S3=Doktor, PR=Profesi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_fakultas IS 'Kode fakultas/sekolah singkat, contoh: STEI, SBM, FSRD. FK ke utama.fakultas';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.no_prodi IS 'Kode numerik program studi, contoh: 135=Teknik Informatika S1. FK ke utama.program_studi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.submit_date IS 'Timestamp pengisian kuesioner oleh wisudawan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_prodi IS 'no_ps dari utama.program_studi (identik dengan no_ps, disediakan untuk konsistensi penamaan lintas MV)';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_prodi IS 'Kode singkat program studi, contoh: IF, EL, MA. Dari utama.program_studi.kd_ps';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_prodi_id IS 'Nama lengkap program studi dalam Bahasa Indonesia. Dari utama.program_studi.nama->>id';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_prodi_en IS 'Nama lengkap program studi dalam Bahasa Inggris. Dari utama.program_studi.nama->>en';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.jenjang IS 'Jenjang program studi: S1, S2, S3, PR. Dari utama.program_studi.kd_strata';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.kode_fakultas IS 'Kode fakultas/sekolah. Dari utama.fakultas.kd_fak';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_fakultas_id IS 'Nama lengkap fakultas dalam Bahasa Indonesia. Dari utama.fakultas.nama->>id';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.nama_fakultas_en IS 'Nama lengkap fakultas dalam Bahasa Inggris. Dari utama.fakultas.nama->>en';
+-- ── VIEW ─────────────────────────────────────────────────────────
 
--- Section A: Fasilitas & Kepuasan ITB (U03)
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq001 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Tersedia cukup ruang kelas';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq002 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Ruang kelas kondusif untuk pembelajaran';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq003 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Laboratorium kondusif untuk pembelajaran';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq004 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Akses internet memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq005 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Fasilitas keprofesian memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq006 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Akses perpustakaan memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq007 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Perangkat pembelajaran up-to-date';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq008 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Fasilitas toilet memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq009 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Fasilitas kantin memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq010 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Fasilitas rekreasi/olahraga memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq011 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Fasilitas kesehatan memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u03_sq012 IS 'Section A (U03) | Fasilitas & Kepuasan ITB | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Secara keseluruhan saya puas dengan fasilitas ITB';
-
--- Section B: Pendidikan di Prodi (U01 + U02)
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq001 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Wali akademik selalu tersedia saat dibutuhkan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq002 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Wali akademik membantu memenuhi persyaratan akademik';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq003 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Dosen berinteraksi secara informal dengan mahasiswa';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq004 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Dosen memperhatikan proses pembelajaran mahasiswa';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq005 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Dosen memiliki kemampuan profesional yang baik';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq006 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Matakuliah wajib memberikan dasar yang baik';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq007 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Matakuliah pilihan memberikan keleluasaan eksplorasi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq008 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Praktikum sejalan dengan teori di kelas';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq009 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Sarana program studi memadai';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq010 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Program studi memberikan gambaran dunia kerja';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq011 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Saya menikmati bidang studi saya';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u01_sq012 IS 'Section B (U01) | Pendidikan di Program Studi | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Saya akan memilih program studi yang sama lagi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u02 IS 'Section B (U02) | Rekomendasi prodi | Populasi: semua | Nominal (REKOMENDASI_PRODI): 1=Kualitas dosen · 2=Suasana akademik · 3=Jejaring alumni · 4=Lapangan pekerjaan · 5=Fasilitas akademik · 6=Tidak merekomendasikan · 7=Other';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u02_other IS 'Section B (U02) | Teks bebas jika u02=Other. NULL jika u02 bukan Other';
-
--- Section C1: Softskills (U04)
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq001 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan komunikasi lisan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq002 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan komunikasi tertulis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq003 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan berbahasa asing';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq004 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan penyelesaian masalah';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq005 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan berpikir kritis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq006 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan introspeksi diri';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq007 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan menyampaikan pendapat';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq008 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan kerja tim';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u04_sq009 IS 'Section C1 (U04) | Kemampuan Softskills | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kemampuan kerja mandiri';
-
--- Section C2: Karakter (U05)
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq001 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kejujuran';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq002 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Komitmen';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq003 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kecerdasan emosi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq004 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kepedulian terhadap sesama';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq005 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Objektivitas';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq006 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Ketidakmudahan menyerah (Perseverance)';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u05_sq007 IS 'Section C2 (U05) | Pengembangan Karakter | Populasi: semua strata & fakultas | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kepatuhan terhadap aturan';
-
--- Section D1: Permasalahan Studi (U06)
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq001 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Permasalahan akademis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq002 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Permasalahan keuangan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq003 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Pengaruh keuangan terhadap akademis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq004 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Permasalahan psikologis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq005 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Pengaruh psikologis terhadap studi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq006 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Permasalahan sosial budaya';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq007 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Pengaruh sosial budaya terhadap studi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq008 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Permasalahan kesehatan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u06_sq009 IS 'Section D1 (U06) | Permasalahan Selama Studi | Populasi: semua strata & fakultas | 1=Tidak pernah atau sama sekali tidak · 2=Jarang atau kecil · 3=Sering atau cukup · 4=Selalu atau besar | Pertanyaan: Pengaruh kesehatan terhadap studi';
-
--- Section D2: Ketersediaan Dukungan (U07)
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u07_sq001 IS 'Section D2 (U07) | Ketersediaan Dukungan | Populasi: semua strata & fakultas | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Sepenuhnya memenuhi harapan · 5=Melampaui harapan | Pertanyaan: Ketersediaan beasiswa atau pinjaman';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u07_sq002 IS 'Section D2 (U07) | Ketersediaan Dukungan | Populasi: semua strata & fakultas | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Sepenuhnya memenuhi harapan · 5=Melampaui harapan | Pertanyaan: Bimbingan konseling';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u07_sq003 IS 'Section D2 (U07) | Ketersediaan Dukungan | Populasi: semua strata & fakultas | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Sepenuhnya memenuhi harapan · 5=Melampaui harapan | Pertanyaan: Nasehat dari wali akademik';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.u07_sq004 IS 'Section D2 (U07) | Ketersediaan Dukungan | Populasi: semua strata & fakultas | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Sepenuhnya memenuhi harapan · 5=Melampaui harapan | Pertanyaan: Nasehat dari dosen matakuliah';
-
--- Section E: Free-text Pengalaman Belajar
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g10q22 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Kebiasaan belajar (cara belajar, waktu, hal-hal yang mendorong belajar)';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q23 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Kesan-kesan dan prestasi dalam belajar';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q24 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Pengalaman lain yang sangat berkesan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q25 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Aktivitas kemahasiswaan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q26 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Cita-cita dalam karier';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q27 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Cita-cita dalam hidup';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q28 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Motto untuk sukses studi di ITB';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q29 IS 'Section E | Pengalaman Belajar | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Sifat khas diri sendiri';
-
--- Section F: Free-text Pandangan ITB
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g11q30 IS 'Section F | Pandangan tentang ITB | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Suka duka menempuh studi di ITB';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q31 IS 'Section F | Pandangan tentang ITB | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Segi positif studi di ITB';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q32 IS 'Section F | Pandangan tentang ITB | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Segi negatif studi di ITB';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q33 IS 'Section F | Pandangan tentang ITB | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Saran untuk perbaikan proses dan sarana pendidikan di ITB';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q34 IS 'Section F | Pandangan tentang ITB | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Saran untuk mahasiswa lain dalam menempuh studi di ITB';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.g01q35 IS 'Section F | Pandangan tentang ITB | Populasi: semua | Free-text, NULL jika tidak diisi | Pertanyaan: Catatan atau komentar lain';
-
--- Section G: S1 Khusus
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s101 IS 'Section G (S101) | Rencana melanjutkan ke pendidikan lebih tinggi | Hanya S1, NULL untuk strata lain | Nominal (YA_TIDAK): 1=Ya · 2=Tidak';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s102 IS 'Section G (S102) | Lokasi rencana studi lanjut | Hanya S1, NULL untuk strata lain | Nominal (LOKASI_STUDI_LANJUT): 1=ITB · 2=Perguruan tinggi dalam negeri selain ITB · 3=Di luar negeri · 4=Tidak ada rencana studi lanjut';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s103 IS 'Section G (S103) | Kelanjutan bidang studi | Hanya S1, NULL untuk strata lain | Nominal (BIDANG_STUDI_LANJUT): 1=Ya kelanjutan · 2=Tidak tapi serumpun · 3=Tidak tapi butuh pengetahuan ITB · 4=Tidak sangat berbeda · 5=Tidak ada rencana';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s104_sq001 IS 'Section G (S104) | Penilaian Matakuliah Wajib ITB | Hanya S1, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Agama dan etika — pengaruh terhadap sikap';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s104_sq002 IS 'Section G (S104) | Penilaian Matakuliah Wajib ITB | Hanya S1, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Pancasila dan kewarganegaraan — pengaruh terhadap sikap';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s104_sq003 IS 'Section G (S104) | Penilaian Matakuliah Wajib ITB | Hanya S1, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Manajemen — wawasan pentingnya peranan manajemen';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.s104_sq004 IS 'Section G (S104) | Penilaian Matakuliah Wajib ITB | Hanya S1, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Lingkungan — wawasan dan perilaku ramah lingkungan';
-
--- Section H: S2 Khusus
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.m01 IS 'Section H (M01) | Rencana melanjutkan ke pendidikan lebih tinggi | Hanya S2, NULL untuk strata lain | Nominal (YA_TIDAK): 1=Ya · 2=Tidak';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.m02 IS 'Section H (M02) | Lokasi rencana studi lanjut | Hanya S2, NULL untuk strata lain | Nominal (LOKASI_STUDI_LANJUT): 1=ITB · 2=Perguruan tinggi dalam negeri selain ITB · 3=Di luar negeri · 4=Tidak ada rencana studi lanjut';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.m03 IS 'Section H (M03) | Kelanjutan bidang studi | Hanya S2, NULL untuk strata lain | Nominal (BIDANG_STUDI_LANJUT): 1=Ya kelanjutan · 2=Tidak tapi serumpun · 3=Tidak tapi butuh pengetahuan ITB · 4=Tidak sangat berbeda · 5=Tidak ada rencana';
-
--- Section I: S3 Khusus
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.d01_sq001 IS 'Section I (D01) | Penilaian Matakuliah Wajib ITB Doktor | Hanya S3, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Filsafat ilmu — wawasan pengembangan ilmu pengetahuan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.d01_sq002 IS 'Section I (D01) | Penilaian Matakuliah Wajib ITB Doktor | Hanya S3, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Metodologi penelitian — manfaat dalam penelitian';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.d01_sq003 IS 'Section I (D01) | Penilaian Matakuliah Wajib ITB Doktor | Hanya S3, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kesulitan mengambil filsafat ilmu';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.d01_sq004 IS 'Section I (D01) | Penilaian Matakuliah Wajib ITB Doktor | Hanya S3, NULL untuk strata lain | 1=Tidak Setuju · 2=Cenderung Tidak Setuju · 3=Cenderung Setuju · 4=Setuju | Pertanyaan: Kesulitan mengambil metodologi penelitian';
-
--- Section J: FSRD Khusus
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd01_sq001 IS 'Section J FSRD01 (TPB) | Pemahaman Prinsip Estetik | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd01_sq002 IS 'Section J FSRD01 (TPB) | Penguasaan Proses Kreatif | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd01_sq003 IS 'Section J FSRD01 (TPB) | Penguasaan menggambar dan membentuk | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd01_sq004 IS 'Section J FSRD01 (TPB) | Pengetahuan tentang program studi FSRD | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd01_sq005 IS 'Section J FSRD01 (TPB) | Kemampuan menulis secara ilmiah | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd02_sq001 IS 'Section J FSRD02 (Perwalian) | Perwalian tatap muka | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd02_sq002 IS 'Section J FSRD02 (Perwalian) | Perwalian online | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd02_sq003 IS 'Section J FSRD02 (Perwalian) | Bantuan dan respon dosen wali | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd03_sq001 IS 'Section J FSRD03 (MK Teori) | Sejarah Seni/Kria/Desain | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd03_sq002 IS 'Section J FSRD03 (MK Teori) | Perkembangan Seni/Kria/Desain di Indonesia | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd03_sq003 IS 'Section J FSRD03 (MK Teori) | Perkembangan Seni/Kria/Desain di Dunia | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd03_sq004 IS 'Section J FSRD03 (MK Teori) | Metoda dan prosedur penciptaan/perancangan | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd03_sq005 IS 'Section J FSRD03 (MK Teori) | Kemampuan analisis-kritis karya | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd03_sq006 IS 'Section J FSRD03 (MK Teori) | Kesesuaian SKS dengan jumlah dan materi tugas | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd04_sq001 IS 'Section J FSRD04 (MK Studio) | Teknik penciptaan/perancangan | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd04_sq002 IS 'Section J FSRD04 (MK Studio) | Wawasan estetik dan proses perancangan | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd04_sq003 IS 'Section J FSRD04 (MK Studio) | Kesesuaian SKS dengan tugas studio | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd04_sq004 IS 'Section J FSRD04 (MK Studio) | Proses asistensi/pembimbingan | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd04_sq005 IS 'Section J FSRD04 (MK Studio) | Kesesuaian penilaian kualitas karya | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd04_sq006 IS 'Section J FSRD04 (MK Studio) | Kesesuaian pengetahuan dengan kerja profesi/pemagangan | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd05_sq001 IS 'Section J FSRD05 (Tugas Akhir) | Pengetahuan menunjang TA | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd05_sq002 IS 'Section J FSRD05 (Tugas Akhir) | Proses pembimbingan TA | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd05_sq003 IS 'Section J FSRD05 (Tugas Akhir) | Sarana dan prasarana TA | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.fsrd05_sq004 IS 'Section J FSRD05 (Tugas Akhir) | Buku dan literatur perpustakaan untuk TA | Hanya FSRD, NULL untuk fak lain | 1=Tidak sesuai harapan · 2=Ada yang memenuhi harapan · 3=Sebagian besar memenuhi harapan · 4=Memenuhi harapan · 5=Melampaui harapan';
-
--- Section K: SBM Khusus
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq001 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan berkomunikasi secara lisan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq002 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan berkomunikasi dalam tulisan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq003 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menggunakan pengetahuan marketing';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq004 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menggunakan pengetahuan manajemen operasi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq005 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menggunakan pengetahuan manajemen sumber daya manusia';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq006 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menggunakan pengetahuan keuangan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq007 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan Pengambilan Keputusan dan Negosiasi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq008 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan kewirausahaan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq009 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan tampil di depan publik';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq010 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Pengetahuan mendalam pada sekurangnya satu konsentrasi';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq011 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Pengetahuan probabilitas dan statistik termasuk analisis data';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq012 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menginterpretasi data';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq013 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan mengidentifikasi masalah';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq014 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menyelesaikan masalah';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq015 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan melakukan riset bisnis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq016 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan menggunakan internet untuk informasi dan berbagi pengetahuan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq017 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan membangun jejaring';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq018 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan mendirikan usaha baru';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq019 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan bekerjasama dalam tim';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq020 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan mengidentifikasi peluang bisnis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq021 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan mengidentifikasi peluang peningkatan kondisi komunitas';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq022 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan merancang dan menciptakan produk baru';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq023 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan beradaptasi dalam kendala sosial';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq024 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan bekerja/belajar dalam kendala sumberdaya';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq025 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan bekerja/belajar dalam kendala etika';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq026 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan bekerja/belajar dalam kendala kesehatan dan keamanan';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq027 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Memahami tanggung jawab profesional';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq028 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Memahami tanggung jawab etis';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq029 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Pengakuan perlunya belajar seumur hidup';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq030 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Kemampuan terlibat dalam pembelajaran seumur hidup';
-COMMENT ON COLUMN analitik.v_wisudawan_jawaban_responden.sbm01_sq031 IS 'Section K (SBM01) | Outcomes Program Studi SBM | Hanya SBM, NULL untuk fak lain | 1=Undeveloped · 2=Slightly Developed · 3=Moderately Developed · 4=Substantially Developed · 5=Highly Developed | Pertanyaan: Pengetahuan pendukung untuk studi pasca sarjana';
+COMMENT ON VIEW analitik.v_akademik_komponen_evaluasi_kelas IS
+    'Komposisi bobot komponen penilaian (UTS/UAS/Tugas/Kuis/Praktikum/Projek/Partisipatif) per kelas. '
+    'Grain: 1 baris = 1 kelas yang memiliki minimal satu komponen penilaian aktif (bobot > 0). '
+    'Kelas tanpa data komponen penilaian di evaluasi.komponen_evaluasi TIDAK muncul di view ini. '
+    'Sumber: evaluasi.komponen_evaluasi (bobot per entri) JOIN analitik_mv.mv_akademik_kelas (dimensi). '
+    'Periode: 2018/2019 semester 1 s.d. terkini. '
+    ''
+    'PENTING : cara baca kolom bobot_*: '
+    'Satu kelas bisa punya banyak entri komponen yang sama, contoh "Tugas 1" (25%) + '
+    '"Tugas 2" (25%) = bobot_tugas 50. Kolom bobot_* sudah berisi SUM seluruh entri '
+    'per tipe komponen, sehingga 1 baris langsung mencerminkan porsi total per komponen. '
+    'Nilai 0 = komponen tidak digunakan di kelas ini. '
+    ''
+    'CARA AGGREGASI KE PRODI/FAKULTAS: '
+    'Gunakan AVG(bobot_*) GROUP BY (no_prodi|kode_fakultas), tahun_ajaran, semester. '
+    'Contoh: SELECT kode_fakultas, AVG(bobot_uts) AS rata_uts '
+    'FROM analitik.v_akademik_komponen_evaluasi_kelas '
+    'WHERE tahun_ajaran = ''2024/2025'' AND semester = 1 '
+    'GROUP BY kode_fakultas. '
+    ''
+    'CARA FILTER KOMPONEN YANG DIPAKAI: '
+    'Komponen dianggap "digunakan" jika avg_bobot_* > 0 setelah aggregasi. '
+    'Frontend/output hanya menampilkan bucket yang AVG > 0 agar stacked bar tidak penuh slot kosong. '
+    ''
+    'INDIKATOR KUALITAS DATA: '
+    'total_bobot_kelas idealnya mendekati 100. Nilai jauh di bawah 100 mengindikasikan '
+    'dosen belum selesai mengisi komponen penilaian (data tidak lengkap).';
 
 
--- COMMENT ON VIEW analitik.v_akademik_portofolio IS  ← sudah ada di atas, skip duplikat
+-- ── Identitas kelas ───────────────────────────────────────────────
 
--- ================================================================
--- COMMENT ON COLUMN — DIMENSI KELAS
--- ================================================================
-COMMENT ON COLUMN analitik.v_akademik_portofolio.kelas_id
-    IS 'PK MV. Identitas kelas (FK ke kelas.kelas).';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_matkul
-    IS 'Kode mata kuliah (6 karakter), contoh: MA1101.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_matkul_id
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.kelas_id
+    IS 'PK. ID kelas (FK ke kelas.kelas dan analitik_mv.mv_akademik_kelas). '
+       'Unik di view ini karena grain per kelas.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.no_kelas
+    IS 'Nomor urut kelas dalam satu mata kuliah per semester, contoh: 1, 2, 3. '
+       'Kelas paralel dari MK yang sama dibedakan oleh no_kelas.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.kode_matkul
+    IS 'Kode mata kuliah 6 karakter, contoh: IF2210, MA1101. Dari utama.mata_kuliah.kd_kuliah.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.nama_matkul_id
     IS 'Nama mata kuliah Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_matkul_en
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.nama_matkul_en
     IS 'Nama mata kuliah Bahasa Inggris.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.sks
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.sks
     IS 'Jumlah SKS mata kuliah.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.no_kelas
-    IS 'Nomor urut kelas dalam satu mata kuliah per semester.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.semester
-    IS '1=ganjil, 2/3=genap/pendek.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun
-    IS 'Tahun akademik (4 digit).';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun_ajaran
-    IS 'Format YYYY/YYYY, contoh: 2022/2023.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.tahun_kurikulum
-    IS 'Tahun kurikulum yang berlaku untuk mata kuliah ini.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.jenis_nilai
-    IS 'ABCDE atau PassFail.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.no_prodi
-    IS 'ID numerik program studi penyelenggara (no_ps).';
--- [singkatan_prodi tidak ada di view baru — digantikan kode_prodi]
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_prodi_id
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.tahun_kurikulum
+    IS 'Tahun kurikulum yang berlaku untuk mata kuliah ini, contoh: 2024.';
+
+
+-- ── Dimensi prodi & fakultas ──────────────────────────────────────
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.no_prodi
+    IS 'ID numerik program studi penyelenggara kelas (FK ke utama.program_studi.no_ps). ';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.kode_prodi
+    IS 'Kode singkat prodi 2 karakter, contoh: IF, EL, MA. Dari utama.program_studi.kd_ps.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.nama_prodi_id
     IS 'Nama program studi Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.jenjang
-    IS 'Jenjang studi: S1, S2, S3, D3, dst.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.kode_fakultas
-    IS 'Kode fakultas/sekolah (FMIPA, STEI, FTI, dst.).';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nama_fakultas_id
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.nama_prodi_en
+    IS 'Nama program studi Bahasa Inggris.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.jenjang
+    IS 'Jenjang program studi: S1, S2, S3, PR (Profesi). Dari utama.program_studi.kd_strata.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.kode_fakultas
+    IS 'Kode fakultas/sekolah, contoh: STEI, SBM, FSRD. Dari utama.program_studi.kd_fak. ';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.nama_fakultas_id
     IS 'Nama fakultas/sekolah Bahasa Indonesia.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.semua_dosen_id
-    IS 'Array dosen_id semua pengajar kelas (dari kelas.pengajar).';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.semua_dosen_nama_gelar
-    IS 'Array nama lengkap dengan gelar semua pengajar kelas.';
 
--- ================================================================
--- COMMENT ON COLUMN — METADATA PORTOFOLIO
--- ================================================================
-COMMENT ON COLUMN analitik.v_akademik_portofolio.tgl_entri
-    IS 'Tanggal dosen menyelesaikan pengisian portofolio.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lengkap
-    IS 'TRUE jika portofolio sudah dinyatakan lengkap oleh verifikator.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.nilai_portofolio
-    IS 'Nilai numerik portofolio hasil verifikasi.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.skema_pertanyaan
-    IS '"baru" = kd_pertanyaan 12-19 [20181,∞) | '
-       '"lama" = kd_pertanyaan 1-11 (sebelum 2018) | '
-       '"kosong" = isian NULL atau {}.';
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.nama_fakultas_en
+    IS 'Nama fakultas/sekolah Bahasa Inggris.';
 
--- ================================================================
--- COMMENT ON COLUMN — ERA BARU (kd_pertanyaan 12–19)
--- ================================================================
-COMMENT ON COLUMN analitik.v_akademik_portofolio.metode_perkuliahan
-    IS '[ACTIVE | kd_pertanyaan=12 | kd_grup=6 Penyelenggaraan Perkuliahan] '
-       'Uraian metode yang digunakan dalam pembelajaran: diskusi, '
-       'collaborative learning, kuliah tamu, project, dsb.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.komponen_penilaian
-    IS '[ACTIVE | kd_pertanyaan=13 | kd_grup=6 Penyelenggaraan Perkuliahan] '
-       'Komponen-komponen penilaian (UTS, UAS, kuis, tugas, praktikum, presentasi, dll.) '
-       'beserta bobot dan standar konversi nilai ke indeks.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.statistik_nilai_kelas
-    IS '[ACTIVE | kd_pertanyaan=14 | kd_grup=7 Ketercapaian Outcomes] '
-       'Distribusi nilai ujian, PR, kuis, dan bentuk penilaian lainnya, '
-       'serta data statistik penting kelas lainnya.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.analisis_ketercapaian_outcomes
-    IS '[ACTIVE | kd_pertanyaan=15 | kd_grup=7 Ketercapaian Outcomes] '
-       'Uraian tentang tingkat keberhasilan pembelajaran dan ketercapaian outcomes '
-       'beserta faktor-faktor yang mempengaruhinya berdasarkan data terkumpul.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.tanggapan_kuesioner_mahasiswa
-    IS '[ACTIVE | kd_pertanyaan=16 | kd_grup=8 Refleksi Dosen] '
-       'Tanggapan dosen terhadap penilaian mahasiswa melalui kuesioner.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.refleksi_perkuliahan
-    IS '[ACTIVE | kd_pertanyaan=17 | kd_grup=8 Refleksi Dosen] '
-       'Uraian tentang pelaksanaan perkuliahan: keberhasilan dan kegagalan rencana, '
-       'masalah belajar mahasiswa, persoalan yang dihadapi dosen, temuan penting.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.usulan_perbaikan_dosen
-    IS '[ACTIVE | kd_pertanyaan=18 | kd_grup=9 Rekomendasi Tindak Lanjut] '
-       'Hal-hal yang perlu dilakukan oleh dosen pengampu pada perkuliahan mendatang '
-       'untuk meningkatkan kualitas dan keberhasilan pembelajaran.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.rekomendasi_ke_itb
-    IS '[ACTIVE | kd_pertanyaan=19 | kd_grup=9 Rekomendasi Tindak Lanjut] '
-       'Hal-hal yang perlu dilakukan oleh ITB (institut, fakultas/sekolah, prodi) '
-       'untuk mendukung keberhasilan perkuliahan: kurikulum, sarpras, fasilitas.';
--- ================================================================
--- COMMENT ON COLUMN — ERA LAMA (kd_pertanyaan 1–11)
--- ================================================================
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_metode_perkuliahan
-    IS '[ARCHIVED | kd_pertanyaan=1 | kd_grup=2 Pelaksanaan Kuliah] '
-       'Metode Perkuliahan.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_statistik_kelas
-    IS '[ARCHIVED | kd_pertanyaan=7 | kd_grup=2 Pelaksanaan Kuliah] '
-       'Statistik Kelas.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_outcomes_matakuliah
-    IS '[ARCHIVED | kd_pertanyaan=2 | kd_grup=1 Pencapaian Tujuan/Outcomes] '
-       'Outcomes Matakuliah.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_sistem_penilaian
-    IS '[ARCHIVED | kd_pertanyaan=3 | kd_grup=1 Pencapaian Tujuan/Outcomes] '
-       'Sistem Penilaian.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_analisis_statistik_ketercapaian
-    IS '[ARCHIVED | kd_pertanyaan=8 | kd_grup=1 Pencapaian Tujuan/Outcomes] '
-       'Analisis terhadap Statistik Kelas dan Ketercapaian Outcomes.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_uraian_kuesioner_statistik
-    IS '[ARCHIVED | kd_pertanyaan=4 | kd_grup=3 Refleksi] '
-       'Uraian terhadap Hasil Kuesioner dan Statistik Kelas.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_komentar_kuesioner_mahasiswa
-    IS '[ARCHIVED | kd_pertanyaan=9 | kd_grup=3 Refleksi] '
-       'Komentar terhadap Hasil Kuesioner Mahasiswa.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_refleksi_perkuliahan
-    IS '[ARCHIVED | kd_pertanyaan=5 | kd_grup=3 Refleksi] '
-       'Refleksi Pelaksanaan Perkuliahan.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_rencana_tindak_lanjut
-    IS '[ARCHIVED | kd_pertanyaan=6 | kd_grup=4 Rencana Tindak Lanjut] '
-       'Rencana Tindak Lanjut.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_rekomendasi_perbaikan_dosen
-    IS '[ARCHIVED | kd_pertanyaan=10 | kd_grup=5 Rekomendasi Tindak Lanjut] '
-       'Rekomendasi Perbaikan oleh Dosen Berikutnya.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_rekomendasi_itb
-    IS '[ARCHIVED | kd_pertanyaan=11 | kd_grup=5 Rekomendasi Tindak Lanjut] '
-       'Rekomendasi Perbaikan oleh ITB.';
--- ================================================================
--- COMMENT ON COLUMN — KOMENTAR VERIFIKATOR ERA BARU
--- ================================================================
-COMMENT ON COLUMN analitik.v_akademik_portofolio.komentar_penyelenggaraan
-    IS '[ACTIVE | kd_grup=6] '
-       'Komentar verifikator untuk grup Penyelenggaraan Perkuliahan.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.komentar_ketercapaian
-    IS '[ACTIVE | kd_grup=7] '
-       'Komentar verifikator untuk grup Ketercapaian Outcomes.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.komentar_refleksi
-    IS '[ACTIVE | kd_grup=8] '
-       'Komentar verifikator untuk grup Refleksi Dosen.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.komentar_rekomendasi
-    IS '[ACTIVE | kd_grup=9] '
-       'Komentar verifikator untuk grup Rekomendasi Tindak Lanjut.';
--- ================================================================
--- COMMENT ON COLUMN — KOMENTAR VERIFIKATOR ERA LAMA
--- ================================================================
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_komentar_pencapaian_outcomes
-    IS '[ARCHIVED | kd_grup=1] '
-       'Komentar verifikator untuk grup Pencapaian Tujuan/Outcomes.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_komentar_pelaksanaan_kuliah
-    IS '[ARCHIVED | kd_grup=2] '
-       'Komentar verifikator untuk grup Pelaksanaan Kuliah.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_komentar_refleksi
-    IS '[ARCHIVED | kd_grup=3] '
-       'Komentar verifikator untuk grup Refleksi.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_komentar_rencana_tindak_lanjut
-    IS '[ARCHIVED | kd_grup=4] '
-       'Komentar verifikator untuk grup Rencana Tindak Lanjut.';
-COMMENT ON COLUMN analitik.v_akademik_portofolio.lama_komentar_rekomendasi
-    IS '[ARCHIVED | kd_grup=5] '
-       'Komentar verifikator untuk grup Rekomendasi Tindak Lanjut.';
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.semua_dosen_id
+    IS 'Array integer ID semua dosen yang mengajar kelas ini. '
+       'Gunakan operator @> untuk cek apakah dosen tertentu mengajar kelas ini: '
+       'WHERE semua_dosen_id @> ARRAY[<dosen_id>].';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.semua_dosen_nama_gelar
+    IS 'Array nama lengkap dengan gelar dari semua dosen pengampu kelas, '
+       'berurutan paralel dengan semua_dosen_id.';
+
+
+-- ── Dimensi waktu ─────────────────────────────────────────────────
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.tahun
+    IS '4 digit tahun akademik diselenggarakannnya kelas, contoh: 2023.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.semester
+    IS 'Semester: 1=ganjil, 2=genap, 3=pendek.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.tahun_ajaran
+    IS 'Format YYYY/YYYY, contoh: 2023/2024. '
+       'Semester 1 → tahun/tahun+1; semester 2/3 → tahun-1/tahun.';
+
+
+-- ── Bobot komponen penilaian ──────────────────────────────────────
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_uts
+    IS 'Total bobot Ujian Tengah Semester (kd_komponen_evaluasi_mk=''UTS'') di kelas ini. '
+       'SUM semua entri UTS dengan bobot > 0. Skala 0–100. '
+       '0 = kelas ini tidak menggunakan UTS sebagai komponen penilaian.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_uas
+    IS 'Total bobot Ujian Akhir Semester (kd_komponen_evaluasi_mk=''UAS'') di kelas ini. '
+       'SUM semua entri UAS dengan bobot > 0. Skala 0–100. '
+       '0 = kelas ini tidak menggunakan UAS sebagai komponen penilaian.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_tugas
+    IS 'Total bobot semua Tugas (kd_komponen_evaluasi_mk=''TGS'') di kelas ini. '
+       'SUM semua entri tugas dengan bobot > 0 — termasuk "Tugas 1", "Tugas 2", dst. yang semuanya ber-kode TGS. '
+       'Contoh: Tugas 1 (25%) + Tugas 2 (25%) = bobot_tugas 50. '
+       '0 = kelas ini tidak menggunakan tugas sebagai komponen penilaian.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_kuis
+    IS 'Total bobot Kuis (kd_komponen_evaluasi_mk=''QIZ'') di kelas ini. '
+       'SUM semua entri kuis dengan bobot > 0. Skala 0–100. '
+       '0 = kelas ini tidak menggunakan kuis.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_praktikum
+    IS 'Total bobot Praktikum (kd_komponen_evaluasi_mk=''PRK'') di kelas ini. '
+       'SUM semua entri praktikum dengan bobot > 0. Skala 0–100. '
+       '0 = kelas ini tidak memiliki komponen praktikum.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_projek
+    IS 'Total bobot Hasil Projek (kd_komponen_evaluasi_mk=''PRO'') di kelas ini. '
+       'SUM semua entri projek dengan bobot > 0. Skala 0–100. '
+       '0 = kelas ini tidak menggunakan komponen projek.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.bobot_partisipatif
+    IS 'Total bobot Aktivitas Partisipatif (kd_komponen_evaluasi_mk=''PAR'') di kelas ini. '
+       'Mencakup partisipasi aktif, diskusi, presentasi singkat, dan sejenisnya. '
+       'SUM semua entri partisipatif dengan bobot > 0. Skala 0–100. '
+       '0 = kelas ini tidak menggunakan komponen partisipatif.';
+
+COMMENT ON COLUMN analitik.v_akademik_komponen_evaluasi_kelas.total_bobot_kelas
+    IS 'Jumlah total semua bobot komponen aktif di kelas ini (SUM bobot_uts + bobot_uas + '
+       'bobot_tugas + bobot_kuis + bobot_praktikum + bobot_projek + bobot_partisipatif). '
+       'Idealnya = 100 untuk kelas yang sudah mengisi komponen penilaian dengan lengkap. '
+       'Nilai < 100: dosen belum selesai mengisi, data tidak lengkap, interpretasi hati-hati. '
+       'Nilai > 100: kemungkinan entry error di sistem. ';

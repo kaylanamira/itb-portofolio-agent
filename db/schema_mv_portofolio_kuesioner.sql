@@ -184,9 +184,10 @@ distribusi_pivot AS (
         COUNT(*) FILTER (WHERE nilai = 'C')  AS dist_jumlah_c,
         COUNT(*) FILTER (WHERE nilai = 'D')  AS dist_jumlah_d,
         COUNT(*) FILTER (WHERE nilai = 'E')  AS dist_jumlah_e,
+        COUNT(*) FILTER (WHERE nilai = 'T')  AS dist_jumlah_t,
         COUNT(*) FILTER (WHERE nilai = 'P')  AS dist_jumlah_pass,
         COUNT(*) FILTER (WHERE nilai = 'F')  AS dist_jumlah_fail,
-        COUNT(*) FILTER (WHERE nilai <> 'T' AND nilai IS NOT NULL) AS total_mahasiswa
+        COUNT(*) FILTER (WHERE nilai IS NOT NULL) AS total_mahasiswa
     FROM mahasiswa.kuliah
     WHERE sah_nilai = true
       AND ts_hapus  IS NULL
@@ -352,6 +353,7 @@ SELECT
     CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_c,    0) END AS dist_jumlah_c,
     CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_d,    0) END AS dist_jumlah_d,
     CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_e,    0) END AS dist_jumlah_e,
+    CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_t,    0) END AS dist_jumlah_t,
     CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_pass, 0) END AS dist_jumlah_pass,
     CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_fail, 0) END AS dist_jumlah_fail,
 
@@ -363,6 +365,7 @@ SELECT
     ROUND(CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_c,   0)::NUMERIC / NULLIF(dp.total_mahasiswa,0) * 100 END, 2) AS dist_pct_c,
     ROUND(CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_d,   0)::NUMERIC / NULLIF(dp.total_mahasiswa,0) * 100 END, 2) AS dist_pct_d,
     ROUND(CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_e,   0)::NUMERIC / NULLIF(dp.total_mahasiswa,0) * 100 END, 2) AS dist_pct_e,
+    ROUND(CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_t,   0)::NUMERIC / NULLIF(dp.total_mahasiswa,0) * 100 END, 2) AS dist_pct_t,
     ROUND(CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_pass,0)::NUMERIC / NULLIF(dp.total_mahasiswa,0) * 100 END, 2) AS dist_pct_pass,
     ROUND(CASE WHEN dp.kelas_id IS NOT NULL THEN COALESCE(dp.dist_jumlah_fail,0)::NUMERIC / NULLIF(dp.total_mahasiswa,0) * 100 END, 2) AS dist_pct_fail,
 
@@ -454,7 +457,17 @@ LEFT JOIN skor_dosen_avg            sda  ON sda.kelas_id  = k.kelas_id
 LEFT JOIN skor_dimensi_avg          sda2 ON sda2.kelas_id = k.kelas_id
 LEFT JOIN skor_kues_per_dosen       skdp ON skdp.kelas_id = k.kelas_id
 LEFT JOIN jenis_sifat_agg           js   ON js.mata_kuliah_id = k.mata_kuliah_id
-                                        AND js.no_prodi     = ps.no_ps;
+                                        AND js.no_prodi     = ps.no_ps
+WHERE (
+    -- semester 1: tahun >= 2018 → tahun_ajaran >= '2018/2019'
+    (k.semester = 1 AND k.tahun >= 2018)
+    OR
+    -- semester 2: tahun >= 2019 → tahun_ajaran >= '2018/2019'
+    (k.semester = 2 AND k.tahun >= 2019)
+    OR
+    -- semester 3 (pendek): tahun >= 2019 → tahun_ajaran >= '2018/2019'
+    (k.semester = 3 AND k.tahun >= 2019)
+);
 
 -- Index
 CREATE UNIQUE INDEX idx_mv_akademik_kelas_pk
@@ -465,6 +478,8 @@ CREATE INDEX idx_mv_akademik_kelas_fak_sem
     ON analitik_mv.mv_akademik_kelas (kode_fakultas, semester, tahun);
 CREATE INDEX idx_mv_akademik_kelas_matkul_sem
     ON analitik_mv.mv_akademik_kelas (kode_matkul, semester, tahun);
+CREATE INDEX idx_mv_akademik_kelas_matkul_tahun_ajaran
+    ON analitik_mv.mv_akademik_kelas (kode_matkul, tahun_ajaran);
 CREATE INDEX idx_mv_akademik_kelas_tahun_ajaran
     ON analitik_mv.mv_akademik_kelas (tahun_ajaran, no_prodi);
 CREATE INDEX idx_mv_akademik_kelas_dosen_arr
@@ -483,6 +498,7 @@ CREATE INDEX idx_mv_akademik_kelas_distribusi_tersedia
 
 COMMENT ON MATERIALIZED VIEW analitik_mv.mv_akademik_kelas IS
     '1 baris = 1 kelas. Semua dimensi ter-flatten. '
+    'Periode: 2018/2019 semester 1 s.d. terkini. '
     'Refresh setelah mv_jenis_dan_sifat_matkul.';
 
 COMMENT ON COLUMN analitik_mv.mv_akademik_kelas.is_distribusi_nilai_sah IS
@@ -541,20 +557,28 @@ LEFT JOIN LATERAL (
 ) d ON TRUE
 WHERE (jk.jawaban->>'103') IS NOT NULL
   AND (jk.jawaban->>'103') <> ''
-  AND k.open = TRUE;
-
--- Index
-CREATE INDEX idx_mv_komentar_tahun_ajaran
-    ON analitik_mv.mv_akademik_komentar_mahasiswa (tahun_ajaran, no_prodi);
-CREATE INDEX idx_mv_komentar_dosen_arr
-    ON analitik_mv.mv_akademik_komentar_mahasiswa USING GIN (semua_dosen_id);
+  AND (
+      (k.semester = 1 AND k.tahun >= 2018)
+      OR
+      (k.semester IN (2, 3) AND k.tahun >= 2019)
+  );
 
 COMMENT ON MATERIALIZED VIEW analitik_mv.mv_akademik_komentar_mahasiswa IS
     '1 baris = 1 jawaban komentar teks mahasiswa per kelas. '
     'Komentar diambil dari evaluasi.jwb_kuesioner.jawaban key ''103''. '
-    'Filter: k.open=true (evaluasi sudah dibuka). '
-    'TIDAK bergantung pada mv_akademik_kelas — bisa di-refresh paralel. '
-    'Perhatian: nama kolom kode_matkul/nama_matkul_id berbeda dari mv_akademik_kelas (kode_matkul/nama_matkul_id).';
+    'Periode: 2018/2019 semester 1 s.d. terkini. ';
+
+-- Index
+CREATE INDEX idx_mv_komentar_kelas
+    ON analitik_mv.mv_akademik_komentar_mahasiswa (kelas_id);
+CREATE INDEX idx_mv_komentar_tahun_ajaran
+    ON analitik_mv.mv_akademik_komentar_mahasiswa (tahun_ajaran, no_prodi);
+CREATE INDEX idx_mv_komentar_dosen_arr
+    ON analitik_mv.mv_akademik_komentar_mahasiswa USING GIN (semua_dosen_id);
+CREATE INDEX idx_mv_komentar_prodi_semester
+    ON analitik_mv.mv_akademik_komentar_mahasiswa (no_prodi, tahun, semester);
+CREATE INDEX idx_mv_komentar_fak_semester
+    ON analitik_mv.mv_akademik_komentar_mahasiswa (kode_fakultas, tahun, semester);
 
 
 CREATE OR REPLACE FUNCTION analitik_mv.strip_html(raw text)
@@ -596,29 +620,20 @@ raw AS (
         p.tgl_entri,
         p.lengkap,
         p.nilai                  AS nilai_portofolio,
-        CASE
-            WHEN p.isian ? '12'  THEN 'baru'
-            WHEN p.isian ? '1'   THEN 'lama'
-            ELSE                      'kosong'
-        END                      AS skema_pertanyaan,
         p.isian->>'12' AS r12, p.isian->>'13' AS r13,
         p.isian->>'14' AS r14, p.isian->>'15' AS r15,
         p.isian->>'16' AS r16, p.isian->>'17' AS r17,
         p.isian->>'18' AS r18, p.isian->>'19' AS r19,
-        p.isian->>'1'  AS r1,  p.isian->>'2'  AS r2,
-        p.isian->>'3'  AS r3,  p.isian->>'4'  AS r4,
-        p.isian->>'5'  AS r5,  p.isian->>'6'  AS r6,
-        p.isian->>'7'  AS r7,  p.isian->>'8'  AS r8,
-        p.isian->>'9'  AS r9,  p.isian->>'10' AS r10,
-        p.isian->>'11' AS r11,
         p.komentar->>'6' AS k6, p.komentar->>'7' AS k7,
-        p.komentar->>'8' AS k8, p.komentar->>'9' AS k9,
-        p.komentar->>'1' AS kg1, p.komentar->>'2' AS kg2,
-        p.komentar->>'3' AS kg3, p.komentar->>'4' AS kg4,
-        p.komentar->>'5' AS kg5
+        p.komentar->>'8' AS k8, p.komentar->>'9' AS k9
     FROM evaluasi.portofolio p
     WHERE p.isian IS NOT NULL
       AND p.isian <> '{}'::jsonb
+      AND (
+          p.isian ? '12' OR p.isian ? '13' OR p.isian ? '14' OR
+          p.isian ? '15' OR p.isian ? '16' OR p.isian ? '17' OR
+          p.isian ? '18' OR p.isian ? '19'
+      )
 )
 SELECT
     mk.kelas_id,
@@ -645,37 +660,25 @@ SELECT
     r.tgl_entri                             AS tanggal_entri,
     r.lengkap,
     r.nilai_portofolio,
-    r.skema_pertanyaan,
     analitik_mv.strip_html(r.r12)              AS metode_perkuliahan,
-    analitik_mv.strip_html(r.r13)              AS komponen_penilaian,
-    analitik_mv.strip_html(r.r14)              AS statistik_nilai_kelas,
-    analitik_mv.strip_html(r.r15)              AS analisis_ketercapaian_outcomes,
-    analitik_mv.strip_html(r.r16)              AS tanggapan_kuesioner_mahasiswa,
-    analitik_mv.strip_html(r.r17)              AS refleksi_perkuliahan,
-    analitik_mv.strip_html(r.r18)              AS usulan_perbaikan_dosen,
-    analitik_mv.strip_html(r.r19)              AS rekomendasi_ke_itb,
-    analitik_mv.strip_html(r.r1)               AS lama_metode_perkuliahan,
-    analitik_mv.strip_html(r.r7)               AS lama_statistik_kelas,
-    analitik_mv.strip_html(r.r2)               AS lama_outcomes_matakuliah,
-    analitik_mv.strip_html(r.r3)               AS lama_sistem_penilaian,
-    analitik_mv.strip_html(r.r8)               AS lama_analisis_statistik_ketercapaian,
-    analitik_mv.strip_html(r.r4)               AS lama_uraian_kuesioner_statistik,
-    analitik_mv.strip_html(r.r9)               AS lama_komentar_kuesioner_mahasiswa,
-    analitik_mv.strip_html(r.r5)               AS lama_refleksi_perkuliahan,
-    analitik_mv.strip_html(r.r6)               AS lama_rencana_tindak_lanjut,
-    analitik_mv.strip_html(r.r10)              AS lama_rekomendasi_perbaikan_dosen,
-    analitik_mv.strip_html(r.r11)              AS lama_rekomendasi_itb,
-    analitik_mv.strip_html(r.k6)               AS komentar_penyelenggaraan,
-    analitik_mv.strip_html(r.k7)               AS komentar_ketercapaian,
-    analitik_mv.strip_html(r.k8)               AS komentar_refleksi,
-    analitik_mv.strip_html(r.k9)               AS komentar_rekomendasi,
-    analitik_mv.strip_html(r.kg1)              AS lama_komentar_pencapaian_outcomes,
-    analitik_mv.strip_html(r.kg2)              AS lama_komentar_pelaksanaan_kuliah,
-    analitik_mv.strip_html(r.kg3)              AS lama_komentar_refleksi,
-    analitik_mv.strip_html(r.kg4)              AS lama_komentar_rencana_tindak_lanjut,
-    analitik_mv.strip_html(r.kg5)              AS lama_komentar_rekomendasi
+    analitik_mv.strip_html(r.r13)              AS sistem_penilaian,
+    analitik_mv.strip_html(r.r14)              AS statistik_kelas,
+    analitik_mv.strip_html(r.r15)              AS analisis_terhadap_statistik_kelas_dan_ketercapaian_outcomes,
+    analitik_mv.strip_html(r.r16)              AS komentar_terhadap_hasil_kuesioner_mahasiswa,
+    analitik_mv.strip_html(r.r17)              AS refleksi_pelaksanaan_perkuliahan,
+    analitik_mv.strip_html(r.r18)              AS usulan_perbaikan_oleh_dosen_berikutnya,
+    analitik_mv.strip_html(r.r19)              AS usulan_perbaikan_oleh_itb,
+    analitik_mv.strip_html(r.k6)               AS verifikator_penyelenggaraan_perkuliahan,
+    analitik_mv.strip_html(r.k7)               AS verifikator_ketercapaian_outcomes,
+    analitik_mv.strip_html(r.k8)               AS verifikator_refleksi_dosen,
+    analitik_mv.strip_html(r.k9)               AS verifikator_rekomendasi_tindak_lanjut
 FROM raw r
 JOIN analitik_mv.mv_akademik_kelas mk ON mk.kelas_id = r.kelas_id;
+
+COMMENT ON MATERIALIZED VIEW analitik_mv.mv_akademik_portofolio IS
+    'Portofolio dosen per kelas : refleksi, analisis, dan rekomendasi pengajaran. '
+    'Grain        : 1 baris = 1 kelas (hanya kelas dengan portofolio terisi). '
+    'Skema        : hanya pertanyaan baru (kd_pertanyaan 12–19). ';
 
 -- Index
 CREATE UNIQUE INDEX idx_mv_portofolio_pk
@@ -688,9 +691,6 @@ CREATE INDEX idx_mv_portofolio_dosen_arr
     ON analitik_mv.mv_akademik_portofolio USING GIN (semua_dosen_id);
 CREATE INDEX idx_mv_portofolio_fak_semester
     ON analitik_mv.mv_akademik_portofolio (kode_fakultas, semester, tahun);
-CREATE INDEX idx_mv_portofolio_era_baru
-    ON analitik_mv.mv_akademik_portofolio (kelas_id)
-    WHERE skema_pertanyaan = 'baru';
 CREATE INDEX idx_mv_portofolio_fak_jenjang
     ON analitik_mv.mv_akademik_portofolio (kode_fakultas, jenjang, tahun, semester);
 
@@ -718,6 +718,11 @@ mhs_aktif_per_prodi AS (
           WHERE na.mahasiswa_id = st.mahasiswa_id
             AND na.tahun        = st.tahun
             AND na.semester     = st.semester
+      )
+      AND (
+          (st.semester = 1 AND st.tahun >= 2018)
+          OR
+          (st.semester IN (2, 3) AND st.tahun >= 2019)
       )
     GROUP BY mhs.no_ps, st.tahun, st.semester
 )
@@ -752,30 +757,32 @@ SELECT
     SUM(mv.dist_jumlah_c)                                       AS total_jumlah_c,
     SUM(mv.dist_jumlah_d)                                       AS total_jumlah_d,
     SUM(mv.dist_jumlah_e)                                       AS total_jumlah_e,
+    SUM(mv.dist_jumlah_t)                                       AS total_jumlah_t,
     SUM(mv.dist_jumlah_pass)                                    AS total_jumlah_pass,
     SUM(mv.dist_jumlah_fail)                                    AS total_jumlah_fail,
     SUM(COALESCE(mv.dist_jumlah_a,0) + COALESCE(mv.dist_jumlah_ab,0) +
         COALESCE(mv.dist_jumlah_b,0) + COALESCE(mv.dist_jumlah_bc,0) +
         COALESCE(mv.dist_jumlah_c,0) + COALESCE(mv.dist_jumlah_d,0) +
-        COALESCE(mv.dist_jumlah_e,0) + COALESCE(mv.dist_jumlah_pass,0) +
+        COALESCE(mv.dist_jumlah_e,0) + COALESCE(mv.dist_jumlah_t,0) + COALESCE(mv.dist_jumlah_pass,0) +
         COALESCE(mv.dist_jumlah_fail,0))
         FILTER (WHERE mv.is_distribusi_nilai_sah)                AS total_mahasiswa_dinilai,
 
-    ROUND(SUM(mv.dist_jumlah_a)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_a,
-    ROUND(SUM(mv.dist_jumlah_ab)::NUMERIC   / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_ab,
-    ROUND(SUM(mv.dist_jumlah_b)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_b,
-    ROUND(SUM(mv.dist_jumlah_bc)::NUMERIC   / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_bc,
-    ROUND(SUM(mv.dist_jumlah_c)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_c,
-    ROUND(SUM(mv.dist_jumlah_d)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_d,
-    ROUND(SUM(mv.dist_jumlah_e)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_e,
-    ROUND(SUM(mv.dist_jumlah_pass)::NUMERIC / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_pass,
-    ROUND(SUM(mv.dist_jumlah_fail)::NUMERIC / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_fail,
+    ROUND(SUM(mv.dist_jumlah_a)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_a,
+    ROUND(SUM(mv.dist_jumlah_ab)::NUMERIC   / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_ab,
+    ROUND(SUM(mv.dist_jumlah_b)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_b,
+    ROUND(SUM(mv.dist_jumlah_bc)::NUMERIC   / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_bc,
+    ROUND(SUM(mv.dist_jumlah_c)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_c,
+    ROUND(SUM(mv.dist_jumlah_d)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_d,
+    ROUND(SUM(mv.dist_jumlah_e)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_e,
+    ROUND(SUM(mv.dist_jumlah_t)::NUMERIC    / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_t,
+    ROUND(SUM(mv.dist_jumlah_pass)::NUMERIC / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_pass,
+    ROUND(SUM(mv.dist_jumlah_fail)::NUMERIC / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_fail,
 
     ROUND((SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)) FILTER (WHERE mv.is_distribusi_nilai_sah))::NUMERIC
-        / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_lulus_a_c,
+        / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_lulus_a_c,
 
     ROUND((SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)) FILTER (WHERE mv.is_distribusi_nilai_sah))::NUMERIC
-        / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_lulus_a_d,
+        / NULLIF(SUM(COALESCE(mv.dist_jumlah_a,0)+COALESCE(mv.dist_jumlah_ab,0)+COALESCE(mv.dist_jumlah_b,0)+COALESCE(mv.dist_jumlah_bc,0)+COALESCE(mv.dist_jumlah_c,0)+COALESCE(mv.dist_jumlah_d,0)+COALESCE(mv.dist_jumlah_e,0)+COALESCE(mv.dist_jumlah_t,0)+COALESCE(mv.dist_jumlah_pass,0)+COALESCE(mv.dist_jumlah_fail,0)) FILTER (WHERE mv.is_distribusi_nilai_sah),0)*100,2) AS dist_pct_lulus_a_d,
 
     ROUND(AVG(mv.skor_q21)::NUMERIC,     4) AS avg_skor_q21,
     ROUND(AVG(mv.skor_q22)::NUMERIC,     4) AS avg_skor_q22,
@@ -808,6 +815,10 @@ GROUP BY
     mv.semester,      mv.tahun,           mv.tahun_ajaran,
     map.jumlah_mahasiswa_aktif;
 
+COMMENT ON MATERIALIZED VIEW analitik_mv.mv_akademik_statistik_prodi IS
+    'Statistik agregat seluruh kelas per prodi per semester. '
+    'Periode: 2018/2019 semester 1 s.d. terkini';
+
 -- Index
 CREATE UNIQUE INDEX idx_mv_prodi_pk
     ON analitik_mv.mv_akademik_statistik_prodi (no_prodi, semester, tahun);
@@ -839,6 +850,11 @@ skor_dimensi_dosen AS (
     WHERE nd.skor_kues IS NOT NULL
       AND nd.skor_kues <> '{}'::jsonb
       AND nd.skor_kues ? '1'
+      AND (
+        (k.semester = 1 AND k.tahun >= 2018)
+        OR
+        (k.semester IN (2, 3) AND k.tahun >= 2019)
+      )
     GROUP BY nd.dosen_id, k.semester, k.tahun
 ),
 
@@ -855,6 +871,11 @@ skor_q25_q27_dosen AS (
     WHERE nd.kuesioner IS NOT NULL
       AND nd.kuesioner <> '{}'::jsonb
       AND nd.kuesioner ? '25'
+      AND (
+          (k.semester = 1 AND k.tahun >= 2018)
+          OR
+          (k.semester IN (2, 3) AND k.tahun >= 2019)
+      )
     GROUP BY nd.dosen_id, k.semester, k.tahun
 )
 
@@ -896,7 +917,7 @@ SELECT
     )                                                            AS avg_skor_overall,
     sdd.jumlah_kelas_dengan_skor,
     ROUND(AVG(nd.nilai_akhir)::NUMERIC, 4)                       AS avg_nilai_akhir,
-    array_agg(DISTINCT mv.kelas_id    ORDER BY mv.kelas_id)      AS kelas_ids,
+    array_agg(DISTINCT mv.kelas_id    ORDER BY mv.kelas_id)      AS kelas_id_list,
     array_agg(DISTINCT mv.kode_matkul ORDER BY mv.kode_matkul)   AS kode_matkul_list,
     array_agg(DISTINCT mv.no_prodi  ORDER BY mv.no_prodi)    AS no_prodi_diajar,
     array_agg(DISTINCT mv.kode_prodi ORDER BY mv.kode_prodi) AS kode_prodi_diajar
@@ -922,6 +943,10 @@ GROUP BY
     sdd.avg_skor_perilaku_mahasiswa, sdd.jumlah_kelas_dengan_skor,
     sqd.avg_skor_q25, sqd.avg_skor_q26, sqd.avg_skor_q27;
 
+COMMENT ON MATERIALIZED VIEW analitik_mv.mv_akademik_statistik_dosen IS
+    'Statistik agregat per dosen per semester. '
+    'Periode: 2018/2019 semester 1 s.d. terkini ';
+
 -- Index
 CREATE UNIQUE INDEX idx_mv_dosen_pk
     ON analitik_mv.mv_akademik_statistik_dosen (dosen_id, semester, tahun);
@@ -933,3 +958,80 @@ CREATE INDEX idx_mv_dosen_no_ps_sem
     ON analitik_mv.mv_akademik_statistik_dosen (no_prodi, semester, tahun);
 CREATE INDEX idx_mv_dosen_tahun_ajaran
     ON analitik_mv.mv_akademik_statistik_dosen (tahun_ajaran, dosen_id);
+CREATE INDEX idx_mv_dosen_prodi_diajar_arr
+    ON analitik_mv.mv_akademik_statistik_dosen USING gin (no_prodi_diajar);
+
+-- ================================================================
+-- STEP 7: mv_akademik_statistik_dosen
+-- ================================================================
+CREATE MATERIALIZED VIEW analitik_mv.mv_akademik_komponen_evaluasi_kelas AS
+
+WITH komponen_per_kelas AS (
+    -- SUM bobot per komponen per kelas.
+    -- WHERE bobot > 0 memfilter placeholder sebelum SUM.
+    -- Beberapa entri TGS per kelas (Tugas 1 + Tugas 2 + ...) di-SUM jadi satu angka.
+    SELECT
+        kelas_id,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'UTS' THEN bobot ELSE 0 END) AS bobot_uts,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'UAS' THEN bobot ELSE 0 END) AS bobot_uas,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'TGS' THEN bobot ELSE 0 END) AS bobot_tugas,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'QIZ' THEN bobot ELSE 0 END) AS bobot_kuis,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'PRK' THEN bobot ELSE 0 END) AS bobot_praktikum,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'PRO' THEN bobot ELSE 0 END) AS bobot_projek,
+        SUM(CASE WHEN kd_komponen_evaluasi_mk = 'PAR' THEN bobot ELSE 0 END) AS bobot_partisipatif,
+        SUM(bobot)                                                            AS total_bobot_kelas
+    FROM evaluasi.komponen_evaluasi
+    WHERE bobot > 0
+    GROUP BY kelas_id
+)
+SELECT
+    -- ── Identitas kelas ───────────────────────────────────────────────────────
+    mk.kelas_id,
+    mk.no_kelas,
+    mk.kode_matkul,
+    mk.nama_matkul_id,
+    mk.nama_matkul_en,
+    mk.sks,
+
+    -- ── Dimensi prodi & fakultas ──────────────────────────────────────────────
+    mk.no_prodi,
+    mk.kode_prodi,
+    mk.nama_prodi_id,
+    mk.nama_prodi_en,
+    mk.jenjang,
+    mk.kode_fakultas,
+    mk.nama_fakultas_id,
+    mk.nama_fakultas_en,
+    mk.semua_dosen_id,
+    mk.semua_dosen_nama_gelar,
+
+    -- ── Dimensi waktu ─────────────────────────────────────────────────────────
+    mk.tahun,
+    mk.semester,
+    mk.tahun_ajaran,
+    mk.tahun_kurikulum,
+
+    -- ── Bobot komponen (sudah di-SUM, tanpa pre-aggregation ke prodi) ────────
+    kpk.bobot_uts,
+    kpk.bobot_uas,
+    kpk.bobot_tugas,
+    kpk.bobot_kuis,
+    kpk.bobot_praktikum,
+    kpk.bobot_projek,
+    kpk.bobot_partisipatif,
+    kpk.total_bobot_kelas   -- indikator kelengkapan data; idealnya mendekati 100
+
+FROM komponen_per_kelas kpk
+JOIN analitik_mv.mv_akademik_kelas mk ON kpk.kelas_id = mk.kelas_id;
+
+
+-- ─── Index ────────────────────────────────────────────────────────────────────
+
+-- Filter utama: spatial + temporal (pola query chart grading_comp)
+CREATE INDEX ON analitik_mv.mv_akademik_komponen_evaluasi_kelas (no_prodi);
+CREATE INDEX ON analitik_mv.mv_akademik_komponen_evaluasi_kelas (kode_fakultas);
+CREATE INDEX ON analitik_mv.mv_akademik_komponen_evaluasi_kelas (tahun_ajaran, semester);
+CREATE INDEX ON analitik_mv.mv_akademik_komponen_evaluasi_kelas (kode_fakultas, tahun_ajaran, semester);
+
+-- Lookup per kelas (jika dipakai untuk drill-down)
+CREATE UNIQUE INDEX ON analitik_mv.mv_akademik_komponen_evaluasi_kelas (kelas_id);
