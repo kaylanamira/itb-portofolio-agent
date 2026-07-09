@@ -1,14 +1,11 @@
 # Chart: Distribusi Nilai (`GradeDistributionSection`)
 
-> Struktur field `ChartContext` umum ada di `01-chart-context-type.md`.
-> Rata-rata IP mahasiswa **tidak** dibahas di file ini — itu salah satu dari 17 metric di `02-entity-comparison-and-ranking-chart.md` (`chart_type: entity_comparison_bar_chart` / `course_ranking_top_bottom_list`, field `avg_ip_akhir_mahasiswa`).
-
 ---
 
 ## 1. Apa isi chart ini
 
 2 sub-komponen (format chart) dalam 1 section:
-- **`GradePie`** — donut chart distribusi grade A/AB/B/BC/C/D/E/T, **selalu 1 pie** (rata-rata tertimbang otomatis benar di semua scope, tidak perlu mode collapse khusus). *(Tidak mengirim `chart_context` terpisah — datanya sama dengan `GradeStackedBar` di bawah.)*
+- **`GradePie`** — donut chart distribusi grade A/AB/B/BC/C/D/E/T, **selalu 1 pie**. 
 - **`GradeStackedBar`** — stacked bar 8 kategori grade per entitas. **Collapse** ke bar chart profil 8-bar horizontal (bukan stacked) saat 1 entitas.
 
 ---
@@ -17,13 +14,12 @@
 
 - Proporsi mahasiswa dengan nilai baik (A-C) vs bermasalah (D-E-T) — indikator langsung kualitas capaian.
 - Perbandingan distribusi antar-fakultas/prodi — apakah ada yang jomplang (misal proporsi E jauh lebih tinggi).
-- Hubungan dengan rata-rata IP (lihat `02-entity-comparison-and-ranking-chart.md`) — distribusi condong ke grade tinggi harusnya sejalan dengan IP rata-rata tinggi; kalau tidak sejalan, itu layak dipertanyakan (potensi anomali data atau kebijakan penilaian yang tidak konsisten antar dosen).
 
 ---
 
 ## 3. Struktur payload `chart_context`
 
-**Mode perbandingan** (`grade_distribution_stacked_bar_chart`, banyak entitas):
+**Mode perbandingan** (`grade_distribution_stacked_bar_chart`, perbandingan antarfakultas/antarprogram studi):
 ```json
 {
   "chart_type": "grade_distribution_stacked_bar_chart",
@@ -59,7 +55,12 @@
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
     "semester": 1
-  }
+  },
+  "hint": [
+    "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
+    "Identifikasi mayoritas nilai yang diraih oleh setiap fakultas untuk mendapat gambaran pemahaman umum mahasiswa setiap fakultas terhadap pelaksanaan perkuliahan di fakultas tersebut.",
+    "Identifikasi apakah terdapat flag pada hasil yang diraih, ditandai dengan 100% mahasiswa meraih suatu kategori nilai."
+  ]
 }
 ```
 Untuk granularity prodi (Dekan, atau Direktorat sudah drill 1 fakultas), field menggunakan: `no_prodi`, `kode_prodi`, dan `nama_prodi_id` menggantikan `kode_fakultas`/`nama_fakultas_id`.
@@ -89,7 +90,12 @@ Untuk granularity prodi (Dekan, atau Direktorat sudah drill 1 fakultas), field m
     "tahun_ajaran": "2024/2025",
     "semester": 1,
     "no_prodi": 135
-  }
+  },
+  "hint": [
+    "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarprogram studi.",
+    "Identifikasi mayoritas nilai yang diraih oleh setiap program studi untuk mendapat gambaran pemahaman umum mahasiswa setiap program studi terhadap pelaksanaan perkuliahan di program studi tersebut.",
+    "Identifikasi apakah terdapat flag pada hasil yang diraih, ditandai dengan 100% mahasiswa meraih suatu kategori nilai."
+  ]
 }
 ```
 

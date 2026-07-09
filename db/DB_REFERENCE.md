@@ -9,7 +9,7 @@
 
 | Schema | Relevance | Purpose |
 |--------|-----------|---------|
-| `analitik` | **YES** | Agent-facing analytics layer. 13 views (5 public + 8 row/column-secured via `SECURITY DEFINER`). See "Analytics Views" section. |
+| `analitik` | **YES** | Agent-facing analytics layer. 14 views (6 public + 8 row/column-secured via `SECURITY DEFINER`). See "Analytics Views" section. |
 | `analitik_mv` | **NO (agent must not query)** | Raw materialized views backing `analitik.*`. Not RLS-enforced — owned by the application DB role, so GRANT/REVOKE does not block direct access. |
 | `utama` | **YES** | Master data: dosen, mahasiswa, mata kuliah, prodi, fakultas, KK |
 | `kelas` | **YES** | Class sessions, instructors, attendance meetings |
@@ -553,7 +553,6 @@ Grade records per student per course. **Primary source for grade distribution da
 | `lulus` | `boolean` | Pass flag |
 
 Filter for valid grades: `WHERE sah_nilai = true AND ts_hapus IS NULL AND kelas_id IS NOT NULL`
-Grade `'T'` (incomplete) must be excluded from distribution counts.
 
 
 ---
@@ -684,7 +683,7 @@ A dekan of two faculties will have two rows in `user_role` with `role_name = 'de
 The analytics layer is split into two schemas:
 
 - `analitik_mv.*` — raw materialized views (defined in `schema_mv_portofolio_kuesioner.sql`, documented in `mv_dokumentasi.md`). **Agent must NEVER query this schema** — not RLS-enforced, and the application DB role owns it (GRANT/REVOKE does not block direct access).
-- `analitik.*` — 13 views consumed by the agent. 5 public views (Group A, no row filtering) + 8 row/column-secured views (Group B), each backed by an `analitik.fn_get_*()` `SECURITY DEFINER` function.
+- `analitik.*` — 14 views consumed by the agent. 6 public views (Group A, no row filtering) + 8 row/column-secured views (Group B), each backed by an `analitik.fn_get_*()` `SECURITY DEFINER` function.
 
 Every generated query must reference `analitik.*` with the schema prefix. References to `analitik_mv.*`, other schemas, or unqualified table names must be rejected before execution.
 
@@ -708,7 +707,7 @@ Before querying any Group B view, the following session variables must be set vi
 | `kaprodi`, `jajaran_prodi` | Row filter: `no_prodi = app.no_ps` |
 | `dosen` | Row filter: `no_prodi = app.no_ps`, plus column masking (see `skor_dosen_q25/26/27` below and `v_akademik_statistik_dosen`) |
 
-Without these session variables, all 8 Group B views return **0 rows** (not an error). Group A views (the 5 `v_info_umum_*` / `v_akademik_jenis_dan_sifat_matkul` views) always return data regardless of session variables.
+Without these session variables, all 8 Group B views return **0 rows** (not an error). Group A views (the 6 `v_info_umum_*` / `v_akademik_jenis_dan_sifat_matkul` / `v_akademik_komponen_evaluasi_kelas` views) always return data regardless of session variables.
 
 ---
 
@@ -761,6 +760,7 @@ Must be refreshed first before `analitik.v_akademik_statistik_prodi` and `analit
 | `is_distribusi_nilai_sah` | `boolean` | **Gate column.** `TRUE` = nilai sudah sah. Jika `FALSE`/NULL, semua kolom `dist_*` di bawah bernilai NULL (bukan 0) — WAJIB `WHERE is_distribusi_nilai_sah = TRUE` sebelum agregasi `dist_*` |
 | `jumlah_mahasiswa` | `integer` | `40` (jumlah dgn nilai sah) |
 | `dist_jumlah_a` .. `dist_jumlah_e` | `integer` | `12`, `8`, `10`, `5`, `3`, `1`, `1` |
+| `dist_jumlah_t` | `integer` | Nilai `'T'` (incomplete) — dihitung sebagai bucket sendiri, termasuk dalam `jumlah_mahasiswa` |
 | `dist_jumlah_pass` / `dist_jumlah_fail` | `integer` | For PassFail courses only |
 | `dist_pct_a` .. `dist_pct_fail` | `numeric` | `30.00`, `20.00`, ... |
 | `dist_pct_lulus_a_c` | `numeric` | `95.00` — % with grade ≥ C (or Pass) |
@@ -871,7 +871,7 @@ Pre-aggregated for dosen-level dashboard panels.
 | `avg_skor_overall` | `numeric` | Avg of capaian + pelaksanaan + perilaku (sarana excluded) |
 | `jumlah_kelas_dengan_skor` | `bigint` | Classes with questionnaire data |
 | `avg_nilai_akhir` | `numeric` | Usually NULL — inconsistently populated |
-| `kelas_ids` | `integer[]` | Array of taught kelas_id |
+| `kelas_id_list` | `integer[]` | Array of taught kelas_id |
 | `kode_matkul_list` | `varchar[]` | Unique course codes taught |
 | `no_prodi_diajar` | `integer[]` | Prodi where this dosen taught (may differ from home prodi) |
 | `kode_prodi_diajar` | `varchar[]` | |
@@ -940,33 +940,17 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 | `semua_dosen_id` | `integer[]` | Array of dosen IDs teaching the class |
 | `semua_dosen_nama_gelar` | `text[]` | Array of teaching dosen names with titles |
 | `metode_perkuliahan` | `text` |  |
-| `komponen_penilaian` | `text` |  |
-| `statistik_nilai_kelas` | `text` |  |
-| `analisis_ketercapaian_outcomes` | `text` |  |
-| `tanggapan_kuesioner_mahasiswa` | `text` |  |
-| `refleksi_perkuliahan` | `text` |  |
-| `usulan_perbaikan_dosen` | `text` |  |
-| `rekomendasi_ke_itb` | `text` |  |
-| `lama_metode_perkuliahan` | `text` |  |
-| `lama_statistik_kelas` | `text` |  |
-| `lama_outcomes_matakuliah` | `text` |  |
-| `lama_sistem_penilaian` | `text` |  |
-| `lama_analisis_statistik_ketercapaian` | `text` |  |
-| `lama_uraian_kuesioner_statistik` | `text` |  |
-| `lama_komentar_kuesioner_mahasiswa` | `text` |  |
-| `lama_refleksi_perkuliahan` | `text` |  |
-| `lama_rencana_tindak_lanjut` | `text` |  |
-| `lama_rekomendasi_perbaikan_dosen` | `text` |  |
-| `lama_rekomendasi_itb` | `text` |  |
-| `komentar_penyelenggaraan` | `text` |  |
-| `komentar_ketercapaian` | `text` |  |
-| `komentar_refleksi` | `text` |  |
-| `komentar_rekomendasi` | `text` |  |
-| `lama_komentar_pencapaian_outcomes` | `text` |  |
-| `lama_komentar_pelaksanaan_kuliah` | `text` |  |
-| `lama_komentar_refleksi` | `text` |  |
-| `lama_komentar_rencana_tindak_lanjut` | `text` |  |
-| `lama_komentar_rekomendasi` | `text` |  |
+| `sistem_penilaian` | `text` |  |
+| `statistik_kelas` | `text` |  |
+| `analisis_terhadap_statistik_kelas_dan_ketercapaian_outcomes` | `text` |  |
+| `komentar_terhadap_hasil_kuesioner_mahasiswa` | `text` |  |
+| `refleksi_pelaksanaan_perkuliahan` | `text` |  |
+| `usulan_perbaikan_oleh_dosen_berikutnya` | `text` |  |
+| `usulan_perbaikan_oleh_itb` | `text` |  |
+| `verifikator_penyelenggaraan_perkuliahan` | `text` |  |
+| `verifikator_ketercapaian_outcomes` | `text` |  |
+| `verifikator_refleksi_dosen` | `text` |  |
+| `verifikator_rekomendasi_tindak_lanjut` | `text` |  |
 
 ### `analitik.v_akademik_jenis_dan_sifat_matkul` (under `analitik` schema, **publik / Group A — no row filter**)
 
@@ -1050,6 +1034,21 @@ Jenis dan sifat MK dalam struktur kurikulum. Grain: 1 baris = 1 (mata_kuliah_id,
 | `periode_ijazah_id_final`, `tahun_ijazah`, `bulan_ijazah` | — | Periode ijazah |
 | `periode_seremoni_id`, `tahun_seremoni`, `bulan_seremoni`, `nama_seremoni`, `is_seremoni_asumtif` | — | Periode seremoni (saat ini semua `is_seremoni_asumtif = TRUE`, data dummy) |
 | `jumlah_responden` | `bigint` | `COUNT(DISTINCT response_id)` — jumlah pengisi survei, BUKAN jumlah lulusan riil |
+
+---
+
+### `analitik.v_akademik_komponen_evaluasi_kelas` (**publik / Group A — no row filter**)
+
+**Granularity: 1 row = 1 class.** Bobot komponen evaluasi (UTS/UAS/Tugas/dll) per kelas, di-SUM dari `evaluasi.komponen_evaluasi` dan di-join ke dimensi `analitik.v_akademik_kelas`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `kelas_id`, `no_kelas`, `kode_matkul`, `nama_matkul_id` / `nama_matkul_en`, `sks` | — | Identitas kelas |
+| `no_prodi`, `kode_prodi`, `nama_prodi_id` / `nama_prodi_en`, `jenjang`, `kode_fakultas`, `nama_fakultas_id` / `nama_fakultas_en` | — | Prodi/fakultas |
+| `semua_dosen_id`, `semua_dosen_nama_gelar` | `integer[]` / `text[]` | |
+| `tahun`, `semester`, `tahun_ajaran`, `tahun_kurikulum` | — | Dimensi waktu |
+| `bobot_uts`, `bobot_uas`, `bobot_tugas`, `bobot_kuis`, `bobot_praktikum`, `bobot_projek`, `bobot_partisipatif` | `numeric` | SUM bobot per komponen (bobot `<= 0` sudah difilter) |
+| `total_bobot_kelas` | `numeric` | SUM seluruh komponen — indikator kelengkapan data, idealnya mendekati 100 |
 
 ---
 

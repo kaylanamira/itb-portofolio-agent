@@ -1,14 +1,12 @@
 # Chart: Komposisi Bobot Komponen Penilaian (`GradingCompChart`)
 
-> Struktur field `ChartContext` umum ada di `01-chart-context-type.md`.
-
 ---
 
 ## 1. Apa isi chart ini
 
 Menunjukkan rata-rata persentase bobot tiap komponen penilaian (UTS, UAS, Tugas, Kuis, Praktikum, Projek, Partisipasi) yang dipakai dosen dalam menilai mahasiswa.
 
-**Mode perbandingan** (`grading_composition_stacked_bar_chart` — stacked bar per fakultas/program studi) collapse jadi **mode 1 entitas** (`grading_composition_single_entity_bar_chart`) saat data tersisa 1 entitas: bentuknya bukan lagi stacked bar susunan seluruh komponen penilaian untuk banyak fakultas/prodi, melainkan bar chart biasa berisi komponen penilaian yang dipakai oleh 1 fakultas/prodi itu saja.
+**Mode perbandingan** (`grading_composition_stacked_bar_chart` — stacked bar per fakultas/program studi) collapse jadi **mode 1 entitas** (`grading_composition_single_entity_bar_chart`) saat data tersisa 1 prodi: bentuknya bukan lagi stacked bar susunan seluruh komponen penilaian untuk banyak fakultas/prodi, melainkan bar chart biasa berisi komponen penilaian yang dipakai oleh 1 prodi itu saja.
 
 ### Seluruh komponen penilaian yang mungkin
 
@@ -28,7 +26,6 @@ Menunjukkan rata-rata persentase bobot tiap komponen penilaian (UTS, UAS, Tugas,
 
 - Pola penilaian yang dominan — apakah suatu fakultas/prodi cenderung berbasis ujian (UTS+UAS besar) atau berbasis tugas/proyek berkelanjutan.
 - Komponen penilaian yang **tidak dipakai sama sekali** — bisa jadi insight ("hampir tidak ada kelas pakai praktikum di prodi ini").
-- Perbandingan pola antar-fakultas — fakultas teknik vs sosial-humaniora biasanya beda pola bobot, ini konteks alami yang boleh disebut kalau relevan.
 
 ---
 
@@ -65,10 +62,14 @@ Menunjukkan rata-rata persentase bobot tiap komponen penilaian (UTS, UAS, Tugas,
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
     "semester": 1
-  }
+  },
+  "hint": [
+    "Identifikasi pola penilaian dominan tiap fakultas: berbasis ujian (total bobot rata-rata UTS dan bobot rata-rata UAS besar) atau berbasis tugas/proyek.",
+    "Identifikasi komponen penilaian yang dominan digunakan oleh setiap fakultas.",
+    "Bandingkan pola bobot antarfakultas untuk melihat perbedaan karakteristik penilaian antarfakultas."
+  ]
 }
 ```
-**Perhatikan baris kedua (FTSL):** tidak ada `avg_bobot_kuis`, `avg_bobot_projek`, `avg_bobot_partisipatif` — karena bobotnya 0, field-nya **dihilangkan total**, bukan dikirim sebagai `0` (lihat §4).
 
 **Mode 1 entitas** (`grading_composition_single_entity_bar_chart`):
 ```json
@@ -94,12 +95,10 @@ Menunjukkan rata-rata persentase bobot tiap komponen penilaian (UTS, UAS, Tugas,
     "tahun_ajaran": "2024/2025",
     "semester": 1,
     "no_prodi": 135
-  }
+  },
+  "hint": [
+    "Identifikasi komponen penilaian dominan pada entitas ini.",
+    "Komponen yang tidak muncul di series berarti tidak dipakai sama sekali oleh entitas ini, bukan data hilang."
+  ]
 }
 ```
-
----
-
-## 4. Edge case
-
-- **Komponen dengan bobot 0 tidak dikirim sama sekali** (bukan dikirim sebagai `0`). Backend menyaring komponen yang benar-benar tidak dipakai (lihat `dashboard_akademik.py::get_akademik_grading_comp` — field diset `None` kalau `avg_bobot_*` bernilai 0, dan field bernilai `None` tidak diserialisasi ke payload). Kalau `avg_bobot_praktikum` tidak muncul di `series` milik suatu fakultas/program studi, itu berarti **tidak ada kelas** di fakultas/program studi itu yang memakai komponen praktikum sebagai penilaian.
