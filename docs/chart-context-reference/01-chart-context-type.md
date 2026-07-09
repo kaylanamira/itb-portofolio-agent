@@ -85,7 +85,7 @@ class ChartContext(BaseModel):
 
 ### 4.2 Isi per `chart_type`
 
-Untuk **template skema kosong** yang mencakup **seluruh kombinasi `chart_type` × granularitas entitas** (fakultas/prodi) sekaligus dengan `hint` final/tetap per `chart_type`, lihat `02-chart-context-empty-templates.md`.
+Untuk **template skema kosong** dengan `hint` per `chart_type` dapat dilihat pada file `02-chart-context-empty-templates.md`.
 
 Contoh payload untuk tiap `chart_type` didokumentasikan di file per-chart masing-masing (§3 di tiap file `03`-`09`).
 
@@ -96,6 +96,7 @@ Contoh payload untuk tiap `chart_type` didokumentasikan di file per-chart masing
 ### 5.1 Definisi
  
 `question_reference` adalah dict opsional dengan : 
+
 key : **nama field skor persis seperti yang muncul di `series`** (mis. `"skor_q28"`)
 
 value : `QuestionReference` berisi kode pertanyaan versi UI (`kode_pertanyaan_frontend`, mis. `"Q8"`) dan teks pertanyaan aslinya (`pertanyaan`).
@@ -119,11 +120,7 @@ selalu ada, 1 entry (`skor_q28`).
  
 Pada metric **komposit** (`overall`, `capaian`, `sarana_prasarana`, `perilaku_mahasiswa`) dan `avg_ip` — karena itu bukan 1 pertanyaan individual. Juga tidak ada pada chart yang sama sekali tidak menyentuh kolom `skor_qXX` (kehadiran, distribusi nilai, komposisi penilaian).
  
-### 5.4 Kenapa tetap ditambahkan meski `title` sering sudah menjelaskan pertanyaannya
- 
-Untuk chart individual-Q (`entity_comparison_bar_chart`/`course_ranking_top_bottom_list`), `title` biasanya sudah memuat teks pertanyaan (mis. "Q8 — Kesesuaian Beban Kerja dengan SKS"), jadi `question_reference` di situ sifatnya **redundan by design** — ditambahkan demi konsistensi struktural (semua chart yang menyentuh `skor_qXX` individual selalu punya `question_reference`, tanpa perlu agent menghafal chart mana yang "kebetulan" sudah punya title informatif dan mana yang tidak).
- 
-### 5.5 Contoh
+### 5.4 Contoh
  
 ```json
 "question_reference": {

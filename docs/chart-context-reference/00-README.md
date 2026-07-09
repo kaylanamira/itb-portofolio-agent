@@ -30,7 +30,7 @@ Scope ditegakkan di level RLS database — **tidak pernah** dikontrol dari front
 
 ---
 
-## 3. Perilaku khusus: chart perbandingan "collapse" jadi bentuk 1-entitas ketika hanya ada 1 entitas
+## 3. Perilaku khusus: chart perbandingan "collapse" jadi bentuk 1-entitas ketika hanya ada 1 entitas (prodi)
 
 Ini **pola arsitektur terpenting** untuk dipahami sebelum baca file chart lain di folder ini.
 
