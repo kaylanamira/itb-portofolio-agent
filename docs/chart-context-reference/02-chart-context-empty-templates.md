@@ -8,7 +8,7 @@ Gunakan file ini sebagai **rujukan implementasi** (frontend saat menyusun payloa
 
 Beberapa `chart_type` tidak punya granularitas entitas sama sekali (grain-nya periode atau bucket SKS).
 
-**Catatan tipe `filters_applied`:`semester`, `kode_fakultas`, `no_prodi`, dan `jenjang` **selalu berbentuk array**. `tahun_ajaran` berupa 1 string tunggal
+Catatan tipe `filters_applied`:`semester`, `kode_fakultas`, `no_prodi`, dan `jenjang` **selalu berbentuk array**. `tahun_ajaran` berupa 1 string tunggal
 ---
 
 ## 1. `entity_comparison_bar_chart`
