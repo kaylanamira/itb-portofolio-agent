@@ -8,7 +8,8 @@ Gunakan file ini sebagai **rujukan implementasi** (frontend saat menyusun payloa
 
 Beberapa `chart_type` tidak punya granularitas entitas sama sekali (grain-nya periode atau bucket SKS).
 
-Catatan tipe `filters_applied`:`semester`, `kode_fakultas`, `no_prodi`, dan `jenjang` **selalu berbentuk array**. `tahun_ajaran` berupa 1 string tunggal
+Catatan tipe `filters_applied`: `semester`, `kode_fakultas`, `no_prodi`, dan `jenjang` **selalu berbentuk array**. `tahun_ajaran` berupa 1 string tunggal. Untuk granularitas **prodi**, `kode_fakultas` selalu ikut muncul di `filters_applied` bersama `no_prodi` — prodi selalu terkunci ke 1 fakultas, jadi konteks fakultasnya selalu diketahui dan disertakan.
+
 ---
 
 ## 1. `entity_comparison_bar_chart`
@@ -29,7 +30,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "delta_periode_lalu": "float | null"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"] },
   "hint": [
     "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
     "Identifikasi seberapa lebar kesenjangan antarfakultas (apakah merata, atau ada outlier jauh di bawah rata-rata)",
@@ -56,7 +57,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "delta_periode_lalu": "float | null"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Identifikasi program studi dengan nilai tertinggi dan terendah pada metrik ini.",
     "Identifikasi seberapa lebar kesenjangan antarprogram studi (apakah merata, atau ada outlier jauh di bawah rata-rata)",
@@ -100,7 +101,7 @@ Granularitas: **fakultas** atau **prodi** (menentukan isi `filters_applied`). Gr
       "jumlah_mahasiswa": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Bandingkan kelas top-5 dan bottom-5 untuk metrik ini.",
     "Prioritaskan kelas yang masuk list bottom-5 dengan jumlah_mahasiswa besar karena dampaknya lebih luas."
@@ -137,7 +138,7 @@ Granularitas: **fakultas** atau **prodi** (menentukan isi `filters_applied`). Gr
       "jumlah_mahasiswa": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "no_prodi": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Bandingkan kelas top-5 dan bottom-5 untuk metrik ini.",
     "Prioritaskan kelas bottom dengan jumlah_mahasiswa besar karena dampaknya lebih luas."
@@ -169,7 +170,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "delta_periode_lalu": "float | null"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Bandingkan angka ini dengan delta_periode_lalu untuk menilai tren membaik atau memburuk.",
     "Nilai berskala 0-100%, bukan skala skor kuesioner 1-4."
@@ -191,7 +192,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "delta_periode_lalu": "float | null"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "no_prodi": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Bandingkan angka ini dengan delta_periode_lalu untuk menilai tren membaik atau memburuk.",
     "Nilai berskala 0-100%, bukan skala skor kuesioner 1-4."
@@ -226,7 +227,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "total_mahasiswa": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"] },
   "hint": [
     "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
     "Identifikasi mayoritas nilai yang diraih oleh setiap fakultas untuk mendapat gambaran pemahaman umum mahasiswa fakultas terkait terhadap pelaksanaan perkuliahan di fakultas tersebut.",
@@ -256,7 +257,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "total_mahasiswa": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
     "Identifikasi mayoritas nilai yang diraih oleh setiap program studi untuk mendapat gambaran pemahaman umum mahasiswa program studi terkait terhadap pelaksanaan perkuliahan di program studi tersebut.",
@@ -291,7 +292,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "total_mahasiswa": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
     "Identifikasi mayoritas nilai yang diraih oleh setiap fakultas untuk mendapat gambaran pemahaman umum mahasiswa fakultas terkait terhadap pelaksanaan perkuliahan di fakultas tersebut.",
@@ -315,7 +316,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "total_mahasiswa": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "no_prodi": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
     "Identifikasi mayoritas nilai yang diraih oleh setiap program studi untuk mendapat gambaran pemahaman umum mahasiswa program studi terkait terhadap pelaksanaan perkuliahan di program studi tersebut.",
@@ -341,13 +342,14 @@ Entitas hanya muncul sebagai filter opsional di `filters_applied` (`kode_fakulta
   "series": [
     { "period_label": "string", "tahun_ajaran": "string", "semester": "int", "avg_skor_overall": "float | null" }
   ],
-  "filters_applied": { "kode_fakultas": "string (opsional)", "no_prodi": "int (opsional)" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Identifikasi arah tren (naik/turun) sepanjang periode yang tersedia.",
     "Perhatikan titik semester dengan kenaikan atau penurunan nilai yang tajam."
   ]
 }
 ```
+**Catatan:** `kode_fakultas` dan `no_prodi` di `filters_applied` sama-sama opsional (chart ini bisa dilihat tanpa drill ke entitas tertentu) — kehadiran/ketidakhadiran key itu sendiri di objek yang menandakan opsionalnya, bukan anotasi tambahan di value.
 
 ---
 
@@ -379,7 +381,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "bottom_3_kolom": ["string"]
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Identifikasi pertanyaan (kolom) yang konsisten rendah di banyak fakultas.",
     "Identifikasi pertanyaan (kolom) bottom_3_kolom (3 pertanyaan dengan skor terendah) di setiap fakultas untuk mengidentifikasi poin pertanyaan apa yang perlu menjadi perhatian untuk evaluasi setiap fakultas"
@@ -419,7 +421,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "bottom_3_kolom": ["string"]
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Identifikasi pertanyaan (kolom) yang konsisten rendah di banyak program studi.",
     "Identifikasi pertanyaan (kolom) bottom_3_kolom (3 pertanyaan dengan skor terendah) di setiap program studi untuk mengidentifikasi poin pertanyaan apa yang perlu menjadi perhatian untuk evaluasi setiap program studi"
@@ -466,7 +468,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian). Semua field `avg_bobot_*` 
       "jumlah_kelas": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Identifikasi pola penilaian dominan tiap fakultas: berbasis ujian (total bobot rata-rata UTS dan bobot rata-rata UAS besar) atau berbasis tugas/proyek.",
     "Identifikasi komponen penilaian yang dominan digunakan oleh setiap fakultas.",
@@ -495,7 +497,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian). Semua field `avg_bobot_*` 
       "jumlah_kelas": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Identifikasi pola penilaian dominan tiap program studi: berbasis ujian (total bobot rata-rata UTS dan bobot rata-rata UAS besar) atau berbasis tugas/proyek.",
     "Identifikasi komponen penilaian yang dominan digunakan oleh setiap program studi.",
@@ -529,7 +531,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian). Field `avg_bobot_*` sama-s
       "jumlah_kelas": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "kode_fakultas": "string" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Identifikasi pola penilaian dominan fakultas ini: berbasis ujian (total bobot rata-rata UTS dan bobot rata-rata UAS besar) atau berbasis tugas/proyek.",
     "Identifikasi komponen penilaian yang dominan digunakan oleh fakultas ini."
@@ -557,7 +559,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian). Field `avg_bobot_*` sama-s
       "jumlah_kelas": "int"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int", "no_prodi": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Identifikasi pola penilaian dominan program studi ini: berbasis ujian (total bobot rata-rata UTS dan bobot rata-rata UAS besar) atau berbasis tugas/proyek.",
     "Identifikasi komponen penilaian yang dominan digunakan oleh program studi ini."
@@ -582,7 +584,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian). Field `avg_bobot_*` sama-s
     { "sks_label": "3 SKS", "jumlah_kelas": "int", "skor_q28": "float | null" },
     { "sks_label": "4+ SKS", "jumlah_kelas": "int", "skor_q28": "float | null" }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": "int" },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Identifikasi apakah skor Q8 menurun seiring bertambahnya jumlah SKS.",
     "Bandingkan jumlah_kelas antar-bucket untuk menilai keterwakilan rata-rata skor tiap bucket."
