@@ -88,7 +88,8 @@ Dipakai untuk **17 metric** (16 metric skor kuesioner + rata-rata IP). Strukturn
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTMD"]
   },
   "hint": [
     "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
@@ -123,7 +124,9 @@ Dipakai untuk **17 metric** (16 metric skor kuesioner + rata-rata IP). Strukturn
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI"],
+    "no_prodi": [132, 135]
   },
   "hint": [
     "Identifikasi program studi dengan nilai tertinggi dan terendah pada metrik ini.",
@@ -164,7 +167,8 @@ Dipakai untuk **17 metric** (16 metric skor kuesioner + rata-rata IP). Strukturn
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTMD", "SF"]
   },
   "hint": [
     "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
@@ -207,7 +211,8 @@ Dipakai untuk **17 metric** (16 metric skor kuesioner + rata-rata IP). Strukturn
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTMD", "SF"]
   },
   "hint": [
     "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
@@ -293,8 +298,8 @@ Dipakai untuk **17 metric yang sama** seperti §2.1, tapi saat scope sudah colla
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1,
-    "no_prodi": 135
+    "semester": [1],
+    "no_prodi": [135]
   },
   "hint": [
     "Bandingkan kelas top-5 dan bottom-5 untuk metrik ini.",
@@ -334,8 +339,8 @@ Dipakai untuk **17 metric yang sama** seperti §2.1, tapi saat scope sudah colla
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1,
-    "no_prodi": 135
+    "semester": [1],
+    "no_prodi": [135]
   },
   "hint": [
     "Bandingkan kelas top-5 dan bottom-5 untuk metrik ini.",

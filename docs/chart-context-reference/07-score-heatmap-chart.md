@@ -51,7 +51,8 @@ kolom = 12 pertanyaan kuesioner (Q1-Q12 UI / `q21`-`q37` database).
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTMD"]
   },
   "hint": [
     "Identifikasi pertanyaan (kolom) yang konsisten rendah di banyak fakultas.",

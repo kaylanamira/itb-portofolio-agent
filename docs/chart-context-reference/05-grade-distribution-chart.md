@@ -54,7 +54,8 @@
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTMD"]
   },
   "hint": [
     "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
@@ -88,8 +89,8 @@ Untuk granularity prodi (Dekan, atau Direktorat sudah drill 1 fakultas), field m
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1,
-    "no_prodi": 135
+    "semester": [1],
+    "no_prodi": [135]
   },
   "hint": [
     "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarprogram studi.",

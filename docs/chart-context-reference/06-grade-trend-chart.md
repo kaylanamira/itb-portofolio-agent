@@ -29,7 +29,7 @@ Line chart (multiline) menunjukkan perkembangan skor kuesioner dari semester ke 
     { "period_label": "2023/2024-1", "tahun_ajaran": "2023/2024", "semester": 1, "avg_skor_overall": 3.79 }
   ],
   "filters_applied": {
-    "kode_fakultas": "STEI"
+    "kode_fakultas": ["STEI"]
   },
   "hint": [
     "Identifikasi arah tren (naik/turun) sepanjang periode yang tersedia.",

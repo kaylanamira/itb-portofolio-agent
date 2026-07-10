@@ -40,7 +40,8 @@ Bar chart sederhana menampilkan rata-rata skor Q8 (`avg_skor_q28` — kesesuaian
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["SBM"]
   },
   "hint": [
     "Identifikasi apakah skor Q8 menurun seiring bertambahnya jumlah SKS.",

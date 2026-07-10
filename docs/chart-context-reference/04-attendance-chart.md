@@ -34,7 +34,8 @@ Card yang berisi informasi rata-rata persentase kehadiran dosen dan kehadiran ma
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTMD"]
   },
   "hint": [
     "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
@@ -61,8 +62,8 @@ Untuk kehadiran mahasiswa, field-nya `avg_pct_kehadiran_mahasiswa` (bukan `avg_p
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1,
-    "no_prodi": 135
+    "semester": [1],
+    "no_prodi": [135]
   },
   "hint": [
     "Bandingkan angka ini dengan delta_periode_lalu untuk menilai tren membaik atau memburuk.",

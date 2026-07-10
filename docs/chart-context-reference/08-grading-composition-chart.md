@@ -61,7 +61,8 @@ Menunjukkan rata-rata persentase bobot tiap komponen penilaian (UTS, UAS, Tugas,
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1
+    "semester": [1],
+    "kode_fakultas": ["STEI", "FTSL"]
   },
   "hint": [
     "Identifikasi pola penilaian dominan tiap fakultas: berbasis ujian (total bobot rata-rata UTS dan bobot rata-rata UAS besar) atau berbasis tugas/proyek.",
@@ -93,8 +94,8 @@ Menunjukkan rata-rata persentase bobot tiap komponen penilaian (UTS, UAS, Tugas,
   ],
   "filters_applied": {
     "tahun_ajaran": "2024/2025",
-    "semester": 1,
-    "no_prodi": 135
+    "semester": [1],
+    "no_prodi": [135]
   },
   "hint": [
     "Identifikasi komponen penilaian dominan pada entitas ini.",
