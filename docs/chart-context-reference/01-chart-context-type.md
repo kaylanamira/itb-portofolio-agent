@@ -37,7 +37,7 @@ interface ChartContext {
   x_axis_label?: string;
   y_axis_label?: string;
   series: Record<string, unknown>[];
-  filters_applied: Record<string, string | number>;
+  filters_applied: Record<string, string | number | string[] | number[]>;
   hint: string[];
   jumlah_kelas_aktif?: number;
   question_reference?: Record<string, QuestionReference>;
@@ -135,14 +135,22 @@ Detail isi lengkap per chart ada di file `02`, `03`, `07`, `09`.
 ## 6. Field umum lain (berlaku semua `chart_type`, kecuali disebutkan opsional-khusus)
 
 - **`title`** — judul card, sudah dalam Bahasa Indonesia, siap ditampilkan/dikutip apa adanya ke user.
+
 - **`x_axis_label` / `y_axis_label`** — opsional, hanya ada kalau chart itu punya sumbu (chart list/value tidak punya).
+
 - **`series`** — array baris data.
+
 - **`filters_applied`** — hanya berisi filter yang **aktif**. Kalau tidak ada filter aktif sama sekali, objeknya kosong `{}`. Contoh umum:
   ```json
   { "tahun_ajaran": "2024/2025", "semester": 1, "kode_fakultas": "STEI", "no_prodi": 135 }
   ```
+
+`tahun_ajaran` selalu berupa **1 string tunggal** (tidak pernah array). Field lain (`semester`, `kode_fakultas`, `no_prodi`, `jenjang`) bisa berupa **array** kalau user memilih lebih dari 1 nilai, contoh: `{ "kode_fakultas": ["STEI", "FTMD"] }`. Kalau user memilih tepat 1 nilai, boleh muncul sebagai scalar (`"STEI"`) atau array 1 elemen (`["STEI"]`) — agen harus memperlakukan keduanya setara.
+
 - **`hint`** — array string berisi arahan singkat tentang insight.
+
 - **`jumlah_matkul_aktif`** — opsional, **hanya ada** pada `chart_type: "course_ranking_top_bottom_list"`. Total jumlah mata kuliah aktif yang jadi basis perhitungan top/bottom pada entitas & periode yang difilter. Tujuannya memberi agent angka pasti untuk mengonfirmasi kenapa `kode_matkul` yang sama bisa muncul di posisi `top` dan `bottom` sekaligus.
+
 - **`question_reference`** — dict dengan key `field pertanyaan yang ada di payload (misal skor_q28)` dan value berupa `kode_pertanyaan_frontend` dan `pertanyaan`.
 
 **Field yang TIDAK pernah dikirim** (sengaja dihilangkan dari semua chart untuk hemat token & hindari noise): `page`, `total_pages`.
