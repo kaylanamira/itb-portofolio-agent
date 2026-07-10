@@ -30,7 +30,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "delta_periode_lalu": "float | null"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"] },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
   "hint": [
     "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
     "Identifikasi seberapa lebar kesenjangan antarfakultas (apakah merata, atau ada outlier jauh di bawah rata-rata)",
@@ -57,7 +57,7 @@ Granularitas: **fakultas** atau **prodi** (2 varian).
       "delta_periode_lalu": "float | null"
     }
   ],
-  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"] },
+  "filters_applied": { "tahun_ajaran": "string", "semester": ["int"], "kode_fakultas": ["string"], "no_prodi": ["int"] },
   "hint": [
     "Identifikasi program studi dengan nilai tertinggi dan terendah pada metrik ini.",
     "Identifikasi seberapa lebar kesenjangan antarprogram studi (apakah merata, atau ada outlier jauh di bawah rata-rata)",
