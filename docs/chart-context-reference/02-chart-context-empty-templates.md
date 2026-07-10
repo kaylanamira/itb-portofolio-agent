@@ -8,6 +8,8 @@ Gunakan file ini sebagai **rujukan implementasi** (frontend saat menyusun payloa
 
 Beberapa `chart_type` tidak punya granularitas entitas sama sekali (grain-nya periode atau bucket SKS).
 
+**Catatan tipe `filters_applied`:** nilai `"int"`/`"string"` pada `semester`, `kode_fakultas`, `no_prodi` di seluruh template di bawah ini adalah bentuk paling sederhana (1 nilai dipilih). Ketiga field itu bisa juga berupa **array** kalau user memilih lebih dari 1 nilai — lihat `01-chart-context-type.md` §6 untuk aturan lengkapnya. `tahun_ajaran` selalu tetap 1 string tunggal, tidak pernah array.
+
 ---
 
 ## 1. `entity_comparison_bar_chart`
