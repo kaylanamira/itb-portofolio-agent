@@ -29,13 +29,33 @@ class ValidationStatus(str, Enum):
     FAIL    = "fail"
     PENDING = "pending"
 
+ChartType = Literal[
+    "entity_comparison_bar_chart",
+    "course_ranking_top_bottom_list",
+    "single_entity_percentage_value",
+    "grade_distribution_stacked_bar_chart",
+    "grade_distribution_single_entity_bar_chart",
+    "score_trend_line_chart",
+    "score_heatmap_matrix_chart",
+    "grading_composition_stacked_bar_chart",
+    "grading_composition_single_entity_bar_chart",
+    "score_by_sks_bucket_bar_chart",
+]
+
+class QuestionReference(BaseModel):
+    kode_pertanyaan_frontend: str
+    pertanyaan: str
+
 class ChartContext(BaseModel):
-    chart_type: str
+    chart_type: ChartType
     title: str
     x_axis_label: Optional[str] = None
     y_axis_label: Optional[str] = None
     series: list[dict]
     filters_applied: dict = Field(default_factory=dict)
+    hint: list[str] = Field(default_factory=list)
+    jumlah_kelas_aktif: Optional[int] = None
+    question_reference: Optional[dict[str, QuestionReference]] = None
 
 class DetectedEntities(BaseModel):
     kode_matkul: Optional[str] = None
