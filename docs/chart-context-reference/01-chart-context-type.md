@@ -37,7 +37,13 @@ interface ChartContext {
   x_axis_label?: string;
   y_axis_label?: string;
   series: Record<string, unknown>[];
-  filters_applied: Record<string, string | number | string[] | number[]>;
+  filters_applied: {
+    tahun_ajaran?: string;
+    semester?: number[];
+    jenjang?: string[];
+    kode_fakultas?: string[];
+    no_prodi?: number[];
+  };
   hint: string[];
   jumlah_kelas_aktif?: number;
   question_reference?: Record<string, QuestionReference>;
@@ -142,10 +148,10 @@ Detail isi lengkap per chart ada di file `02`, `03`, `07`, `09`.
 
 - **`filters_applied`** — hanya berisi filter yang **aktif**. Kalau tidak ada filter aktif sama sekali, objeknya kosong `{}`. Contoh umum:
   ```json
-  { "tahun_ajaran": "2024/2025", "semester": 1, "kode_fakultas": "STEI", "no_prodi": 135 }
+  { "tahun_ajaran": "2024/2025", "semester": [1], "kode_fakultas": ["STEI"], "no_prodi": [135] }
   ```
 
-`tahun_ajaran` selalu berupa **1 string tunggal** (tidak pernah array). Field lain (`semester`, `kode_fakultas`, `no_prodi`, `jenjang`) bisa berupa **array** kalau user memilih lebih dari 1 nilai, contoh: `{ "kode_fakultas": ["STEI", "FTMD"] }`. Kalau user memilih tepat 1 nilai, boleh muncul sebagai scalar (`"STEI"`) atau array 1 elemen (`["STEI"]`) — agen harus memperlakukan keduanya setara.
++`tahun_ajaran` selalu berupa **1 string tunggal**, tidak pernah array. Field lain (`semester`, `kode_fakultas`, `no_prodi`, `jenjang`) **selalu berupa array**.
 
 - **`hint`** — array string berisi arahan singkat tentang insight.
 
