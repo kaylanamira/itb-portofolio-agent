@@ -48,7 +48,7 @@ class AkademikQueryFilters(BaseModel):
     jenjang memakai Annotated[..., Query()] untuk multi-value: ?jenjang=S1&jenjang=S2.
     """
     tahun_ajaran: str | None                                  = None
-    semester:     Literal["ganjil", "genap", "pendek"] | None = None
+    semester:     int | None                                  = None
     jenjang:      Annotated[list[str] | None, Query()]        = None
     fakultas:     str | None                                  = None
     no_ps:        str | None                                  = None

@@ -116,15 +116,19 @@ async def get_auth_user(ms365_id: str) -> AuthUser:
                 http_status=403,
             )
 
-        # Dosen info dibutuhkan untuk mengisi dosen_id, kd_fak, no_ps, kk_id
-        # pada ScopeEntry. Hanya diquery jika ada role yang membutuhkannya.
+        # Dosen info dibutuhkan untuk mengisi dosen_id, kk_id, dan kd_fak
+        # (khusus scope_type == "dosen") pada ScopeEntry.
         needs_dosen_info = any(
             r["scope_type"] in ("dosen", "prodi", "tpb", "sps", "fakultas")
             for r in authorized
         )
         dosen_info = await _fetch_dosen_info(conn, ms365_id) if needs_dosen_info else None
 
-        scope_entries = [_build_scope_entry(r, dosen_info) for r in authorized]
+        # FIX: _build_scope_entry sekarang async karena butuh lookup kd_fak
+        # dari program_studi untuk scope_type prodi/tpb/sps (lihat fungsi itu).
+        scope_entries = [
+            await _build_scope_entry(conn, r, dosen_info) for r in authorized
+        ]
         user_scope = _build_user_scope(user["user_id"], scope_entries)
 
         logger.info(
@@ -198,6 +202,11 @@ async def _fetch_dosen_info(conn, ms365_id: str) -> dict | None:
     Kembalikan None jika user bukan dosen (misal: admin-analitik mahasiswa).
 
     Join ms365.user_dosen → utama.dosen untuk dapat dosen_id, kd_fak, no_ps, kk_id.
+
+    Catatan: kd_fak dari sini HANYA valid dipakai untuk scope_type == "dosen"
+    (fakultas "rumah" dosen itu sendiri). JANGAN dipakai sebagai kd_fak untuk
+    scope_type prodi/tpb/sps — dosen bisa berbeda fakultas rumah dengan prodi
+    yang dia jabat sebagai kaprodi/jajaran. Untuk itu pakai _fetch_prodi_kd_fak().
     """
     cursor = await conn.execute(
         """
@@ -214,6 +223,23 @@ async def _fetch_dosen_info(conn, ms365_id: str) -> dict | None:
         return None
     cols = [d[0] for d in cursor.description]
     return dict(zip(cols, row))
+
+
+async def _fetch_prodi_kd_fak(conn, no_ps: int) -> str | None:
+    """
+    Ambil kd_fak resmi milik suatu prodi, berdasarkan no_ps.
+
+    kd_fak di utama.program_studi adalah NOT NULL — ini SUMBER KEBENARAN
+    untuk menentukan fakultas suatu prodi. JANGAN pakai dosen.kd_fak untuk
+    tujuan ini, karena dosen bisa punya fakultas "rumah" berbeda dengan
+    fakultas resmi prodi yang dia jabat sebagai kaprodi/jajaran prodi.
+    """
+    cursor = await conn.execute(
+        "SELECT kd_fak FROM utama.program_studi WHERE no_ps = %s",
+        (no_ps,),
+    )
+    row = await cursor.fetchone()
+    return row[0] if row else None
 
 
 # ─── Private: Role Mapping ────────────────────────────────────────────────────
@@ -262,15 +288,17 @@ def _resolve_user_role(role_name: str, scope_type: str | None) -> UserRole | Non
     return None
 
 
-def _build_scope_entry(role_row: dict, dosen_info: dict | None) -> ScopeEntry:
+async def _build_scope_entry(conn, role_row: dict, dosen_info: dict | None) -> ScopeEntry:
     """
     Bangun ScopeEntry dari satu baris role DB + info dosen (jika ada).
 
     Logika pengisian field scope:
-        DOSEN       → semua dari dosen_info (dosen_id, kd_fak, no_ps, kk_id)
-        PRODI/TPB/SPS → no_ps dari ur.scope (integer), kd_fak dari dosen_info
-        FAKULTAS    → kd_fak dari ur.scope (string), dosen_id dari dosen_info
-        ADMIN/DIREK → semua null (tidak butuh scope spesifik)
+        DOSEN         → semua dari dosen_info (dosen_id, kd_fak, no_ps, kk_id)
+        PRODI/TPB/SPS → no_ps dari ur.scope (integer),
+                        kd_fak di-LOOKUP dari program_studi berdasarkan no_ps
+                        (FIX: bukan dari dosen_info — lihat _fetch_prodi_kd_fak)
+        FAKULTAS      → kd_fak dari ur.scope (string), dosen_id dari dosen_info
+        ADMIN/DIREK   → semua null (tidak butuh scope spesifik)
     """
     role_name: str = role_row["role_name"]
     scope_type: str | None = role_row["scope_type"]
@@ -288,8 +316,12 @@ def _build_scope_entry(role_row: dict, dosen_info: dict | None) -> ScopeEntry:
 
     elif scope_type in ("prodi", "tpb", "sps"):
         # scope berisi no_ps sebagai string, misal '135'
-        no_ps  = _to_int(scope_val)
-        kd_fak = dosen_info["kd_fak"] if dosen_info else None
+        no_ps = _to_int(scope_val)
+        # FIX: kd_fak WAJIB dari program_studi (sumber resmi, NOT NULL),
+        # bukan dari dosen_info — dosen bisa beda fakultas rumah dengan
+        # prodi yang dia jabat, dan dosen_info bisa None kalau user tidak
+        # terdaftar di ms365.user_dosen.
+        kd_fak = await _fetch_prodi_kd_fak(conn, no_ps) if no_ps is not None else None
 
     elif scope_type == "fakultas":
         # scope berisi kd_fak sebagai string, misal 'STEI'

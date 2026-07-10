@@ -62,7 +62,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard-akademik"])
 # ─── Internal helpers ─────────────────────────────────────────────────────────
 
 @dataclass
-class _ResolvedSpatial:
+class _ResolvedEntitas:
     """Nilai spasial setelah scope-locking. Beda dari FilterOptionsLocked."""
     fakultas: str | None
     no_ps:    str | None
@@ -83,17 +83,15 @@ def _resolve_locked(scope: UserScope) -> FilterOptionsLocked:
     return FilterOptionsLocked(fakultas=scope.active_role.kd_fak, prodi=locked_prodi)
 
 
-def _resolve_spatial(
+def _resolve_entitas(
     scope: UserScope, fakultas: str | None, no_ps: str | None,
-) -> _ResolvedSpatial:
+) -> _ResolvedEntitas:
     """Scope-locking: dimensi yang terkunci diabaikan dari client, diganti scope."""
     locked = _resolve_locked(scope)
-    return _ResolvedSpatial(
+    return _ResolvedEntitas(
         fakultas = locked.fakultas or fakultas,
         no_ps    = locked.prodi    or no_ps,
     )
-
-_DB_TO_SEMESTER = {1: "ganjil", 2: "genap", 3: "pendek"}
 
 async def _resolve_filters(
     scope: UserScope, filters: AkademikQueryFilters,
@@ -112,7 +110,7 @@ async def _resolve_filters(
     tahun_ajaran, sem_int = resolved_period
     return filters.model_copy(update={
         "tahun_ajaran": tahun_ajaran,
-        "semester": _DB_TO_SEMESTER.get(sem_int),
+        "semester": sem_int,
     })
 
 
@@ -157,10 +155,9 @@ async def get_akademik_stats_overview(
     filters: AkademikQueryFilters = Depends(),
     scope:   UserScope            = Depends(get_user_scope),
 ) -> StatsOverviewResponse:
-    resolved = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
-    filters  = filters.model_copy(update={"fakultas": resolved.fakultas, "no_ps": resolved.no_ps})
+    resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters  = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
-    row      = await get_stats_overview(scope, filters)
+    row      = await get_stats_overview(scope, filters, resolved.fakultas, resolved.no_ps)
     if row is None:
         return StatsOverviewResponse(jumlah_kelas=0, jumlah_matkul_aktif=0,
                                      jumlah_dosen_aktif=0, jumlah_mahasiswa_aktif=0,
@@ -176,7 +173,7 @@ async def get_akademik_attendance(
     filters: AkademikQueryFilters = Depends(),
     scope:   UserScope            = Depends(get_user_scope),
 ) -> AttendanceResponse:
-    resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_attendance(scope, filters, resolved.fakultas, resolved.no_ps)
     granularity = "fakultas" if is_faculty_level(scope) else "prodi"
@@ -204,7 +201,7 @@ async def get_akademik_skor_pertanyaan(
     if kode_grup not in VALID_KODE_GRUP:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                             detail=f"kode_grup '{kode_grup}' tidak valid. Nilai yang diterima: {sorted(VALID_KODE_GRUP)}")
-    resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_skor_pertanyaan(scope, filters, resolved.fakultas, resolved.no_ps, kode_grup)
     granularity = "fakultas" if is_faculty_level(scope) else "prodi"
@@ -224,7 +221,7 @@ async def get_akademik_grade_distribution(
     filters: AkademikQueryFilters = Depends(),
     scope:   UserScope            = Depends(get_user_scope),
 ) -> GradeDistResponse:
-    resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_grade_distribution(scope, filters, resolved.fakultas, resolved.no_ps)
     granularity = "fakultas" if is_faculty_level(scope) else "prodi"
@@ -238,11 +235,11 @@ async def get_akademik_grade_distribution(
             summary="Tren nilai & skor N semester terakhir (line chart)",
             description="n_semester = jumlah titik data. Filter semester diabaikan di endpoint ini.")
 async def get_akademik_grade_trend(
-    n_semester: int                   = Query(default=6, ge=2, le=20),
+    n_semester: int                   = Query(default=18, ge=2, le=20),
     filters:    AkademikQueryFilters  = Depends(),
     scope:      UserScope             = Depends(get_user_scope),
 ) -> GradeTrendResponse:
-    resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     rows        = await get_grade_trend(scope, filters, resolved.fakultas, resolved.no_ps, n_semester)
     granularity = "fakultas" if is_faculty_level(scope) else "prodi"
     trend = [
@@ -275,7 +272,7 @@ async def get_akademik_course_ranking(
     if metric not in VALID_RANKING_METRIC:
         raise HTTPException(status_code=422, detail=f"metric tidak valid: {metric}")
 
-    resolved = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters  = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     top_rows, bottom_rows = await asyncio.gather(
         get_course_ranking_top(scope, filters, resolved.fakultas, resolved.no_ps, limit, metric),
@@ -306,7 +303,7 @@ async def get_akademik_skor_heatmap(
     filters: AkademikQueryFilters = Depends(),
     scope:   UserScope            = Depends(get_user_scope),
 ) -> SkorHeatmapResponse:
-    resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_skor_heatmap(scope, filters, resolved.fakultas, resolved.no_ps)
     granularity = "fakultas" if is_faculty_level(scope) else "prodi"
@@ -324,7 +321,7 @@ async def get_akademik_grading_comp(
     filters: AkademikQueryFilters = Depends(),
     scope:   UserScope            = Depends(get_user_scope),
 ) -> GradingCompResponse:
-    resolved    = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters     = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows        = await get_grading_comp(scope, filters, resolved.fakultas, resolved.no_ps)
     granularity = "fakultas" if is_faculty_level(scope) else "prodi"
@@ -357,7 +354,7 @@ async def get_akademik_skor_by_sks(
     filters: AkademikQueryFilters = Depends(),
     scope:   UserScope            = Depends(get_user_scope),
 ) -> SkorBySksResponse:
-    resolved = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters  = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows     = await get_skor_by_sks(scope, filters, resolved.fakultas, resolved.no_ps)
     items    = [SkorBySksBucket(**r) for r in rows]
@@ -381,7 +378,7 @@ async def get_akademik_komentar_mentah(
     filters:   AkademikQueryFilters  = Depends(),
     scope:     UserScope             = Depends(get_user_scope),
 ) -> KomentarResponse:
-    resolved = _resolve_spatial(scope, filters.fakultas, filters.no_ps)
+    resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
     filters  = await _resolve_filters(scope, filters, resolved.fakultas, resolved.no_ps)
     rows, total = await get_komentar_mentah(
         scope, filters, sumber, page, page_size, resolved.fakultas, resolved.no_ps,
