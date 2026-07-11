@@ -84,7 +84,8 @@
   "valid_tools": [
     "sql",
     "rag",
-    "clarification"
+    "clarification",
+    "chart_interpreter"
   ],
   "result_dir": "evals/results",
   "deepeval": {

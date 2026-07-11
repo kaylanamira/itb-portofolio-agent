@@ -10,6 +10,8 @@ from agent.nodes.synthesizer import synthesizer
 from agent.nodes.clarification_handler import clarification_handler
 from agent.nodes.rag_retriever import rag_retriever
 from agent.nodes.catalog_lookup import catalog_lookup
+from agent.nodes.chart_interpreter import chart_interpreter
+from agent.constants.planner import CHART_INTERPRETER_TOOL
 
 def route_next_step(state: AgentState) -> str:
     if state.get("query_type") == QueryType.CLARIFICATION_NEEDED:
@@ -22,6 +24,8 @@ def route_next_step(state: AgentState) -> str:
         return "synthesizer"
         
     tool = plan[idx].get("tool", "sql")
+    if tool == CHART_INTERPRETER_TOOL:
+        return "chart_interpreter"
     if tool == "rag":
         return "rag_retriever"
     if plan[idx].get("required"):
@@ -38,6 +42,7 @@ def build_portfolio_graph():
     graph.add_node("step_reasoner", step_reasoner)
     graph.add_node("synthesizer", synthesizer)
     graph.add_node("clarification_handler", clarification_handler)
+    graph.add_node("chart_interpreter", chart_interpreter)
 
     graph.set_entry_point("query_rewriter")
     graph.add_edge("query_rewriter", "planner")
@@ -47,6 +52,7 @@ def build_portfolio_graph():
         "sql_pipeline": "sql_pipeline",
         "catalog_lookup": "catalog_lookup",
         "rag_retriever": "rag_retriever",
+        "chart_interpreter": "chart_interpreter",
         "synthesizer": "synthesizer"
     })
 
@@ -62,10 +68,12 @@ def build_portfolio_graph():
         "sql_pipeline": "sql_pipeline",
         "catalog_lookup": "catalog_lookup",
         "rag_retriever": "rag_retriever",
+        "chart_interpreter": "chart_interpreter",
         "synthesizer": "synthesizer"
     })
 
     graph.add_edge("clarification_handler", END)
+    graph.add_edge("chart_interpreter", "synthesizer")
     graph.add_edge("synthesizer", END)
 
     return graph.compile()

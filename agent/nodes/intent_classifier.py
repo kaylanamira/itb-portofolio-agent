@@ -13,6 +13,12 @@ class DomainRoute(BaseModel):
     reason: str = Field(..., description="Reason for the domain choice.")
     
 async def intent_classifier(state: AgentState) -> dict:
+    if state.get("chart_context"):
+        return {
+            "domain": AgentDomain.PORTFOLIO,
+            "effective_query": state["raw_query"],
+        }
+
     llm = get_llm("intent_classification")
     
     human_content = build_intent_human_message(

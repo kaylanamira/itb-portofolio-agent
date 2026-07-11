@@ -1,6 +1,6 @@
 from core.utils import extract_json_from_llm
 import uuid
-from agent.state import AgentState, FormattedResponse, TableArtifact, ChartArtifact
+from agent.state import AgentState, FormattedResponse, TableArtifact, ChartArtifact, QueryType
 from agent.prompts.synthesizer import SYNTHESIZER_SYSTEM_PROMPT, REJECTION_SYSTEM_PROMPT, ABORT_REASON_MESSAGES, build_synthesizer_human_message
 from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -53,28 +53,29 @@ async def synthesizer(state: AgentState) -> dict:
         content = extract_json_from_llm(response.content)
 
         artifacts = []
-        for art in content.get("artifacts", []):
-            art_id = str(uuid.uuid4())
-            if art.get("artifact_type") == "chart":
-                artifacts.append(ChartArtifact(
-                    artifact_id=art_id,
-                    chart_type=art.get("chart_type", "bar"),
-                    title=art.get("title", "Analysis Chart"),
-                    chart_spec=art.get("chart_spec", {}),
-                    source_sql=art.get("source_sql"),
-                    columns_used=art.get("columns_used", []),
-                    insight=art.get("insight")
-                ))
-            else:
-                artifacts.append(TableArtifact(
-                    artifact_id=art_id,
-                    title=art.get("title", "Data Table"),
-                    columns=art.get("columns", []),
-                    rows=art.get("rows", []),
-                    source_sql=art.get("source_sql"),
-                    row_count=art.get("row_count", len(art.get("rows", []))),
-                    is_truncated=art.get("is_truncated", False)
-                ))
+        if state.get("query_type") != QueryType.CHART_INTERPRET:
+            for art in content.get("artifacts", []):
+                art_id = str(uuid.uuid4())
+                if art.get("artifact_type") == "chart":
+                    artifacts.append(ChartArtifact(
+                        artifact_id=art_id,
+                        chart_type=art.get("chart_type", "bar"),
+                        title=art.get("title", "Analysis Chart"),
+                        chart_spec=art.get("chart_spec", {}),
+                        source_sql=art.get("source_sql"),
+                        columns_used=art.get("columns_used", []),
+                        insight=art.get("insight")
+                    ))
+                else:
+                    artifacts.append(TableArtifact(
+                        artifact_id=art_id,
+                        title=art.get("title", "Data Table"),
+                        columns=art.get("columns", []),
+                        rows=art.get("rows", []),
+                        source_sql=art.get("source_sql"),
+                        row_count=art.get("row_count", len(art.get("rows", []))),
+                        is_truncated=art.get("is_truncated", False)
+                    ))
 
         formatted = FormattedResponse(
             response_type="mixed" if artifacts else "text",

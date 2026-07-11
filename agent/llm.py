@@ -16,6 +16,7 @@ OPENROUTER_MODEL_ENVS: dict[str, tuple[str, ...]] = {
     "answer_validation": ("VALIDATION_MODEL", "ANSWER_VALIDATION_MODEL"),
     "step_reasoning": ("REASONING_MODEL", "STEP_REASONING_MODEL"),
     "synthesis": ("SYNTHESIS_MODEL",),
+    "chart_interpretation": ("CHART_INTERPRETATION_MODEL", "SYNTHESIS_MODEL"),
     "clarification": ("CLARIFICATION_MODEL",),
     "llm_evaluation": ("EVAL_MODEL", "LLM_EVALUATION_MODEL"),
 }
@@ -68,6 +69,7 @@ TASK_MODEL_MAPPING: dict[str, dict[str, str]] = {
         "step_reasoning",
         "clarification",
         "synthesis",
+        "chart_interpretation",
         "planning",
         "schema_linking",
         "sql_generation",

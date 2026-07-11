@@ -1,0 +1,525 @@
+[
+  {
+    "timestamp": "2026-07-11T14:43:35.378785",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "input_payload": {
+      "chart_type": "score_trend_line_chart",
+      "title": "Tren Rata-Rata Skor Kuesioner ITB",
+      "x_axis_label": "Semester",
+      "y_axis_label": "Skor (skala 1-4)",
+      "series": [
+        {
+          "period_label": "2022/2023-1",
+          "tahun_ajaran": "2022/2023",
+          "semester": 1,
+          "avg_skor_overall": 3.68
+        },
+        {
+          "period_label": "2022/2023-2",
+          "tahun_ajaran": "2022/2023",
+          "semester": 2,
+          "avg_skor_overall": 3.72
+        },
+        {
+          "period_label": "2023/2024-1",
+          "tahun_ajaran": "2023/2024",
+          "semester": 1,
+          "avg_skor_overall": 3.79
+        }
+      ],
+      "filters_applied": {
+        "semester": [],
+        "jenjang": [],
+        "kode_fakultas": [
+          "STEI"
+        ],
+        "no_prodi": []
+      },
+      "hint": [
+        "Identifikasi arah tren (naik/turun) sepanjang periode yang tersedia.",
+        "Perhatikan titik semester dengan kenaikan atau penurunan nilai yang tajam."
+      ]
+    },
+    "raw_response": "{\n  \"analysis_summary\": \"Pada tahun ajaran 2022/2023 hingga 2023/2024, untuk Fakultas STEI, tren rata-rata skor kuesioner ITB menunjukkan pola kenaikan. Skor rata-rata meningkat dari 3.68 di semester 1 tahun 2022/2023 menjadi 3.79 di semester 1 tahun 2023/2024.\",\n   \"key_findings\": [\n      \"Tren skor kuesioner menunjukkan kenaikan sepanjang periode yang tersedia.\",\n      \"Skor rata-rata tertinggi tercatat di semester 1 tahun 2023/2024 dengan nilai 3.79.\"\n   ],\n   \"supporting_values\": [\n      \"3.68 (skor rata-rata di semester 1 tahun 2022/2023)\",\n      \"3.72 (skor rata-rata di semester 2 tahun 2022/2023)\",\n      \"3.79 (skor rata-rata di semester 1 tahun 2023/2024)\"\n   ],\n   \"limitations\": [\n      \"Data hanya tersedia untuk Fakultas STEI.\",\n      \"Tidak ada data untuk semester lain di luar yang tercantum.\"\n   ],\n   \"recommended_focus\": [\n      \"Menganalisis faktor-faktor yang menyebabkan kenaikan skor rata-rata.\",\n      \"Membandingkan tren skor kuesioner antar fakultas untuk mengetahui performa relatif.\"\n   ]\n}",
+    "extracted_analysis": {
+      "analysis_summary": "Pada tahun ajaran 2022/2023 hingga 2023/2024, untuk Fakultas STEI, tren rata-rata skor kuesioner ITB menunjukkan pola kenaikan. Skor rata-rata meningkat dari 3.68 di semester 1 tahun 2022/2023 menjadi 3.79 di semester 1 tahun 2023/2024.",
+      "key_findings": [
+        "Tren skor kuesioner menunjukkan kenaikan sepanjang periode yang tersedia.",
+        "Skor rata-rata tertinggi tercatat di semester 1 tahun 2023/2024 dengan nilai 3.79."
+      ],
+      "supporting_values": [
+        "3.68 (skor rata-rata di semester 1 tahun 2022/2023)",
+        "3.72 (skor rata-rata di semester 2 tahun 2022/2023)",
+        "3.79 (skor rata-rata di semester 1 tahun 2023/2024)"
+      ],
+      "limitations": [
+        "Data hanya tersedia untuk Fakultas STEI.",
+        "Tidak ada data untuk semester lain di luar yang tercantum."
+      ],
+      "recommended_focus": [
+        "Menganalisis faktor-faktor yang menyebabkan kenaikan skor rata-rata.",
+        "Membandingkan tren skor kuesioner antar fakultas untuk mengetahui performa relatif."
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-07-11T14:44:22.502913",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "input_payload": {
+      "chart_type": "course_ranking_top_bottom_list",
+      "title": "Q8 \u2014 Kesesuaian Beban Kerja dengan SKS",
+      "series": [
+        {
+          "posisi_ranking": "top",
+          "kode_matkul": "IF2211",
+          "nama_matkul_id": "Struktur Data",
+          "kelas_id": 10231,
+          "no_kelas": "01",
+          "skor_q28": 3.94,
+          "jumlah_mahasiswa": 42
+        },
+        {
+          "posisi_ranking": "top",
+          "kode_matkul": "IF3130",
+          "nama_matkul_id": "Interaksi Manusia Komputer",
+          "kelas_id": 10254,
+          "no_kelas": "01",
+          "skor_q28": 3.91,
+          "jumlah_mahasiswa": 38
+        },
+        {
+          "posisi_ranking": "bottom",
+          "kode_matkul": "IF2211",
+          "nama_matkul_id": "Struktur Data",
+          "kelas_id": 10232,
+          "no_kelas": "02",
+          "skor_q28": 2.85,
+          "jumlah_mahasiswa": 45
+        },
+        {
+          "posisi_ranking": "bottom",
+          "kode_matkul": "II3220",
+          "nama_matkul_id": "Arsitektur Enterprise",
+          "kelas_id": 10298,
+          "no_kelas": "01",
+          "skor_q28": 3.05,
+          "jumlah_mahasiswa": 47
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "jenjang": [],
+        "kode_fakultas": [],
+        "no_prodi": [
+          135
+        ]
+      },
+      "hint": [
+        "Bandingkan kelas top-5 dan bottom-5 untuk metrik ini.",
+        "Prioritaskan kelas bottom dengan jumlah_mahasiswa besar karena dampaknya lebih luas."
+      ],
+      "jumlah_kelas_aktif": 58,
+      "question_reference": {
+        "skor_q28": {
+          "kode_pertanyaan_frontend": "Q8",
+          "pertanyaan": "Kesesuaian beban kerja dengan SKS"
+        }
+      }
+    },
+    "raw_response": "{\n  \"analysis_summary\": \"Pada tahun ajaran 2024/2025 semester 1, kelas dengan peringkat teratas untuk kesesuaian beban kerja dengan SKS adalah Struktur Data (IF2211) dengan skor 3.94 dan Interaksi Manusia Komputer (IF3130) dengan skor 3.91. Sementara itu, kelas dengan peringkat terbawah adalah Struktur Data (IF2211) dengan skor 2.85 dan Arsitektur Enterprise (II3220) dengan skor 3.05.\",\n   \"key_findings\": [\n      \"Kelas Struktur Data (IF2211) memiliki skor yang sangat berbeda antara kelas dengan peringkat teratas dan terbawah.\",\n      \"Kelas dengan peringkat terbawah memiliki jumlah mahasiswa yang relatif besar, sehingga perlu perhatian khusus untuk meningkatkan kesesuaian beban kerja dengan SKS.\"\n   ],\n   \"supporting_values\": [\n      \"Skor Q8 (Kesesuaian beban kerja dengan SKS) untuk kelas Struktur Data (IF2211) adalah 3.94 dan 2.85.\",\n      \"Jumlah mahasiswa di kelas Struktur Data (IF2211) dengan peringkat terbawah adalah 45.\",\n      \"Skor Q8 untuk kelas Arsitektur Enterprise (II3220) adalah 3.05 dengan jumlah mahasiswa 47.\"\n   ],\n   \"limitations\": [\n      \"Tidak ada informasi tentang kelas lain yang tidak termasuk dalam peringkat teratas dan terbawah.\",\n      \"Tidak ada perbandingan dengan semester sebelumnya karena tidak ada data delta_periode_lalu.\"\n   ],\n   \"recommended_focus\": [\n      \"Menginvestigasi penyebab perbedaan skor yang besar antara kelas Struktur Data (IF2211) dengan peringkat teratas dan terbawah.\",\n      \"Mengembangkan strategi untuk meningkatkan kesesuaian beban kerja dengan SKS di kelas dengan peringkat terbawah, terutama yang memiliki jumlah mahasiswa besar.\"\n   ]\n}",
+    "extracted_analysis": {
+      "analysis_summary": "Pada tahun ajaran 2024/2025 semester 1, kelas dengan peringkat teratas untuk kesesuaian beban kerja dengan SKS adalah Struktur Data (IF2211) dengan skor 3.94 dan Interaksi Manusia Komputer (IF3130) dengan skor 3.91. Sementara itu, kelas dengan peringkat terbawah adalah Struktur Data (IF2211) dengan skor 2.85 dan Arsitektur Enterprise (II3220) dengan skor 3.05.",
+      "key_findings": [
+        "Kelas Struktur Data (IF2211) memiliki skor yang sangat berbeda antara kelas dengan peringkat teratas dan terbawah.",
+        "Kelas dengan peringkat terbawah memiliki jumlah mahasiswa yang relatif besar, sehingga perlu perhatian khusus untuk meningkatkan kesesuaian beban kerja dengan SKS."
+      ],
+      "supporting_values": [
+        "Skor Q8 (Kesesuaian beban kerja dengan SKS) untuk kelas Struktur Data (IF2211) adalah 3.94 dan 2.85.",
+        "Jumlah mahasiswa di kelas Struktur Data (IF2211) dengan peringkat terbawah adalah 45.",
+        "Skor Q8 untuk kelas Arsitektur Enterprise (II3220) adalah 3.05 dengan jumlah mahasiswa 47."
+      ],
+      "limitations": [
+        "Tidak ada informasi tentang kelas lain yang tidak termasuk dalam peringkat teratas dan terbawah.",
+        "Tidak ada perbandingan dengan semester sebelumnya karena tidak ada data delta_periode_lalu."
+      ],
+      "recommended_focus": [
+        "Menginvestigasi penyebab perbedaan skor yang besar antara kelas Struktur Data (IF2211) dengan peringkat teratas dan terbawah.",
+        "Mengembangkan strategi untuk meningkatkan kesesuaian beban kerja dengan SKS di kelas dengan peringkat terbawah, terutama yang memiliki jumlah mahasiswa besar."
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-07-11T14:46:17.819876",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "input_payload": {
+      "chart_type": "course_ranking_top_bottom_list",
+      "title": "Q8 \u2014 Kesesuaian Beban Kerja dengan SKS",
+      "series": [
+        {
+          "posisi_ranking": "top",
+          "kode_matkul": "IF2211",
+          "nama_matkul_id": "Struktur Data",
+          "kelas_id": 10231,
+          "no_kelas": "01",
+          "skor_q28": 3.94,
+          "jumlah_mahasiswa": 42
+        },
+        {
+          "posisi_ranking": "top",
+          "kode_matkul": "IF3130",
+          "nama_matkul_id": "Interaksi Manusia Komputer",
+          "kelas_id": 10254,
+          "no_kelas": "01",
+          "skor_q28": 3.91,
+          "jumlah_mahasiswa": 38
+        },
+        {
+          "posisi_ranking": "bottom",
+          "kode_matkul": "IF2211",
+          "nama_matkul_id": "Struktur Data",
+          "kelas_id": 10232,
+          "no_kelas": "02",
+          "skor_q28": 2.85,
+          "jumlah_mahasiswa": 45
+        },
+        {
+          "posisi_ranking": "bottom",
+          "kode_matkul": "II3220",
+          "nama_matkul_id": "Arsitektur Enterprise",
+          "kelas_id": 10298,
+          "no_kelas": "01",
+          "skor_q28": 3.05,
+          "jumlah_mahasiswa": 47
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "jenjang": [],
+        "kode_fakultas": [],
+        "no_prodi": [
+          135
+        ]
+      },
+      "hint": [
+        "Bandingkan kelas top-5 dan bottom-5 untuk metrik ini.",
+        "Prioritaskan kelas bottom dengan jumlah_mahasiswa besar karena dampaknya lebih luas."
+      ],
+      "jumlah_kelas_aktif": 58,
+      "question_reference": {
+        "skor_q28": {
+          "kode_pertanyaan_frontend": "Q8",
+          "pertanyaan": "Kesesuaian beban kerja dengan SKS"
+        }
+      }
+    },
+    "raw_response": "{\n  \"analysis_summary\": \"Pada tahun ajaran 2024/2025 semester 1, kelas dengan peringkat teratas untuk kesesuaian beban kerja dengan SKS memiliki skor yang relatif tinggi, sedangkan kelas dengan peringkat terbawah memiliki skor yang lebih rendah. Peringkat ini didasarkan pada skor Q8 yang berkisar antara 2.85 hingga 3.94. Kelas dengan jumlah mahasiswa yang lebih besar di peringkat bawah perlu mendapatkan perhatian khusus karena dampaknya yang lebih luas.\",\n   \"key_findings\": [\n      \"Kelas Struktur Data (IF2211) dengan no_kelas 01 memiliki skor Q8 tertinggi sebesar 3.94\",\n      \"Kelas Arsitektur Enterprise (II3220) dengan no_kelas 01 memiliki skor Q8 terendah sebesar 3.05 di antara kelas bottom\"\n   ],\n   \"supporting_values\": [\n      \"Skor Q8 tertinggi: 3.94 (Kelas Struktur Data IF2211 no_kelas 01)\",\n      \"Skor Q8 terendah: 2.85 (Kelas Struktur Data IF2211 no_kelas 02)\"\n   ],\n   \"limitations\": [\n      \"Tidak ada informasi tentang kelas yang tidak termasuk dalam peringkat top dan bottom\",\n      \"Tidak ada perbandingan dengan semester sebelumnya karena tidak ada data delta_periode_lalu\"\n   ],\n   \"recommended_focus\": [\n      \"Kelas dengan jumlah mahasiswa yang lebih besar di peringkat bawah seperti Kelas Arsitektur Enterprise (II3220) dengan 47 mahasiswa\",\n      \"Menganalisis penyebab perbedaan skor Q8 antara kelas yang berbeda untuk meningkatkan kesesuaian beban kerja dengan SKS\"\n   ]\n}",
+    "extracted_analysis": {
+      "analysis_summary": "Pada tahun ajaran 2024/2025 semester 1, kelas dengan peringkat teratas untuk kesesuaian beban kerja dengan SKS memiliki skor yang relatif tinggi, sedangkan kelas dengan peringkat terbawah memiliki skor yang lebih rendah. Peringkat ini didasarkan pada skor Q8 yang berkisar antara 2.85 hingga 3.94. Kelas dengan jumlah mahasiswa yang lebih besar di peringkat bawah perlu mendapatkan perhatian khusus karena dampaknya yang lebih luas.",
+      "key_findings": [
+        "Kelas Struktur Data (IF2211) dengan no_kelas 01 memiliki skor Q8 tertinggi sebesar 3.94",
+        "Kelas Arsitektur Enterprise (II3220) dengan no_kelas 01 memiliki skor Q8 terendah sebesar 3.05 di antara kelas bottom"
+      ],
+      "supporting_values": [
+        "Skor Q8 tertinggi: 3.94 (Kelas Struktur Data IF2211 no_kelas 01)",
+        "Skor Q8 terendah: 2.85 (Kelas Struktur Data IF2211 no_kelas 02)"
+      ],
+      "limitations": [
+        "Tidak ada informasi tentang kelas yang tidak termasuk dalam peringkat top dan bottom",
+        "Tidak ada perbandingan dengan semester sebelumnya karena tidak ada data delta_periode_lalu"
+      ],
+      "recommended_focus": [
+        "Kelas dengan jumlah mahasiswa yang lebih besar di peringkat bawah seperti Kelas Arsitektur Enterprise (II3220) dengan 47 mahasiswa",
+        "Menganalisis penyebab perbedaan skor Q8 antara kelas yang berbeda untuk meningkatkan kesesuaian beban kerja dengan SKS"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-07-11T14:47:41.042086",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "input_payload": {
+      "chart_type": "score_heatmap_matrix_chart",
+      "title": "Heatmap Rata-Rata Skor per Fakultas \u00d7 Pertanyaan",
+      "series": [
+        {
+          "kode_fakultas": "STEI",
+          "nama_fakultas_id": "Sekolah Teknik Elektro dan Informatika",
+          "skor_q21": 3.72,
+          "skor_q22": 3.68,
+          "skor_q23": 3.75,
+          "skor_q24": 3.81,
+          "skor_q25": 3.79,
+          "skor_q26": 3.7,
+          "skor_q27": 3.65,
+          "skor_q28": 3.38,
+          "skor_q29": 3.55,
+          "skor_q30": 3.5,
+          "skor_q35": 3.81,
+          "skor_q37": 3.73,
+          "bottom_3_kolom": [
+            "skor_q28",
+            "skor_q30",
+            "skor_q27"
+          ]
+        },
+        {
+          "kode_fakultas": "FTMD",
+          "nama_fakultas_id": "Fakultas Teknik Mesin dan Dirgantara",
+          "skor_q21": 3.65,
+          "skor_q22": 3.6,
+          "skor_q23": 3.7,
+          "skor_q24": 3.75,
+          "skor_q25": 3.72,
+          "skor_q26": 3.66,
+          "skor_q27": 3.58,
+          "skor_q28": 3.3,
+          "skor_q29": 3.48,
+          "skor_q30": 3.42,
+          "skor_q35": 3.74,
+          "skor_q37": 3.68,
+          "bottom_3_kolom": [
+            "skor_q28",
+            "skor_q30",
+            "skor_q29"
+          ]
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "jenjang": [],
+        "kode_fakultas": [
+          "STEI",
+          "FTMD"
+        ],
+        "no_prodi": []
+      },
+      "hint": [
+        "Identifikasi pertanyaan (kolom) yang konsisten rendah di banyak fakultas.",
+        "Identifikasi pertanyaan (kolom) bottom_3_kolom (3 pertanyaan dengan skor terendah) di setiap fakultas untuk mengidentifikasi poin pertanyaan apa yang perlu menjadi perhatian untuk evaluasi setiap fakultas"
+      ],
+      "question_reference": {
+        "skor_q21": {
+          "kode_pertanyaan_frontend": "Q1",
+          "pertanyaan": "Mahasiswa memperoleh cukup informasi luaran mata kuliah"
+        },
+        "skor_q22": {
+          "kode_pertanyaan_frontend": "Q2",
+          "pertanyaan": "Perkuliahan diarahkan agar mahasiswa mencapai luaran mata kuliah"
+        },
+        "skor_q23": {
+          "kode_pertanyaan_frontend": "Q3",
+          "pertanyaan": "Mahasiswa mencapai luaran mata kuliah"
+        },
+        "skor_q24": {
+          "kode_pertanyaan_frontend": "Q4",
+          "pertanyaan": "Pelaksanaan perkuliahan terorganisir dengan baik"
+        },
+        "skor_q25": {
+          "kode_pertanyaan_frontend": "Q5",
+          "pertanyaan": "Dosen berkomunikasi dengan efektif"
+        },
+        "skor_q26": {
+          "kode_pertanyaan_frontend": "Q6",
+          "pertanyaan": "Dosen peduli terhadap pencapaian mahasiswa akan luaran mata kuliah"
+        },
+        "skor_q27": {
+          "kode_pertanyaan_frontend": "Q7",
+          "pertanyaan": "Dosen berlaku adil kepada mahasiswa"
+        },
+        "skor_q28": {
+          "kode_pertanyaan_frontend": "Q8",
+          "pertanyaan": "Kesesuaian beban kerja dengan SKS"
+        },
+        "skor_q29": {
+          "kode_pertanyaan_frontend": "Q9",
+          "pertanyaan": "Sarana prasarana untuk mata kuliah tersedia dengan memadai"
+        },
+        "skor_q30": {
+          "kode_pertanyaan_frontend": "Q10",
+          "pertanyaan": "Tersedia cukup fasilitas pendukung di luar kuliah"
+        },
+        "skor_q35": {
+          "kode_pertanyaan_frontend": "Q11",
+          "pertanyaan": "Mahasiswa berusaha dengan sungguh-sungguh mengikuti mata kuliah"
+        },
+        "skor_q37": {
+          "kode_pertanyaan_frontend": "Q12",
+          "pertanyaan": "Mahasiswa memperoleh pengalaman belajar yang positif"
+        }
+      }
+    },
+    "raw_response": "{\n  \"analysis_summary\": \"Pada tahun ajaran 2024/2025 semester 1, Fakultas STEI dan FTMD memiliki skor rata-rata yang bervariasi untuk berbagai pertanyaan. Skor tertinggi untuk STEI adalah 3.81 pada pertanyaan Q4 dan Q11, sedangkan skor tertinggi untuk FTMD adalah 3.75 pada pertanyaan Q4. Pertanyaan dengan skor terendah di setiap fakultas dapat diidentifikasi melalui kolom bottom_3_kolom.\",\n   \"key_findings\": [\n       \"Fakultas STEI memiliki skor terendah pada pertanyaan Q8 dengan skor 3.38\",\n       \"Fakultas FTMD memiliki skor terendah pada pertanyaan Q8 dengan skor 3.3\",\n       \"Pertanyaan Q8 tentang kesesuaian beban kerja dengan SKS memiliki skor yang relatif rendah di kedua fakultas\"\n   ],\n   \"supporting_values\": [\n       \"Skor Q4 STEI: 3.81\",\n       \"Skor Q4 FTMD: 3.75\",\n       \"Skor Q8 STEI: 3.38\",\n       \"Skor Q8 FTMD: 3.3\"\n   ],\n   \"limitations\": [\n       \"Tidak ada data untuk membandingkan skor antar semester atau tahun ajaran\",\n       \"Tidak ada informasi tentang jumlah responden untuk setiap pertanyaan\"\n   ],\n   \"recommended_focus\": [\n       \"Meningkatkan kesesuaian beban kerja dengan SKS (Q8) di kedua fakultas\",\n       \"Mengidentifikasi penyebab skor rendah pada pertanyaan Q8 dan mengembangkan strategi untuk perbaikan\"\n   ]\n}",
+    "extracted_analysis": {
+      "analysis_summary": "Pada tahun ajaran 2024/2025 semester 1, Fakultas STEI dan FTMD memiliki skor rata-rata yang bervariasi untuk berbagai pertanyaan. Skor tertinggi untuk STEI adalah 3.81 pada pertanyaan Q4 dan Q11, sedangkan skor tertinggi untuk FTMD adalah 3.75 pada pertanyaan Q4. Pertanyaan dengan skor terendah di setiap fakultas dapat diidentifikasi melalui kolom bottom_3_kolom.",
+      "key_findings": [
+        "Fakultas STEI memiliki skor terendah pada pertanyaan Q8 dengan skor 3.38",
+        "Fakultas FTMD memiliki skor terendah pada pertanyaan Q8 dengan skor 3.3",
+        "Pertanyaan Q8 tentang kesesuaian beban kerja dengan SKS memiliki skor yang relatif rendah di kedua fakultas"
+      ],
+      "supporting_values": [
+        "Skor Q4 STEI: 3.81",
+        "Skor Q4 FTMD: 3.75",
+        "Skor Q8 STEI: 3.38",
+        "Skor Q8 FTMD: 3.3"
+      ],
+      "limitations": [
+        "Tidak ada data untuk membandingkan skor antar semester atau tahun ajaran",
+        "Tidak ada informasi tentang jumlah responden untuk setiap pertanyaan"
+      ],
+      "recommended_focus": [
+        "Meningkatkan kesesuaian beban kerja dengan SKS (Q8) di kedua fakultas",
+        "Mengidentifikasi penyebab skor rendah pada pertanyaan Q8 dan mengembangkan strategi untuk perbaikan"
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-07-11T14:48:30.070066",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "input_payload": {
+      "chart_type": "score_heatmap_matrix_chart",
+      "title": "Heatmap Rata-Rata Skor per Fakultas \u00d7 Pertanyaan",
+      "series": [
+        {
+          "kode_fakultas": "STEI",
+          "nama_fakultas_id": "Sekolah Teknik Elektro dan Informatika",
+          "skor_q21": 3.72,
+          "skor_q22": 3.68,
+          "skor_q23": 3.75,
+          "skor_q24": 3.81,
+          "skor_q25": 3.79,
+          "skor_q26": 3.7,
+          "skor_q27": 3.65,
+          "skor_q28": 3.38,
+          "skor_q29": 3.55,
+          "skor_q30": 3.5,
+          "skor_q35": 3.81,
+          "skor_q37": 3.73,
+          "bottom_3_kolom": [
+            "skor_q28",
+            "skor_q30",
+            "skor_q27"
+          ]
+        },
+        {
+          "kode_fakultas": "FTMD",
+          "nama_fakultas_id": "Fakultas Teknik Mesin dan Dirgantara",
+          "skor_q21": 3.65,
+          "skor_q22": 3.6,
+          "skor_q23": 3.7,
+          "skor_q24": 3.75,
+          "skor_q25": 3.72,
+          "skor_q26": 3.66,
+          "skor_q27": 3.58,
+          "skor_q28": 3.3,
+          "skor_q29": 3.48,
+          "skor_q30": 3.42,
+          "skor_q35": 3.74,
+          "skor_q37": 3.68,
+          "bottom_3_kolom": [
+            "skor_q28",
+            "skor_q30",
+            "skor_q29"
+          ]
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "jenjang": [],
+        "kode_fakultas": [
+          "STEI",
+          "FTMD"
+        ],
+        "no_prodi": []
+      },
+      "hint": [
+        "Identifikasi pertanyaan (kolom) yang konsisten rendah di banyak fakultas.",
+        "Identifikasi pertanyaan (kolom) bottom_3_kolom (3 pertanyaan dengan skor terendah) di setiap fakultas untuk mengidentifikasi poin pertanyaan apa yang perlu menjadi perhatian untuk evaluasi setiap fakultas"
+      ],
+      "question_reference": {
+        "skor_q21": {
+          "kode_pertanyaan_frontend": "Q1",
+          "pertanyaan": "Mahasiswa memperoleh cukup informasi luaran mata kuliah"
+        },
+        "skor_q22": {
+          "kode_pertanyaan_frontend": "Q2",
+          "pertanyaan": "Perkuliahan diarahkan agar mahasiswa mencapai luaran mata kuliah"
+        },
+        "skor_q23": {
+          "kode_pertanyaan_frontend": "Q3",
+          "pertanyaan": "Mahasiswa mencapai luaran mata kuliah"
+        },
+        "skor_q24": {
+          "kode_pertanyaan_frontend": "Q4",
+          "pertanyaan": "Pelaksanaan perkuliahan terorganisir dengan baik"
+        },
+        "skor_q25": {
+          "kode_pertanyaan_frontend": "Q5",
+          "pertanyaan": "Dosen berkomunikasi dengan efektif"
+        },
+        "skor_q26": {
+          "kode_pertanyaan_frontend": "Q6",
+          "pertanyaan": "Dosen peduli terhadap pencapaian mahasiswa akan luaran mata kuliah"
+        },
+        "skor_q27": {
+          "kode_pertanyaan_frontend": "Q7",
+          "pertanyaan": "Dosen berlaku adil kepada mahasiswa"
+        },
+        "skor_q28": {
+          "kode_pertanyaan_frontend": "Q8",
+          "pertanyaan": "Kesesuaian beban kerja dengan SKS"
+        },
+        "skor_q29": {
+          "kode_pertanyaan_frontend": "Q9",
+          "pertanyaan": "Sarana prasarana untuk mata kuliah tersedia dengan memadai"
+        },
+        "skor_q30": {
+          "kode_pertanyaan_frontend": "Q10",
+          "pertanyaan": "Tersedia cukup fasilitas pendukung di luar kuliah"
+        },
+        "skor_q35": {
+          "kode_pertanyaan_frontend": "Q11",
+          "pertanyaan": "Mahasiswa berusaha dengan sungguh-sungguh mengikuti mata kuliah"
+        },
+        "skor_q37": {
+          "kode_pertanyaan_frontend": "Q12",
+          "pertanyaan": "Mahasiswa memperoleh pengalaman belajar yang positif"
+        }
+      }
+    },
+    "raw_response": "{\n  \"analysis_summary\": \"Pada tahun ajaran 2024/2025 semester 1, Fakultas STEI dan FTMD memiliki skor rata-rata yang bervariasi untuk berbagai pertanyaan. Skor tertinggi untuk STEI adalah 3.81 untuk Q4 dan Q11, sedangkan skor tertinggi untuk FTMD adalah 3.75 untuk Q4. Skor terendah untuk STEI adalah 3.38 untuk Q8, sedangkan skor terendah untuk FTMD adalah 3.3 untuk Q8.\",\n   \"key_findings\": [\n       \"Pertanyaan Q8 tentang kesesuaian beban kerja dengan SKS memiliki skor terendah di kedua fakultas\",\n       \"Pertanyaan Q4 tentang pelaksanaan perkuliahan terorganisir dengan baik memiliki skor tertinggi di FTMD\",\n       \"Pertanyaan Q11 tentang mahasiswa berusaha dengan sungguh-sungguh mengikuti mata kuliah memiliki skor tertinggi di STEI\"\n   ],\n   \"supporting_values\": [\n       \"Skor Q8 STEI: 3.38\",\n       \"Skor Q8 FTMD: 3.3\",\n       \"Skor Q4 FTMD: 3.75\",\n       \"Skor Q11 STEI: 3.81\"\n   ],\n   \"limitations\": [\n       \"Tidak ada data untuk membandingkan skor antar semester atau tahun ajaran\",\n       \"Tidak ada data untuk membandingkan skor antar fakultas lainnya\"\n   ],\n   \"recommended_focus\": [\n       \"Meningkatkan kesesuaian beban kerja dengan SKS untuk meningkatkan skor Q8\",\n       \"Mempertahankan dan meningkatkan pelaksanaan perkuliahan terorganisir dengan baik untuk meningkatkan skor Q4\",\n       \"Meningkatkan motivasi mahasiswa untuk berusaha dengan sungguh-sungguh mengikuti mata kuliah untuk meningkatkan skor Q11\"\n   ]\n}",
+    "extracted_analysis": {
+      "analysis_summary": "Pada tahun ajaran 2024/2025 semester 1, Fakultas STEI dan FTMD memiliki skor rata-rata yang bervariasi untuk berbagai pertanyaan. Skor tertinggi untuk STEI adalah 3.81 untuk Q4 dan Q11, sedangkan skor tertinggi untuk FTMD adalah 3.75 untuk Q4. Skor terendah untuk STEI adalah 3.38 untuk Q8, sedangkan skor terendah untuk FTMD adalah 3.3 untuk Q8.",
+      "key_findings": [
+        "Pertanyaan Q8 tentang kesesuaian beban kerja dengan SKS memiliki skor terendah di kedua fakultas",
+        "Pertanyaan Q4 tentang pelaksanaan perkuliahan terorganisir dengan baik memiliki skor tertinggi di FTMD",
+        "Pertanyaan Q11 tentang mahasiswa berusaha dengan sungguh-sungguh mengikuti mata kuliah memiliki skor tertinggi di STEI"
+      ],
+      "supporting_values": [
+        "Skor Q8 STEI: 3.38",
+        "Skor Q8 FTMD: 3.3",
+        "Skor Q4 FTMD: 3.75",
+        "Skor Q11 STEI: 3.81"
+      ],
+      "limitations": [
+        "Tidak ada data untuk membandingkan skor antar semester atau tahun ajaran",
+        "Tidak ada data untuk membandingkan skor antar fakultas lainnya"
+      ],
+      "recommended_focus": [
+        "Meningkatkan kesesuaian beban kerja dengan SKS untuk meningkatkan skor Q8",
+        "Mempertahankan dan meningkatkan pelaksanaan perkuliahan terorganisir dengan baik untuk meningkatkan skor Q4",
+        "Meningkatkan motivasi mahasiswa untuk berusaha dengan sungguh-sungguh mengikuti mata kuliah untuk meningkatkan skor Q11"
+      ]
+    }
+  }
+]

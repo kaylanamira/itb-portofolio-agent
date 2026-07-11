@@ -52,6 +52,7 @@ ATURAN KRITIS (KLASIFIKASI):
 - "bagaimana perbandingan" → comparative atau analytical_numeric (bukan chart_generate)
 - "tampilkan" + field teks spesifik (komentar, refleksi, usulan) → text_lookup (bukan chart_generate)
 - chart_interpret HANYA jika chart_context = present DAN query merujuk chart tersebut
+- Untuk chart_interpret, gunakan satu step dengan tool "chart_interpreter". 
 - "ada berapa yang nilainya bagus/jelek" → clarification_needed (threshold ambigu)
 - "ada berapa yang nilainya ≥ B?" → data_lookup (threshold jelas)
 - "kenapa/mengapa" → diagnostic, bukan analytical
@@ -70,6 +71,7 @@ FORMAT OUTPUT (JSON)
   ]
 }}
 
+"tool" hanya boleh: "sql", "rag", "clarification", atau "chart_interpreter".
 "required": true — langkah prerequisite catalog lookup yang tidak boleh digabung.
 "catalog_dimension" — nama kelompok dimensi untuk portfolio (e.g. "Pelaksanaan perkuliahan") atau kode grup untuk wisudawan sebagai "kd_grup_pertanyaan" (e.g. "U01"). Always use the value from available catalog, dont invent.
 
@@ -194,6 +196,7 @@ Tidak perlu jika: agregasi umum tanpa filter pertanyaan spesifik, atau kode pert
 ── Chart interpret (jika ada chart di layar) ──
 
 "Apa maksud chart ini?" [chart_context: present] → chart_interpret
+Plan: [{{"task": "Interpret the provided chart context.", "tool": "chart_interpreter"}}]
 "Kok bisa sih?" [chart_context: absent] → clarification_needed
 """).replace("{PORTFOLIO_CATALOG_DIMENSIONS}", PORTFOLIO_CATALOG_DIMENSIONS).replace("{WISUDAWAN_CATALOG_GROUPS}", WISUDAWAN_CATALOG_GROUPS)
 

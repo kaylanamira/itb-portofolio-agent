@@ -43,7 +43,19 @@ ChartType = Literal[
     "score_heatmap_matrix_chart",
     "grading_composition_stacked_bar_chart",
     "grading_composition_single_entity_bar_chart",
+    "score_by_sks_bucket_bar_chart",
 ]
+
+class QuestionReference(BaseModel):
+    kode_pertanyaan_frontend: str
+    pertanyaan: str
+
+class ChartFilters(BaseModel):
+    tahun_ajaran: Optional[str] = None
+    semester: list[int] = Field(default_factory=list)
+    jenjang: list[str] = Field(default_factory=list)
+    kode_fakultas: list[str] = Field(default_factory=list)
+    no_prodi: list[int] = Field(default_factory=list)
 
 class ChartContext(BaseModel):
     chart_type: ChartType
@@ -51,7 +63,10 @@ class ChartContext(BaseModel):
     x_axis_label: Optional[str] = None
     y_axis_label: Optional[str] = None
     series: list[dict]
-    filters_applied: dict = {}
+    filters_applied: ChartFilters = Field(default_factory=ChartFilters)
+    hint: list[str] = Field(default_factory=list)
+    jumlah_kelas_aktif: Optional[int] = None
+    question_reference: Optional[dict[str, QuestionReference]] = None
 
 class DetectedEntities(BaseModel):
     kode_matkul: Optional[str] = None

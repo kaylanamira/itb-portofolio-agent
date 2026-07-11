@@ -1,6 +1,6 @@
 from api.routers.schemas import ChatRequest, ChatResponse
 from core.scope import UserScope
-from agent.state import AgentState
+from agent.state import AgentState, ChartContext
 from agent.memory import get_session_history_store
 from core.config import settings
 
@@ -9,6 +9,7 @@ async def build_initial_state(payload: ChatRequest, user_scope: UserScope) -> Ag
     history = await history_store.load_history(payload.session_id)
     messages = [message.model_dump(exclude_none=True) for message in history.messages]
     messages.append({"role": "user", "content": payload.query})
+    chart_context = ChartContext.model_validate(payload.chart_context) if payload.chart_context else None
 
     return AgentState(
         user_scope=user_scope,
@@ -16,7 +17,7 @@ async def build_initial_state(payload: ChatRequest, user_scope: UserScope) -> Ag
         messages=messages,
         conversation_summary=history.summary,
         session_entities=None,
-        chart_context=payload.chart_context,
+        chart_context=chart_context,
         raw_query=payload.query,
         rewritten_query=None,
         effective_query=payload.query,
