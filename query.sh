@@ -3,7 +3,7 @@
 #   uv run python dev_session.py --role direktorat
 #   export DEV_SESSION_ID=<session_id_yang_dicetak>
 
-QUERY="${1:-Bagaimana perbandingan nilai antar kelas matematika diskrit di 2024}"
+QUERY="${1:-Bagaimana dengan jumlah mahasiswa yang mendaapat B}"
 
 if [ -z "$DEV_SESSION_ID" ]; then
   echo "DEV_SESSION_ID belum di-set." >&2
