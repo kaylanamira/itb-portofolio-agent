@@ -29,10 +29,6 @@ class ValidationStatus(str, Enum):
     FAIL    = "fail"
     PENDING = "pending"
 
-# format: {konten}_{bentuk_visual}_{output: chart|list|value}
-# konten: entity_comparison, course_ranking, single_entity, grade_distribution, score_trend, score_heatmap, grading_composition, score_by_sks_bucket
-# bentuk visual: bar_chart, list, percentage_value, stacked_bar_chart, single_entity_bar_chart, line_chart, matrix_chart
-# output: chart, list, value
 ChartType = Literal[
     "entity_comparison_bar_chart",
     "course_ranking_top_bottom_list",

@@ -1,0 +1,483 @@
+[
+  {
+    "id": "CI-CG-S-KP-001",
+    "description": "Test case for chart type: entity_comparison_bar_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "entity_comparison_bar_chart"
+    ],
+    "chart_context": {
+      "chart_type": "entity_comparison_bar_chart",
+      "title": "Rata-Rata Skor Kuesioner per Fakultas",
+      "y_axis_label": "Skor rata-rata (skala 1-4)",
+      "series": [
+        {
+          "kode_fakultas": "STEI",
+          "nama_fakultas_id": "Sekolah Teknik Elektro dan Informatika",
+          "avg_skor_overall": 3.86,
+          "delta_periode_lalu": 0.04
+        },
+        {
+          "kode_fakultas": "FTMD",
+          "nama_fakultas_id": "Fakultas Teknik Mesin dan Dirgantara",
+          "avg_skor_overall": 3.81,
+          "delta_periode_lalu": -0.02
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "kode_fakultas": [
+          "STEI",
+          "FTMD"
+        ]
+      },
+      "hint": [
+        "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
+        "Identifikasi seberapa lebar kesenjangan antarfakultas (apakah merata, atau ada outlier jauh di bawah rata-rata)",
+        "Untuk metrik skor kuesioner (skor_q21 sampai skor_q37), nilai di bawah 3.0 (skala 1-4) mengindikasikan area yang perlu perhatian; ambang ini tidak berlaku untuk metrik avg_ip."
+      ]
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)",
+      "Mentions STEI or FTMD data",
+      "Mentions an increase or decrease compared to the previous period"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-002",
+    "description": "Test case for chart type: entity_comparison_bar_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "entity_comparison_bar_chart"
+    ],
+    "chart_context": {
+      "chart_type": "entity_comparison_bar_chart",
+      "title": "Q1 \u2014 Informasi Luaran Mata Kuliah per Prodi",
+      "y_axis_label": "Skor rata-rata (skala 1-4)",
+      "series": [
+        {
+          "no_prodi": 135,
+          "kode_prodi": "IF",
+          "nama_prodi_id": "Teknik Informatika",
+          "skor_q21": 3.72,
+          "delta_periode_lalu": 0.02
+        },
+        {
+          "no_prodi": 132,
+          "kode_prodi": "EL",
+          "nama_prodi_id": "Teknik Elektro",
+          "skor_q21": 3.68,
+          "delta_periode_lalu": null
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "kode_fakultas": [
+          "STEI"
+        ],
+        "no_prodi": [
+          132,
+          135
+        ]
+      },
+      "hint": [
+        "Identifikasi program studi dengan nilai tertinggi dan terendah pada metrik ini.",
+        "Identifikasi seberapa lebar kesenjangan antarprogram studi (apakah merata, atau ada outlier jauh di bawah rata-rata)",
+        "Untuk metrik skor kuesioner (skor_q21 sampai skor_q37), nilai di bawah 3.0 (skala 1-4) mengindikasikan area yang perlu perhatian; ambang ini tidak berlaku untuk metrik avg_ip."
+      ],
+      "question_reference": {
+        "skor_q21": {
+          "kode_pertanyaan_frontend": "Q1",
+          "pertanyaan": "Mahasiswa memperoleh cukup informasi luaran mata kuliah"
+        }
+      }
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)",
+      "Mentions that 34.2% of students received grade A",
+      "Concludes that the majority of students received A to C (or lulus)",
+      "Mentions that 0.0% received grade T"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-003",
+    "description": "Test case for chart type: entity_comparison_bar_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "entity_comparison_bar_chart"
+    ],
+    "chart_context": {
+      "chart_type": "entity_comparison_bar_chart",
+      "title": "Rata-Rata Kehadiran Dosen per Fakultas",
+      "y_axis_label": "Persentase kehadiran (%)",
+      "series": [
+        {
+          "kode_fakultas": "STEI",
+          "nama_fakultas_id": "Sekolah Teknik Elektro dan Informatika",
+          "avg_pct_kehadiran_dosen": 94.2,
+          "delta_periode_lalu": 1.8
+        },
+        {
+          "kode_fakultas": "FTMD",
+          "nama_fakultas_id": "Fakultas Teknik Mesin dan Dirgantara",
+          "avg_pct_kehadiran_dosen": 91.5,
+          "delta_periode_lalu": -0.5
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "kode_fakultas": [
+          "STEI",
+          "FTMD"
+        ]
+      },
+      "hint": [
+        "Identifikasi fakultas dengan nilai tertinggi dan terendah pada metrik ini.",
+        "Identifikasi seberapa lebar kesenjangan antarfakultas (apakah merata, atau ada outlier jauh di bawah rata-rata)",
+        "Nilai berskala 0-100%, bukan skala skor kuesioner 1-4."
+      ]
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)",
+      "Mentions STEI or FTMD data",
+      "Mentions an increase or decrease compared to the previous period"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-004",
+    "description": "Test case for chart type: grade_distribution_stacked_bar_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "grade_distribution_stacked_bar_chart"
+    ],
+    "chart_context": {
+      "chart_type": "grade_distribution_stacked_bar_chart",
+      "title": "Distribusi Grade per Fakultas",
+      "series": [
+        {
+          "kode_fakultas": "STEI",
+          "nama_fakultas_id": "Sekolah Teknik Elektro dan Informatika",
+          "dist_pct_a": 34.2,
+          "dist_pct_ab": 22.1,
+          "dist_pct_b": 19.5,
+          "dist_pct_bc": 12.0,
+          "dist_pct_c": 7.8,
+          "dist_pct_d": 2.9,
+          "dist_pct_e": 1.5,
+          "dist_pct_t": 0.0,
+          "total_mahasiswa": 1240
+        },
+        {
+          "kode_fakultas": "FTMD",
+          "nama_fakultas_id": "Fakultas Teknik Mesin dan Dirgantara",
+          "dist_pct_a": 30.1,
+          "dist_pct_ab": 24.0,
+          "dist_pct_b": 20.2,
+          "dist_pct_bc": 13.5,
+          "dist_pct_c": 8.0,
+          "dist_pct_d": 2.7,
+          "dist_pct_e": 1.5,
+          "dist_pct_t": 0.0,
+          "total_mahasiswa": 980
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "kode_fakultas": [
+          "STEI",
+          "FTMD"
+        ]
+      },
+      "hint": [
+        "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarfakultas.",
+        "Identifikasi mayoritas nilai yang diraih oleh setiap fakultas untuk mendapat gambaran pemahaman umum mahasiswa setiap fakultas terhadap pelaksanaan perkuliahan di fakultas tersebut.",
+        "Identifikasi apakah terdapat flag pada hasil yang diraih, ditandai dengan 100% mahasiswa meraih suatu kategori nilai."
+      ]
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-005",
+    "description": "Test case for chart type: grade_distribution_single_entity_bar_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "grade_distribution_single_entity_bar_chart"
+    ],
+    "chart_context": {
+      "chart_type": "grade_distribution_single_entity_bar_chart",
+      "title": "Distribusi Grade \u2014 Teknik Informatika",
+      "series": [
+        {
+          "no_prodi": 135,
+          "kode_prodi": "IF",
+          "nama_prodi_id": "Teknik Informatika",
+          "dist_pct_a": 34.2,
+          "dist_pct_ab": 22.1,
+          "dist_pct_b": 19.5,
+          "dist_pct_bc": 12.0,
+          "dist_pct_c": 7.8,
+          "dist_pct_d": 2.9,
+          "dist_pct_e": 1.5,
+          "dist_pct_t": 0.0,
+          "total_mahasiswa": 210
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "no_prodi": [
+          135
+        ]
+      },
+      "hint": [
+        "Bandingkan proporsi grade lulus (A-C) vs bermasalah (D-E-T) antarprogram studi.",
+        "Identifikasi mayoritas nilai yang diraih oleh setiap program studi untuk mendapat gambaran pemahaman umum mahasiswa setiap program studi terhadap pelaksanaan perkuliahan di program studi tersebut.",
+        "Identifikasi apakah terdapat flag pada hasil yang diraih, ditandai dengan 100% mahasiswa meraih suatu kategori nilai."
+      ]
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)",
+      "Mentions that 34.2% of students received grade A",
+      "Concludes that the majority of students received A to C (or lulus)",
+      "Mentions that 0.0% received grade T"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-006",
+    "description": "Test case for chart type: score_trend_line_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "score_trend_line_chart"
+    ],
+    "chart_context": {
+      "chart_type": "score_trend_line_chart",
+      "title": "Tren Rata-Rata Skor Kuesioner ITB",
+      "x_axis_label": "Semester",
+      "y_axis_label": "Skor (skala 1-4)",
+      "series": [
+        {
+          "period_label": "2022/2023-1",
+          "tahun_ajaran": "2022/2023",
+          "semester": 1,
+          "avg_skor_overall": 3.68
+        },
+        {
+          "period_label": "2022/2023-2",
+          "tahun_ajaran": "2022/2023",
+          "semester": 2,
+          "avg_skor_overall": 3.72
+        },
+        {
+          "period_label": "2023/2024-1",
+          "tahun_ajaran": "2023/2024",
+          "semester": 1,
+          "avg_skor_overall": 3.79
+        }
+      ],
+      "filters_applied": {
+        "kode_fakultas": [
+          "STEI"
+        ]
+      },
+      "hint": [
+        "Identifikasi arah tren (naik/turun) sepanjang periode yang tersedia.",
+        "Perhatikan titik semester dengan kenaikan atau penurunan nilai yang tajam."
+      ]
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-007",
+    "description": "Test case for chart type: score_heatmap_matrix_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "score_heatmap_matrix_chart"
+    ],
+    "chart_context": {
+      "chart_type": "score_heatmap_matrix_chart",
+      "title": "Heatmap Rata-Rata Skor per Fakultas \u00d7 Pertanyaan",
+      "series": [
+        {
+          "kode_fakultas": "STEI",
+          "nama_fakultas_id": "Sekolah Teknik Elektro dan Informatika",
+          "skor_q21": 3.72,
+          "skor_q22": 3.68,
+          "skor_q23": 3.75,
+          "skor_q24": 3.81,
+          "skor_q25": 3.79,
+          "skor_q26": 3.7,
+          "skor_q27": 3.65,
+          "skor_q28": 3.38,
+          "skor_q29": 3.55,
+          "skor_q30": 3.5,
+          "skor_q35": 3.81,
+          "skor_q37": 3.73,
+          "bottom_3_kolom": [
+            "skor_q28",
+            "skor_q30",
+            "skor_q27"
+          ]
+        },
+        {
+          "kode_fakultas": "FTMD",
+          "nama_fakultas_id": "Fakultas Teknik Mesin dan Dirgantara",
+          "skor_q21": 3.65,
+          "skor_q22": 3.6,
+          "skor_q23": 3.7,
+          "skor_q24": 3.75,
+          "skor_q25": 3.72,
+          "skor_q26": 3.66,
+          "skor_q27": 3.58,
+          "skor_q28": 3.3,
+          "skor_q29": 3.48,
+          "skor_q30": 3.42,
+          "skor_q35": 3.74,
+          "skor_q37": 3.68,
+          "bottom_3_kolom": [
+            "skor_q28",
+            "skor_q30",
+            "skor_q29"
+          ]
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "kode_fakultas": [
+          "STEI",
+          "FTMD"
+        ]
+      },
+      "hint": [
+        "Identifikasi pertanyaan (kolom) yang konsisten rendah di banyak fakultas.",
+        "Identifikasi pertanyaan (kolom) bottom_3_kolom (3 pertanyaan dengan skor terendah) di setiap fakultas untuk mengidentifikasi poin pertanyaan apa yang perlu menjadi perhatian untuk evaluasi setiap fakultas"
+      ],
+      "question_reference": {
+        "skor_q21": {
+          "kode_pertanyaan_frontend": "Q1",
+          "pertanyaan": "Mahasiswa memperoleh cukup informasi luaran mata kuliah"
+        },
+        "skor_q22": {
+          "kode_pertanyaan_frontend": "Q2",
+          "pertanyaan": "Perkuliahan diarahkan agar mahasiswa mencapai luaran mata kuliah"
+        },
+        "skor_q23": {
+          "kode_pertanyaan_frontend": "Q3",
+          "pertanyaan": "Mahasiswa mencapai luaran mata kuliah"
+        },
+        "skor_q24": {
+          "kode_pertanyaan_frontend": "Q4",
+          "pertanyaan": "Pelaksanaan perkuliahan terorganisir dengan baik"
+        },
+        "skor_q25": {
+          "kode_pertanyaan_frontend": "Q5",
+          "pertanyaan": "Dosen berkomunikasi dengan efektif"
+        },
+        "skor_q26": {
+          "kode_pertanyaan_frontend": "Q6",
+          "pertanyaan": "Dosen peduli terhadap pencapaian mahasiswa akan luaran mata kuliah"
+        },
+        "skor_q27": {
+          "kode_pertanyaan_frontend": "Q7",
+          "pertanyaan": "Dosen berlaku adil kepada mahasiswa"
+        },
+        "skor_q28": {
+          "kode_pertanyaan_frontend": "Q8",
+          "pertanyaan": "Kesesuaian beban kerja dengan SKS"
+        },
+        "skor_q29": {
+          "kode_pertanyaan_frontend": "Q9",
+          "pertanyaan": "Sarana prasarana untuk mata kuliah tersedia dengan memadai"
+        },
+        "skor_q30": {
+          "kode_pertanyaan_frontend": "Q10",
+          "pertanyaan": "Tersedia cukup fasilitas pendukung di luar kuliah"
+        },
+        "skor_q35": {
+          "kode_pertanyaan_frontend": "Q11",
+          "pertanyaan": "Mahasiswa berusaha dengan sungguh-sungguh mengikuti mata kuliah"
+        },
+        "skor_q37": {
+          "kode_pertanyaan_frontend": "Q12",
+          "pertanyaan": "Mahasiswa memperoleh pengalaman belajar yang positif"
+        }
+      }
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)"
+    ]
+  },
+  {
+    "id": "CI-CG-S-KP-008",
+    "description": "Test case for chart type: score_by_sks_bucket_bar_chart",
+    "query": "Insight apa yang bisa saya ambil dari grafik ini?",
+    "tags": [
+      "score_by_sks_bucket_bar_chart"
+    ],
+    "chart_context": {
+      "chart_type": "score_by_sks_bucket_bar_chart",
+      "title": "Q8 per Kelompok SKS",
+      "x_axis_label": "Kelompok SKS",
+      "y_axis_label": "Skor rata-rata (skala 1-4)",
+      "series": [
+        {
+          "sks_label": "1-2 SKS",
+          "jumlah_kelas": 58,
+          "skor_q28": 3.71
+        },
+        {
+          "sks_label": "3 SKS",
+          "jumlah_kelas": 214,
+          "skor_q28": 3.52
+        },
+        {
+          "sks_label": "4+ SKS",
+          "jumlah_kelas": 37,
+          "skor_q28": 3.28
+        }
+      ],
+      "filters_applied": {
+        "tahun_ajaran": "2024/2025",
+        "semester": [
+          1
+        ],
+        "kode_fakultas": [
+          "SBM"
+        ]
+      },
+      "hint": [
+        "Identifikasi apakah skor Q8 menurun seiring bertambahnya jumlah SKS.",
+        "Bandingkan jumlah_kelas antar-bucket untuk menilai keterwakilan rata-rata skor tiap bucket."
+      ],
+      "question_reference": {
+        "skor_q21": {
+          "kode_pertanyaan_frontend": "Q1",
+          "pertanyaan": "Mahasiswa memperoleh cukup informasi luaran mata kuliah"
+        }
+      }
+    },
+    "expected_facts": [
+      "Mentions the time context from filters_applied (e.g. Tahun Ajaran 2024/2025, Semester 1)"
+    ]
+  }
+]
