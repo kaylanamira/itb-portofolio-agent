@@ -1,5 +1,4 @@
 from core.utils import extract_json_from_llm
-import re
 from agent.state import AgentState
 from agent.prompts.query_rewriter import REWRITER_PROMPT
 from agent.llm import get_llm
@@ -20,39 +19,11 @@ def format_recent_history(messages: list, limit: int = 5) -> str:
     return "\n".join(lines)
 
 
-def should_rewrite(query: str, history: str) -> bool:
-    REFERENCE_PATTERNS = [
-        r'\b(itu|tersebut|dia|mereka)\b',
-        r'\b\w+nya\b',
-        r'\b(tadi|barusan|sebelumnya)\b',
-        r'\b(yang sama|seperti tadi|itu juga)\b',
-        r'\b(that|those|previous|same)\b',
-        r'^\s*(kenapa|mengapa|bagaimana|why|how)\s*\??\s*$',
-        r'^\s*(dan|tapi|lalu|terus|and|but|then)\b',
-    ]
-
-    has_reference = any(
-        re.search(p, query, re.IGNORECASE) for p in REFERENCE_PATTERNS
-    )
-
-    if not history.strip():
-        return False
-
-    if len(query.split()) > 30:
-        return False
-
-    if not has_reference and re.search(
-        r'^\s*(siapa|berapa|apa saja|tampilkan|buat|plot|visualisasikan|what|who|show)\b',
-        query,
-        re.IGNORECASE,
-    ):
-        return False
-
-    return has_reference or len(query.split()) < 6
-
-
 async def query_rewriter(state: AgentState) -> dict:
     raw_query = state["raw_query"]
+
+    if not state.get("needs_rewrite", False):
+        return {"rewritten_query": None, "effective_query": raw_query}
 
     recent_messages = state.get("messages", [])
     if recent_messages:
@@ -74,9 +45,6 @@ async def query_rewriter(state: AgentState) -> dict:
     if history:
         context_parts.append(f"History:\n{history}")
     context = "\n\n".join(context_parts)
-
-    if not should_rewrite(raw_query, context):
-        return {"rewritten_query": None, "effective_query": raw_query}
 
     llm = get_llm("query_rewriter")
     prompt = REWRITER_PROMPT + (f"\n\nConversation context:\n{context}" if context.strip() else "")

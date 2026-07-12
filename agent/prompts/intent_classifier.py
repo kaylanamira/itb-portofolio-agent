@@ -23,11 +23,14 @@ Assign a confidence score (0-1):
 - 0.4 - 0.7 : Maybe related to ITB Academic Data, but not sure
 - 0.8 - 1.0 : Clearly related to ITB Academic Data
 
-Consider the conversation history to classify domain.
+Also determine if the query needs rewriting (needs_rewrite = true or false).
+A query needs rewriting if it is ambiguous, relies on conversational or temporal context, or uses conversational references (e.g., "itu", "dia", "mereka", "sebelumnya", "tadi") that require context to be resolved into a standalone query. Standalone queries do NOT need rewriting.
+
+Consider the conversation history to classify domain and determine rewrite needs.
 
 Respond with JSON only:
-{"domain": "portfolio"|"wisudawan"|"out_of_scope", "confidence": 0.0-1.0, "reason": "..."}
-""" 
+{"domain": "portfolio"|"wisudawan"|"out_of_scope", "confidence": 0.0-1.0, "reason": "...", "needs_rewrite": true|false}
+"""
 
 def build_intent_human_message(query: str, recent_messages: list, chart_context=None) -> str:
     """Build the human message with conversation context."""

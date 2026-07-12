@@ -125,6 +125,7 @@ class AgentState(MessagesState):
 
     # -- Planning & Reasoning --
     raw_query: str
+    needs_rewrite: Optional[bool]
     rewritten_query: Optional[str]
     effective_query: str
     domain: Optional[AgentDomain]
