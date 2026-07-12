@@ -1,3 +1,5 @@
+# api/services/akademik_scope_rules.py
+
 from core.scope import UserScope, UserRole
 from api.services.akademik_constants import SEMESTER_MAP
 

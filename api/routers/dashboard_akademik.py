@@ -8,7 +8,7 @@ import asyncio
 import logging
 import math
 from dataclasses import dataclass
-from typing      import Literal
+from typing      import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -64,8 +64,8 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard-akademik"])
 @dataclass
 class _ResolvedEntitas:
     """Nilai spasial setelah scope-locking. Beda dari FilterOptionsLocked."""
-    fakultas: str | None
-    no_ps:    str | None
+    fakultas: list[str] | None
+    no_ps:    list[str] | None
 
 
 def _resolve_locked(scope: UserScope) -> FilterOptionsLocked:
@@ -84,34 +84,34 @@ def _resolve_locked(scope: UserScope) -> FilterOptionsLocked:
 
 
 def _resolve_entitas(
-    scope: UserScope, fakultas: str | None, no_ps: str | None,
+    scope: UserScope, fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> _ResolvedEntitas:
     """Scope-locking: dimensi yang terkunci diabaikan dari client, diganti scope."""
     locked = _resolve_locked(scope)
     return _ResolvedEntitas(
-        fakultas = locked.fakultas or fakultas,
-        no_ps    = locked.prodi    or no_ps,
+        fakultas = [locked.fakultas] if locked.fakultas else fakultas,
+        no_ps    = [locked.prodi]    if locked.prodi    else no_ps,
     )
 
 async def _resolve_filters(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> AkademikQueryFilters:
     """
-    Kalau user belum pilih tahun_ajaran/semester, isi otomatis dengan
-    periode terbaru yang tersedia dalam scope ini. Dipanggil di endpoint
-    snapshot (bukan grade-trend, yang memang sengaja multi-periode).
+    tahun_ajaran wajib ada nilai (single-select, tanpa opsi "Semua"). Kalau
+    client belum kirim, isi otomatis dengan tahun_ajaran terbaru yang
+    tersedia dalam scope ini. semester TIDAK di-default di sini — None
+    memang berarti "Semua semester", bukan kondisi yang perlu diisi.
+    Dipanggil di endpoint snapshot (bukan grade-trend, yang memang
+    sengaja multi-periode).
     """
-    if filters.tahun_ajaran or filters.semester:
+    if filters.tahun_ajaran:
         return filters
     resolved_period = await resolve_default_period(scope, fakultas, no_ps)
     if not resolved_period:
         return filters
-    tahun_ajaran, sem_int = resolved_period
-    return filters.model_copy(update={
-        "tahun_ajaran": tahun_ajaran,
-        "semester": sem_int,
-    })
+    tahun_ajaran, _ = resolved_period
+    return filters.model_copy(update={"tahun_ajaran": tahun_ajaran})
 
 
 # ─── Phase 0.5: Filter options ────────────────────────────────────────────────
@@ -152,7 +152,7 @@ async def get_akademik_filter_options(
 @router.get("/akademik/stats-overview", response_model=StatsOverviewResponse,
             summary="4 stat card baris atas dashboard akademik")
 async def get_akademik_stats_overview(
-    filters: AkademikQueryFilters = Depends(),
+    filters: Annotated[AkademikQueryFilters, Query()],
     scope:   UserScope            = Depends(get_user_scope),
 ) -> StatsOverviewResponse:
     resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -170,7 +170,7 @@ async def get_akademik_stats_overview(
 @router.get("/akademik/attendance", response_model=AttendanceResponse,
             summary="Kehadiran dosen & mahasiswa per entitas + trend prev periode")
 async def get_akademik_attendance(
-    filters: AkademikQueryFilters = Depends(),
+    filters: Annotated[AkademikQueryFilters, Query()],
     scope:   UserScope            = Depends(get_user_scope),
 ) -> AttendanceResponse:
     resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -195,7 +195,7 @@ async def get_akademik_attendance(
             summary="Skor rata-rata satu kelompok pertanyaan per entitas + trend")
 async def get_akademik_skor_pertanyaan(
     kode_grup: str,
-    filters:   AkademikQueryFilters = Depends(),
+    filters:    Annotated[AkademikQueryFilters, Query()] = AkademikQueryFilters(),
     scope:     UserScope            = Depends(get_user_scope),
 ) -> SkorPertanyaanResponse:
     if kode_grup not in VALID_KODE_GRUP:
@@ -218,7 +218,7 @@ async def get_akademik_skor_pertanyaan(
 @router.get("/akademik/grade-distribution", response_model=GradeDistResponse,
             summary="Distribusi nilai (A/AB/.../Fail) + IP rata-rata per entitas")
 async def get_akademik_grade_distribution(
-    filters: AkademikQueryFilters = Depends(),
+    filters: Annotated[AkademikQueryFilters, Query()],
     scope:   UserScope            = Depends(get_user_scope),
 ) -> GradeDistResponse:
     resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -235,8 +235,8 @@ async def get_akademik_grade_distribution(
             summary="Tren nilai & skor N semester terakhir (line chart)",
             description="n_semester = jumlah titik data. Filter semester diabaikan di endpoint ini.")
 async def get_akademik_grade_trend(
+    filters:    Annotated[AkademikQueryFilters, Query()] = AkademikQueryFilters(),
     n_semester: int                   = Query(default=18, ge=2, le=20),
-    filters:    AkademikQueryFilters  = Depends(),
     scope:      UserScope             = Depends(get_user_scope),
 ) -> GradeTrendResponse:
     resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -264,9 +264,9 @@ async def get_akademik_grade_trend(
 @router.get("/akademik/course-ranking", response_model=CourseRankingResponse,
             summary="Top-N dan bottom-N mata kuliah berdasarkan skor kuesioner")
 async def get_akademik_course_ranking(
+    filters:    Annotated[AkademikQueryFilters, Query()] = AkademikQueryFilters(),
     limit:   int                   = Query(default=5, ge=1, le=20),
     metric:  str  = Query(default="overall", description="overall|capaian|q4_q7|sarana_prasarana|perilaku_mahasiswa|avg_ip|q21..q30|q35|q37"),
-    filters: AkademikQueryFilters  = Depends(),
     scope:   UserScope             = Depends(get_user_scope),
 ) -> CourseRankingResponse:
     if metric not in VALID_RANKING_METRIC:
@@ -300,7 +300,7 @@ async def get_akademik_course_ranking(
 @router.get("/akademik/skor-heatmap", response_model=SkorHeatmapResponse,
             summary="12 skor pertanyaan per entitas (snapshot satu periode)")
 async def get_akademik_skor_heatmap(
-    filters: AkademikQueryFilters = Depends(),
+    filters: Annotated[AkademikQueryFilters, Query()],
     scope:   UserScope            = Depends(get_user_scope),
 ) -> SkorHeatmapResponse:
     resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -318,7 +318,7 @@ async def get_akademik_skor_heatmap(
             description="Sumber: v_akademik_komponen_evaluasi_kelas (PUBLIC VIEW). "
                         "Hanya komponen dengan avg > 0 yang dikembalikan dalam items.")
 async def get_akademik_grading_comp(
-    filters: AkademikQueryFilters = Depends(),
+    filters: Annotated[AkademikQueryFilters, Query()],
     scope:   UserScope            = Depends(get_user_scope),
 ) -> GradingCompResponse:
     resolved    = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -351,7 +351,7 @@ async def get_akademik_grading_comp(
             description="Bucket: '1-2 SKS', '3 SKS', '4+ SKS'. "
                         "Hanya kelas yang ada data Q28 (avg_skor_q28 IS NOT NULL) yang masuk.")
 async def get_akademik_skor_by_sks(
-    filters: AkademikQueryFilters = Depends(),
+    filters: Annotated[AkademikQueryFilters, Query()],
     scope:   UserScope            = Depends(get_user_scope),
 ) -> SkorBySksResponse:
     resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)
@@ -373,9 +373,9 @@ async def get_akademik_skor_by_sks(
             ))
 async def get_akademik_komentar_mentah(
     sumber:    Literal["mahasiswa", "dosen", "itb"],
+    filters:    Annotated[AkademikQueryFilters, Query()] = AkademikQueryFilters(),
     page:      int                   = Query(default=1, ge=1),
     page_size: int                   = Query(default=20, ge=1, le=100),
-    filters:   AkademikQueryFilters  = Depends(),
     scope:     UserScope             = Depends(get_user_scope),
 ) -> KomentarResponse:
     resolved = _resolve_entitas(scope, filters.fakultas, filters.no_ps)

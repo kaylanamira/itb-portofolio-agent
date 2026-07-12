@@ -1,3 +1,5 @@
+# api/services/akademik.py
+
 import asyncio
 import logging
 
@@ -110,16 +112,16 @@ def derive_jenjang_options(prodi_rows: list[dict]) -> list[dict]:
 # periode akademik default : periode akademik (tahun_ajaran, semester) terbaru
 # pake v_akademik_statistik_prodi karena filter butuh tahu periode mana yang paling baru untuk prodi/fakultas tertentu.
 async def resolve_default_period(
-    scope: UserScope, fakultas: str | None, no_ps: str | None,
+    scope: UserScope, fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> tuple[str, int] | None:
     clauses = []
     params  = []
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
     sql = f"""
@@ -142,7 +144,7 @@ async def resolve_default_period(
 # GET /api/dashboard/akademik/stats-overview
 async def get_stats_overview(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> dict | None:
     clauses = []
     params  = []
@@ -151,16 +153,16 @@ async def get_stats_overview(
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if  no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran = %s")
         params.append(filters.tahun_ajaran)
     if filters.semester:
-        clauses.append("semester = %s")
+        clauses.append("semester = ANY(%s)")
         params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -185,7 +187,7 @@ async def get_stats_overview(
 # GET /api/dashboard/akademik/attendance
 async def get_attendance(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> list[dict]:
     is_fak = is_faculty_level(scope)
 
@@ -196,11 +198,11 @@ async def get_attendance(
         base_clauses.append("jenjang = ANY(%s)")
         base_params.append(filters.jenjang)
     if fakultas:
-        base_clauses.append("kode_fakultas = %s")
+        base_clauses.append("kode_fakultas = ANY(%s)")
         base_params.append(fakultas)
     if not is_fak and no_ps:
-        base_clauses.append("no_prodi = %s")
-        base_params.append(int(no_ps))
+        base_clauses.append("no_prodi = ANY(%s)")
+        base_params.append([int(x) for x in no_ps])
     base_where = f"WHERE {' AND '.join(base_clauses)}" if base_clauses else ""
 
     # Klausa untuk outer query (filter periode: tahun_ajaran/semester)
@@ -210,7 +212,7 @@ async def get_attendance(
         outer_clauses.append("tahun_ajaran = %s")
         outer_params.append(filters.tahun_ajaran)
     if filters.semester:
-        outer_clauses.append("semester = %s")
+        outer_clauses.append("semester = ANY(%s)")
         outer_params.append(filters.semester)
     outer_where = f"WHERE {' AND '.join(outer_clauses)}" if outer_clauses else ""
 
@@ -240,13 +242,13 @@ async def get_attendance(
     else:
         sql = f"""
             WITH base AS (
-                SELECT no_prodi, kode_prodi, nama_prodi_id, semester, tahun, tahun_ajaran,
+                SELECT no_prodi, kode_prodi, nama_prodi_id AS label, jenjang, semester, tahun, tahun_ajaran,
                        avg_pct_kehadiran_dosen    AS kehadiran_dosen,
                        avg_pct_kehadiran_mahasiswa AS kehadiran_mahasiswa
                 FROM analitik.v_akademik_statistik_prodi {base_where}
             ),
             with_prev AS (
-                SELECT kode_prodi AS kode, nama_prodi_id AS label,
+                SELECT no_prodi, kode_prodi, label, jenjang,
                        kehadiran_dosen, kehadiran_mahasiswa, semester, tahun, tahun_ajaran,
                        LAG(kehadiran_dosen)     OVER w AS prev_kehadiran_dosen,
                        LAG(kehadiran_mahasiswa) OVER w AS prev_kehadiran_mahasiswa,
@@ -260,9 +262,15 @@ async def get_attendance(
 
     result = await _executor.execute(sql, scope, all_params)
     if result.error:
-        logger.error("get_attendance (user=%s): %s", scope.user_id, result.error)
-        return []
-    return result.rows
+         logger.error("get_attendance (user=%s): %s", scope.user_id, result.error)
+         return []
+    if is_fak:
+         return result.rows
+    return [
+        {**row, "kode": f"{row['kode_prodi']} ({row['no_prodi']})",
+         "label": build_prodi_label(row["label"], row["jenjang"])}
+         for row in result.rows
+     ]
 
 
 # ─── Phase 3: Skor Pertanyaan ─────────────────────────────────────────────────
@@ -270,7 +278,7 @@ async def get_attendance(
 # GET /api/dashboard/akademik/skor-pertanyaan
 async def get_skor_pertanyaan(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, kode_grup: str,
+    fakultas: list[str] | None, no_ps: list[str] | None, kode_grup: str,
 ) -> list[dict]:
     col    = KODE_GRUP_TO_COL[kode_grup]
     is_fak = is_faculty_level(scope)
@@ -281,11 +289,11 @@ async def get_skor_pertanyaan(
         base_clauses.append("jenjang = ANY(%s)")
         base_params.append(filters.jenjang)
     if fakultas:
-        base_clauses.append("kode_fakultas = %s")
+        base_clauses.append("kode_fakultas = ANY(%s)")
         base_params.append(fakultas)
     if not is_fak and no_ps:
-        base_clauses.append("no_prodi = %s")
-        base_params.append(int(no_ps))
+        base_clauses.append("no_prodi = ANY(%s)")
+        base_params.append([int(x) for x in no_ps])
     base_where = f"WHERE {' AND '.join(base_clauses)}" if base_clauses else ""
 
     outer_clauses = []
@@ -294,7 +302,7 @@ async def get_skor_pertanyaan(
         outer_clauses.append("tahun_ajaran = %s")
         outer_params.append(filters.tahun_ajaran)
     if filters.semester:
-        outer_clauses.append("semester = %s")
+        outer_clauses.append("semester = ANY(%s)")
         outer_params.append(filters.semester)
     outer_where = f"WHERE {' AND '.join(outer_clauses)}" if outer_clauses else ""
 
@@ -321,12 +329,12 @@ async def get_skor_pertanyaan(
     else:
         sql = f"""
             WITH base AS (
-                SELECT no_prodi, kode_prodi, nama_prodi_id, semester, tahun, tahun_ajaran,
+                SELECT no_prodi, kode_prodi, nama_prodi_id AS label, jenjang, semester, tahun, tahun_ajaran,
                        {col} AS skor
                 FROM analitik.v_akademik_statistik_prodi {base_where}
             ),
             with_prev AS (
-                SELECT kode_prodi AS kode, nama_prodi_id AS label,
+                SELECT no_prodi, kode_prodi, label, jenjang,
                        skor, semester, tahun, tahun_ajaran,
                        LAG(skor)        OVER w AS prev_skor,
                        LAG(tahun_ajaran) OVER w AS prev_tahun_ajaran,
@@ -338,9 +346,15 @@ async def get_skor_pertanyaan(
 
     result = await _executor.execute(sql, scope, all_params)
     if result.error:
-        logger.error("get_skor_pertanyaan kode_grup=%s (user=%s): %s", kode_grup, scope.user_id, result.error)
-        return []
-    return result.rows
+         logger.error("get_skor_pertanyaan kode_grup=%s (user=%s): %s", kode_grup, scope.user_id, result.error)
+         return []
+    if is_fak:
+         return result.rows
+    return [
+        {**row, "kode": f"{row['kode_prodi']} ({row['no_prodi']})",
+        "label": build_prodi_label(row["label"], row["jenjang"])}
+        for row in result.rows
+     ]
 
 
 # ─── Phase 4a: Grade Distribution ─────────────────────────────────────────────
@@ -348,7 +362,7 @@ async def get_skor_pertanyaan(
 # GET /api/dashboard/akademik/grade-distribution
 async def get_grade_distribution(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> list[dict]:
     is_fak = is_faculty_level(scope)
 
@@ -358,16 +372,16 @@ async def get_grade_distribution(
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran = %s")
         params.append(filters.tahun_ajaran)
     if filters.semester:
-        clauses.append("semester = %s")
+        clauses.append("semester = ANY(%s)")
         params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -400,7 +414,7 @@ async def get_grade_distribution(
         """
     else:
         sql = f"""
-            SELECT kode_prodi AS kode, nama_prodi_id AS label,
+            SELECT no_prodi, kode_prodi, nama_prodi_id AS label, jenjang,
                    dist_pct_a, dist_pct_ab, dist_pct_b, dist_pct_bc, dist_pct_c,
                    dist_pct_d, dist_pct_e, dist_pct_t, dist_pct_pass, dist_pct_fail,
                    dist_pct_lulus_a_c, dist_pct_lulus_a_d,
@@ -414,7 +428,13 @@ async def get_grade_distribution(
     if result.error:
         logger.error("get_grade_distribution (user=%s): %s", scope.user_id, result.error)
         return []
-    return result.rows
+    if is_fak:
+        return result.rows
+    return [
+        {**row, "kode": f"{row['kode_prodi']} ({row['no_prodi']})",
+        "label": build_prodi_label(row["label"], row["jenjang"])}
+        for row in result.rows
+    ]
 
 
 # ─── Phase 4b: Grade Trend ────────────────────────────────────────────────────
@@ -422,7 +442,7 @@ async def get_grade_distribution(
 # GET /api/dashboard/akademik/grade-trend
 async def get_grade_trend(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, n_semester: int,
+    fakultas: list[str] | None, no_ps: list[str] | None, n_semester: int,
 ) -> list[dict]:
     clauses = []
     params  = []
@@ -430,14 +450,17 @@ async def get_grade_trend(
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran <= %s")   # ceiling, bukan equality
         params.append(filters.tahun_ajaran)
+    if filters.semester:
+        clauses.append("semester = ANY(%s)")
+        params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
     lulus_ac = ("SUM(total_jumlah_a + total_jumlah_ab + total_jumlah_b "
@@ -470,7 +493,7 @@ async def get_grade_trend(
 # GET /api/dashboard/akademik/skor-heatmap
 async def get_skor_heatmap(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> list[dict]:
     is_fak = is_faculty_level(scope)
 
@@ -480,16 +503,16 @@ async def get_skor_heatmap(
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran = %s")
         params.append(filters.tahun_ajaran)
     if filters.semester:
-        clauses.append("semester = %s")
+        clauses.append("semester = ANY(%s)")
         params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -507,16 +530,22 @@ async def get_skor_heatmap(
     else:
         q_sel = ", ".join(f"avg_skor_{q}" for q in Q)
         sql = f"""
-            SELECT kode_prodi AS kode, nama_prodi_id AS label, {q_sel}
+            SELECT no_prodi, kode_prodi, nama_prodi_id AS label, jenjang, {q_sel}
             FROM analitik.v_akademik_statistik_prodi {where_sql}
             ORDER BY nama_prodi_id
         """
 
     result = await _executor.execute(sql, scope, params)
     if result.error:
-        logger.error("get_skor_heatmap (user=%s): %s", scope.user_id, result.error)
-        return []
-    return result.rows
+         logger.error("get_skor_heatmap (user=%s): %s", scope.user_id, result.error)
+         return []
+    if is_fak:
+         return result.rows
+    return [
+        {**row, "kode": f"{row['kode_prodi']} ({row['no_prodi']})",
+        "label": build_prodi_label(row["label"], row["jenjang"])}
+        for row in result.rows
+     ]
 
 
 # ─── Phase B: Grading Comp ────────────────────────────────────────────────────
@@ -524,7 +553,7 @@ async def get_skor_heatmap(
 # GET /api/dashboard/akademik/grading-comp
 async def get_grading_comp(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> list[dict]:
     is_fak = is_faculty_level(scope)
 
@@ -534,16 +563,16 @@ async def get_grading_comp(
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran = %s")
         params.append(filters.tahun_ajaran)
     if filters.semester:
-        clauses.append("semester = %s")
+        clauses.append("semester = ANY(%s)")
         params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
@@ -564,7 +593,7 @@ async def get_grading_comp(
         """
     else:
         sql = f"""
-            SELECT kode_prodi AS kode, MAX(nama_prodi_id) AS label,
+            SELECT no_prodi, kode_prodi, MAX(nama_prodi_id) AS label, MAX(jenjang) AS jenjang,
                    COUNT(*)::integer                               AS jumlah_kelas,
                    ROUND(AVG(bobot_uts)::numeric, 2)          AS avg_bobot_uts,
                    ROUND(AVG(bobot_uas)::numeric, 2)          AS avg_bobot_uas,
@@ -582,7 +611,13 @@ async def get_grading_comp(
     if result.error:
         logger.error("get_grading_comp (user=%s): %s", scope.user_id, result.error)
         return []
-    return result.rows
+    if is_fak:
+        return result.rows
+    return [
+        {**row, "kode": f"{row['kode_prodi']} ({row['no_prodi']})",
+        "label": build_prodi_label(row["label"], row["jenjang"])}
+        for row in result.rows
+    ]
 
 
 # ─── Phase C: Skor by SKS ─────────────────────────────────────────────────────
@@ -590,26 +625,24 @@ async def get_grading_comp(
 # GET /api/dashboard/akademik/skor-by-sks
 async def get_skor_by_sks(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None,
+    fakultas: list[str] | None, no_ps: list[str] | None,
 ) -> list[dict]:
-    # TODO: verifikasi ke DB — kolom di v_akademik_kelas kemungkinan bernama
-    # "skor_q28", bukan "avg_skor_q28". Cek sebelum deploy.
     clauses = ["skor_q28 IS NOT NULL"]
     params  = []
     if filters.jenjang:
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran = %s")
         params.append(filters.tahun_ajaran)
     if filters.semester:
-        clauses.append("semester = %s")
+        clauses.append("semester = ANY(%s)")
         params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}"
 
@@ -642,8 +675,8 @@ async def get_komentar_mentah(
     sumber:    str,
     page:      int,
     page_size: int,
-    fakultas:  str | None,
-    no_ps:     str | None,
+    fakultas:  list[str] | None,
+    no_ps:     list[str] | None,
 ) -> tuple[list[dict], int]:
     src      = KOMENTAR_SOURCE[sumber]
     view     = src["view"]
@@ -655,16 +688,16 @@ async def get_komentar_mentah(
         clauses.append("jenjang = ANY(%s)")
         params.append(filters.jenjang)
     if fakultas:
-        clauses.append("kode_fakultas = %s")
+        clauses.append("kode_fakultas = ANY(%s)")
         params.append(fakultas)
     if no_ps:
-        clauses.append("no_prodi = %s")
-        params.append(int(no_ps))
+        clauses.append("no_prodi = ANY(%s)")
+        params.append([int(x) for x in no_ps])
     if filters.tahun_ajaran:
         clauses.append("tahun_ajaran = %s")
         params.append(filters.tahun_ajaran)
     if filters.semester:
-        clauses.append("semester = %s")
+        clauses.append("semester = ANY(%s)")
         params.append(filters.semester)
     where_sql = f"WHERE {' AND '.join(clauses)}"
 
@@ -705,7 +738,7 @@ async def get_komentar_mentah(
 # GET /api/dashboard/akademik/course-ranking
 async def get_course_ranking_top(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, limit: int, metric: str = "overall",
+    fakultas: list[str] | None, no_ps: list[str] | None, limit: int, metric: str = "overall",
 ) -> list[dict]:
     return await _course_ranking_query(scope, filters, fakultas, no_ps, limit, desc=True, metric=metric)
 
@@ -713,7 +746,7 @@ async def get_course_ranking_top(
 # GET /api/dashboard/akademik/course-ranking
 async def get_course_ranking_bottom(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, limit: int, metric: str = "overall",
+    fakultas: list[str] | None, no_ps: list[str] | None, limit: int, metric: str = "overall",
 ) -> list[dict]:
     return await _course_ranking_query(scope, filters, fakultas, no_ps, limit, desc=False, metric=metric)
 
@@ -721,7 +754,7 @@ async def get_course_ranking_bottom(
 # GET /api/dashboard/akademik/course-ranking
 async def _course_ranking_query(
     scope: UserScope, filters: AkademikQueryFilters,
-    fakultas: str | None, no_ps: str | None, limit: int, desc: bool,
+    fakultas: list[str] | None, no_ps: list[str] | None, limit: int, desc: bool,
     metric: str = "overall",
 ) -> list[dict]:
     if metric not in VALID_RANKING_METRIC:
@@ -734,11 +767,11 @@ async def _course_ranking_query(
         base_clauses.append("jenjang = ANY(%s)")
         base_params.append(filters.jenjang)
     if fakultas:
-        base_clauses.append("kode_fakultas = %s")
+        base_clauses.append("kode_fakultas = ANY(%s)")
         base_params.append(fakultas)
     if no_ps:
-        base_clauses.append("no_prodi = %s")
-        base_params.append(int(no_ps))
+        base_clauses.append("no_prodi = ANY(%s)")
+        base_params.append([int(x) for x in no_ps])
     base_where = f"WHERE {' AND '.join(base_clauses)}" if base_clauses else ""
 
     outer_clauses = ["skor IS NOT NULL"]
@@ -747,7 +780,7 @@ async def _course_ranking_query(
         outer_clauses.append("tahun_ajaran = %s")
         outer_params.append(filters.tahun_ajaran)
     if filters.semester:
-        outer_clauses.append("semester = %s")
+        outer_clauses.append("semester = ANY(%s)")
         outer_params.append(filters.semester)
     outer_where = f"WHERE {' AND '.join(outer_clauses)}"
 
