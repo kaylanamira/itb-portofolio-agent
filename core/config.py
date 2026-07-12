@@ -91,6 +91,7 @@ class Settings(BaseSettings):
     MEMORY_SESSION_TTL_SECONDS: int = 1800
     MEMORY_LONG_TERM_DAYS: int = 90
     MEMORY_SUMMARY_MAX_WORDS: int = 50
+    CHAT_ARCHIVE_ENABLED: bool = os.getenv("CHAT_ARCHIVE_ENABLED", "False").lower() == "true"
 
     # Content filter
     CONTENT_FILTER_ENABLED: bool = True

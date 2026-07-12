@@ -1,26 +1,13 @@
 import os
 from agent.orchestrator import main_graph
 from agent.graph import portfolio_graph
-from agent.tools.sql import build_sql_pipeline
-from agent.nodes.sql_pipeline import (
-    _portfolio_entity_resolver,
-    _portfolio_few_shot_examples,
-    load_schema_context,
-    SCHEMA_LINKER_SYSTEM_PROMPT,
-)
+from agent.nodes.sql_pipeline import _portfolio_sql_pipeline
 from core.config import settings
 
 def main():
-    # 1. Build the SQL Pipeline subgraph dynamically
-    print("Compiling SQL Pipeline subgraph...")
-    sql_pipeline_graph = build_sql_pipeline(
-        schema_linker_prompt=SCHEMA_LINKER_SYSTEM_PROMPT,
-        entity_resolver=_portfolio_entity_resolver,
-        few_shot_examples=_portfolio_few_shot_examples,
-        schema_context=load_schema_context(),
-        default_table="v_akademik_kelas",
-        max_attempts=settings.MAX_SQL_ATTEMPTS,
-    )
+    # 1. Use the existing SQL Pipeline subgraph
+    print("Loading SQL Pipeline subgraph...")
+    sql_pipeline_graph = _portfolio_sql_pipeline
 
     # Ensure output directory exists
     output_dir = "diagram"
@@ -36,7 +23,7 @@ def main():
     # 3. Draw Main Orchestrator Graph with X-Ray (subgraphs expanded!)
     print("Generating main_graph_xray.png...")
     try:
-        main_xray_png = main_graph.get_graph(xray=True).draw_mermaid_png()
+        main_xray_png = main_graph.get_graph(xray=1).draw_mermaid_png()
         with open(os.path.join(output_dir, "main_graph_xray.png"), "wb") as f:
             f.write(main_xray_png)
     except Exception as e:

@@ -130,3 +130,8 @@ class ErrorHandlerCase(BaseModel):
 
 class RagRetrieverCase(BaseCase):
     task: str
+
+
+class ChartInterpreterCase(BaseCase):
+    chart_context: dict[str, Any]
+    expected_facts: list[str] = Field(default_factory=list)

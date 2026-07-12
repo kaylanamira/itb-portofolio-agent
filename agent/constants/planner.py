@@ -1,0 +1,5 @@
+CHART_INTERPRETER_TOOL = "chart_interpreter"
+CHART_INTERPRETER_TASK = "Interpret the provided chart context."
+CHART_INTERPRET_WITH_CONTEXT_REASONING = "Interpret chart_context without SQL or RAG execution."
+CHART_INTERPRET_WITHOUT_CONTEXT_REASONING = "The query refers to a chart, but chart_context is unavailable."
+CHART_INTERPRET_WITHOUT_CONTEXT_TASK = "Ask the user to select or provide the chart they want interpreted."

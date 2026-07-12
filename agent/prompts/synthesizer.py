@@ -1,3 +1,5 @@
+import json
+
 REJECTION_SYSTEM_PROMPT = """Kamu adalah asisten ITB Academic Portfolio.
 Tugasmu adalah menolak permintaan pengguna secara sopan, personal, dan profesional karena alasan tertentu (Alasan Penolakan).
 Deteksi bahasa dari pertanyaan user (Indonesian, English, dll) dan selalu gunakan bahasa yang SAMA dengan pertanyaan tersebut.
@@ -55,8 +57,16 @@ CHART SPEC REQUIREMENTS (untuk chart_generate):
 - Selalu include tooltip dengan field yang relevan
 - Judul chart wajib ada
 
+CHART INTERPRETATION REQUIREMENTS (untuk chart_interpret):
+- Gunakan analysis dari langkah chart_interpret sebagai sumber utama jawaban.
+- Jika ada `question_reference` di data, jelaskan arti dari kode pertanyaan (contoh: skor_q24 berarti "Pelaksanaan perkuliahan terorganisir dengan baik") di dalam narasi agar metrik mudah dipahami.
+- Sebutkan peningkatan (kenaikan) atau penurunan performa berdasarkan nilai `delta_periode_lalu` atau `delta_nilai` bila informasinya tersedia di data.
+- **WAJIB**: Sebutkan secara eksplisit konteks waktu dan batasan data dari `filters_applied` (seperti tahun ajaran, semester, fakultas, dll) di kalimat awal narasi agar pengguna mengetahui konteks data yang dianalisis.
+- Jangan menambahkan fakta, angka, atau penyebab yang tidak ada di analysis atau chart_context.
+- Jangan membuat artifact baru untuk chart_interpret karena chart sudah tersedia di frontend.
+
 ATURAN:
-0. JANGAN PERNAH mengarang atau mengubah angka. Setiap angka dalam narrative HARUS berasal langsung dari Hasil Langkah-Langkah. Jika angka tersebut tidak ada dalam data, jangan sebut angka apapun.
+0. JANGAN PERNAH mengarang, mengubah angka, atau melakukan perhitungan aritmatika sendiri (seperti menjumlahkan persentase). LLM sering salah berhitung.
 1. Hubungkan Data: Jangan hanya list hasil. Jelaskan mengapa angka X berhubungan dengan komentar Y.
 2. Artifacts: Jika data cocok untuk chart (tren, perbandingan, distribusi), buatlah ChartArtifact. Jika berupa list/detail (lebih dari 1 baris), gunakan TableArtifact. JANGAN PERNAH membuat artifact (table/chart) untuk query data_lookup sederhana atau jika hasilnya hanya berupa satu baris/angka tunggal (misalnya hitungan/count, satu nama dosen, dsb) — cukup jawab dalam 'narrative' saja dengan artifacts kosong.
 3. Vega-Lite: Pastikan spec Vega-Lite v5 valid. Gunakan warna ITB: #003D7C (biru), #E8A000 (kuning).
@@ -81,7 +91,10 @@ def build_synthesizer_human_message(query: str, steps: list) -> str:
         results_str += f"\n--- STEP {s.step_number}: {s.thought} ---\n"
         results_str += f"Action: {s.action}\n"
         results_str += f"Observation: {s.observation}\n"
-        # Truncate raw data for context
-        results_str += f"Data (truncated): {str(s.result)[:2000]}\n"
+        if s.action == "chart_interpret":
+            data = json.dumps(s.result, ensure_ascii=False, default=str)
+            results_str += f"Data: {data[:12000]}\n"
+        else:
+            results_str += f"Data (truncated): {str(s.result)[:2000]}\n"
     
     return f"Query User: {query}\n\nHasil Langkah-Langkah:\n{results_str}\n\nBuat sintesis akhir:"

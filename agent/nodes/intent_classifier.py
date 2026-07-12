@@ -11,8 +11,16 @@ logger = logging.getLogger(__name__)
 class DomainRoute(BaseModel):
     domain: AgentDomain = Field(..., description="The domain of the query.")
     reason: str = Field(..., description="Reason for the domain choice.")
+    needs_rewrite: bool = Field(False, description="True if the query is ambiguous or uses references requiring rewrite.")
     
 async def intent_classifier(state: AgentState) -> dict:
+    if state.get("chart_context"):
+        return {
+            "domain": AgentDomain.PORTFOLIO,
+            "effective_query": state["raw_query"],
+            "needs_rewrite": False,
+        }
+
     llm = get_llm("intent_classification")
     
     human_content = build_intent_human_message(
@@ -32,14 +40,17 @@ async def intent_classifier(state: AgentState) -> dict:
         route = DomainRoute(**content)
         domain = route.domain
         reason = route.reason
+        needs_rewrite = route.needs_rewrite
     except Exception as e:
         logger.error(f"Failed to parse DomainRoute: {e}")
         domain = AgentDomain.OUT_OF_SCOPE
         reason = "Maaf, terjadi kesalahan saat memahami pertanyaan Anda."
+        needs_rewrite = False
         
     updates = {
         "domain": domain,
         "effective_query": state["raw_query"],
+        "needs_rewrite": needs_rewrite,
     }
     
     if domain == AgentDomain.OUT_OF_SCOPE:
@@ -52,6 +63,6 @@ def route_after_intent(state: AgentState) -> str:
     logger.info(f"Routing logic determined domain is: {domain}")
     if domain == "portfolio":
         return "portfolio_agent"
-    elif domain == "wisudawan":
-        return "wisudawan_agent"
+    # elif domain == "wisudawan":
+    #     return "wisudawan_agent"
     return "out_of_scope"

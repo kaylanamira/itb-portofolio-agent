@@ -133,6 +133,7 @@ class MetricFlag(str, Enum):
     SYNTH_ANSWER_RELEVANCE_PASSED = "synth_answer_relevance_passed"
     SYNTH_FAITHFULNESS_PASSED = "synth_faithfulness_passed"
     SYNTH_TOXICITY_PASSED = "synth_toxicity_passed"
+    ANALYSIS_EXISTS = "analysis_exists"
 
 class NodeTestResult(BaseModel):
     case_id: str
@@ -375,6 +376,23 @@ def score_clarification_handler(results: list[NodeTestResult]) -> list[MetricSum
     ]
 
 
+def score_chart_interpreter(results: list[NodeTestResult]) -> list[MetricSummary]:
+    total = len(results)
+    
+    eval_total = sum(1 for r in results if MetricFlag.STEP_FAITHFULNESS in r.metric_flags)
+    eval_total = eval_total if eval_total > 0 else total
+
+    faithfulness = sum(1 for r in results if r.metric_flags.get(MetricFlag.STEP_FAITHFULNESS))
+    relevance = sum(1 for r in results if r.metric_flags.get(MetricFlag.STEP_ANSWER_RELEVANCE))
+    completeness = sum(1 for r in results if r.metric_flags.get(MetricFlag.STEP_OBSERVATION_COMPLETENESS))
+
+    return [
+        _summarize("chart_interpreter", "observation_completeness", _ratio(completeness, eval_total)),
+        _summarize("chart_interpreter", "faithfulness", _ratio(faithfulness, eval_total)),
+        _summarize("chart_interpreter", "answer_relevance", _ratio(relevance, eval_total)),
+    ]
+
+
 def score_sql_executor(results: list[NodeTestResult]) -> list[MetricSummary]:
     total = len(results)
     correct_rows = sum(1 for r in results if r.metric_flags.get(MetricFlag.CORRECT_ROW_RETURN))
@@ -402,6 +420,7 @@ _SCORERS: dict[str, Any] = {
     "step_reasoner": score_step_reasoner,
     "synthesizer": score_synthesizer,
     "clarification_handler": score_clarification_handler,
+    "chart_interpreter": score_chart_interpreter,
     "sql_executor": score_sql_executor,
 }
 

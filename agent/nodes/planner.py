@@ -5,6 +5,13 @@ from agent.utils.plan_optimizer import optimize_plan
 from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 from agent.prompts.planner import FEW_SHOT_EXAMPLES
+from agent.constants.planner import (
+    CHART_INTERPRETER_TASK,
+    CHART_INTERPRETER_TOOL,
+    CHART_INTERPRET_WITH_CONTEXT_REASONING,
+    CHART_INTERPRET_WITHOUT_CONTEXT_REASONING,
+    CHART_INTERPRET_WITHOUT_CONTEXT_TASK,
+)
 
 async def planner(state: AgentState) -> dict:
     """
@@ -47,6 +54,15 @@ async def planner(state: AgentState) -> dict:
         qtype = QueryType.CLARIFICATION_NEEDED
         plan = [{"task": "Minta klarifikasi dari pengguna.", "tool": "clarification"}]
         reasoning = "Gagal memproses query, butuh klarifikasi."
+
+    if qtype == QueryType.CHART_INTERPRET:
+        if chart_ctx:
+            plan = [{"task": CHART_INTERPRETER_TASK, "tool": CHART_INTERPRETER_TOOL}]
+            reasoning = CHART_INTERPRET_WITH_CONTEXT_REASONING
+        else:
+            qtype = QueryType.CLARIFICATION_NEEDED
+            plan = [{"task": CHART_INTERPRET_WITHOUT_CONTEXT_TASK, "tool": "clarification"}]
+            reasoning = CHART_INTERPRET_WITHOUT_CONTEXT_REASONING
 
     plan, optimization_note = optimize_plan(
         query=state["effective_query"],
