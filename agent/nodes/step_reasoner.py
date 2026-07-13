@@ -18,18 +18,33 @@ async def step_reasoner(state: AgentState) -> dict:
     generated_sql = state.get("generated_sql")
     rag_query = state.get("rag_query")
 
+    result_data = {}
+    action_parts = []
+    query_parts = []
+
     if sql_res is not None:
-        action = "sql"
-        result_data = sql_res
-        query_used = generated_sql or "N/A"
-    elif rag_res is not None:
-        action = "rag"
-        result_data = rag_res
-        query_used = rag_query or "N/A"
-    else:
-        action = "unknown"
-        result_data = []
-        query_used = "N/A"
+        action_parts.append("sql")
+        result_data["sql"] = sql_res
+        query_parts.append(f"SQL: {generated_sql}")
+
+    if rag_res is not None:
+        action_parts.append("rag")
+        formatted_rag = []
+        for chunk in rag_res:
+            formatted_rag.append({
+                "source": chunk.get("source_type"),
+                "content": chunk.get("chunk_text")
+            })
+        result_data["rag"] = formatted_rag
+        query_parts.append(f"RAG: {rag_query}")
+
+    if not action_parts:
+        action_parts.append("unknown")
+        result_data["unknown"] = []
+        query_parts.append("N/A")
+
+    action = " + ".join(action_parts)
+    query_used = " | ".join(query_parts)
 
     llm = get_llm("step_reasoning")
     step_desc = plan[idx].get("task", "") if idx < len(plan) else "Final step"
