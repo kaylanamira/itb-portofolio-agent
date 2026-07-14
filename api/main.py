@@ -8,7 +8,7 @@ import os
 from core.database import init_db_pool, close_db_pool
 from core.redis_client import close_redis, init_redis
 
-from api.middleware.scope_middleware import ScopeMiddleware
+from api.middlewares.scope_middleware import ScopeMiddleware
 from api.routers import chat
 from api.routers import auth as auth_router   
 from api.limiter import limiter

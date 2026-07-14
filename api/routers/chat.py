@@ -110,36 +110,48 @@ async def chat_stream_endpoint(
     
     async def event_generator():
         final_state = initial_state
-        async for ns, output in main_graph.astream(initial_state, subgraphs=True):
-            for node_name, state_update in output.items():
-                logger.info(f"=== [NODE COMPLETED: {node_name.upper()}] ===")
-                
-                update_payload = {
-                    "event": "node_update",
-                    "node": node_name,
-                    "namespace": list(ns)
-                }
-                
-                if "plan" in state_update and state_update["plan"]:
-                    plan = state_update["plan"]
-                    logger.info(f"PLAN: {json.dumps(plan, indent=2)}")
-                    update_payload["plan"] = plan
-                if "reasoning_history" in state_update and state_update["reasoning_history"]:
-                    reasoning = state_update["reasoning_history"][-1]
-                    logger.info(f"REASONING: {reasoning}")
-                    update_payload["reasoning"] = reasoning
-                if "generated_sql" in state_update and state_update["generated_sql"]:
-                    sql = state_update["generated_sql"]
-                    logger.info(f"SQL: {sql}")
-                    update_payload["sql"] = sql
-                if "sql_error" in state_update and state_update["sql_error"]:
-                    err = state_update["sql_error"]
-                    logger.error(f"SQL ERROR: {err}")
-                    update_payload["error"] = err
-                
-                final_state = {**final_state, **state_update}
-                yield f"data: {json.dumps(update_payload)}\n\n"
-        
+        try:
+            async for ns, output in main_graph.astream(initial_state, subgraphs=True):
+                for node_name, state_update in output.items():
+                    logger.info(f"=== [NODE COMPLETED: {node_name.upper()}] ===")
+
+                    update_payload = {
+                        "event": "node_update",
+                        "node": node_name,
+                        "namespace": list(ns)
+                    }
+
+                    if "plan" in state_update and state_update["plan"]:
+                        plan = state_update["plan"]
+                        logger.info(f"PLAN: {json.dumps(plan, indent=2)}")
+                        update_payload["plan"] = plan
+                    if "reasoning_history" in state_update and state_update["reasoning_history"]:
+                        reasoning = state_update["reasoning_history"][-1]
+                        logger.info(f"REASONING: {reasoning}")
+                        update_payload["reasoning"] = reasoning
+                    if "generated_sql" in state_update and state_update["generated_sql"]:
+                        sql = state_update["generated_sql"]
+                        logger.info(f"SQL: {sql}")
+                        update_payload["sql"] = sql
+                    if "sql_error" in state_update and state_update["sql_error"]:
+                        err = state_update["sql_error"]
+                        logger.error(f"SQL ERROR: {err}")
+                        update_payload["error"] = err
+
+                    final_state = {**final_state, **state_update}
+                    yield f"data: {json.dumps(update_payload)}\n\n"
+        except Exception:
+            # Exception apapun di node manapun (mis. UnicodeDecodeError saat baca
+            # file schema, error koneksi DB, dst) TIDAK BOLEH membuat generator
+            # ini mati diam-diam -- kalau itu terjadi, koneksi SSE cuma tertutup
+            # tanpa event apa pun, dan frontend tidak akan pernah tahu (macet
+            # permanen di progress indicator terakhir, seperti yang dilaporkan).
+            # Log lengkap untuk debugging, lalu kirim event error yang jelas ke
+            # client supaya UI bisa menampilkan pesan dan berhenti "berpikir".
+            logger.exception("Unhandled error while streaming chat graph")
+            yield f"data: {json.dumps({'event': 'error', 'message': 'Terjadi kesalahan saat memproses pertanyaan Anda. Silakan coba lagi.'})}\n\n"
+            return
+
         resp = final_state.get("formatted_response")
         if resp:
             await save_conversation_turn(payload, user_scope, final_state)
