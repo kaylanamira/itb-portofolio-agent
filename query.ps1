@@ -15,11 +15,12 @@ if (-not $env:DEV_SESSION_ID) {
 }
 
 $cookieName = if ($env:SESSION_COOKIE_NAME) { $env:SESSION_COOKIE_NAME } else { "sid" }
+$sessionId = if ($env:CHAT_SESSION_ID) { $env:CHAT_SESSION_ID } else { "test-session-1" }
 
 # Tulis body ke file temp - menghindari masalah escaping quote saat pass ke curl.exe
 $bodyObj = @{
     query      = $Query
-    session_id = "test-session-1"
+    session_id = $sessionId
 }
 $tempFile = New-TemporaryFile
 $bodyObj | ConvertTo-Json -Compress | Out-File -FilePath $tempFile -Encoding utf8 -NoNewline

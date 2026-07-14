@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from contextlib import asynccontextmanager
+import logging
 import os
 
 from core.database import init_db_pool, close_db_pool
@@ -17,6 +18,8 @@ from api.limiter import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +33,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="ITB Analytics", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s: %s", request.method, request.url.path, exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Terjadi kesalahan internal pada server."},
+    )
 
 # CORS
 _raw_origins = os.getenv("ALLOWED_ORIGINS")

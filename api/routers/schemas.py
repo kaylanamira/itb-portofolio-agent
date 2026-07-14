@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Any
+from datetime import datetime
 
 class ChatRequest(BaseModel):
     query: str
@@ -13,3 +14,14 @@ class ChatResponse(BaseModel):
     follow_up_suggestions: list[str] = Field(default_factory=list)
     clarification_question: Optional[str] = None
     disclaimer: Optional[str] = None
+
+class SessionSummary(BaseModel):
+    session_id: str
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    updated_at: datetime
+
+class ChatMessageOut(BaseModel):
+    role: str
+    content: str
+    created_at: datetime

@@ -1,18 +1,81 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import StreamingResponse
-from api.routers.schemas import ChatRequest, ChatResponse
+from api.routers.schemas import ChatRequest, ChatResponse, SessionSummary, ChatMessageOut
 from api.dependencies import get_user_scope
 from api.limiter import limiter
 from core.scope import UserScope
+from core.database import get_db_connection
 from agent.orchestrator import main_graph
-from api.services.chat_service import build_initial_state, save_conversation_turn, to_chat_response
+from api.services.chat_service import build_initial_state, save_conversation_turn, to_chat_response, verify_session_ownership
 from core.config import settings
+from core.redis_client import get_redis
 import json
 import logging
+import uuid
 
-logger = logging.getLogger("agent.orchestrator")
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+
+@router.get("/sessions", response_model=list[SessionSummary])
+async def list_sessions(user_scope: UserScope = Depends(get_user_scope)):
+    async with get_db_connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT session_id, title, summary, updated_at
+                FROM analitik.chat_sessions
+                WHERE user_id = %s AND active_role = %s::jsonb
+                ORDER BY updated_at DESC
+                LIMIT 50
+                """,
+                (user_scope.user_id, json.dumps(user_scope.role.value)),
+            )
+            rows = await cur.fetchall()
+ 
+    return [
+        SessionSummary(session_id=r[0], title=r[1], summary=r[2], updated_at=r[3])
+        for r in rows
+    ]
+
+@router.get("/sessions/{session_id}/messages", response_model=list[ChatMessageOut])
+async def get_session_messages(session_id: str, user_scope: UserScope = Depends(get_user_scope)):
+    if not await verify_session_ownership(session_id, user_scope):
+        raise HTTPException(status_code=403, detail="Not your session")
+
+    async with get_db_connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                """
+                SELECT role, content, created_at
+                FROM analitik.chat_messages
+                WHERE session_id = %s
+                ORDER BY turn_index, message_id
+                """,
+                (session_id,),
+            )
+            rows = await cur.fetchall()
+
+    return [ChatMessageOut(role=r[0], content=r[1], created_at=r[2]) for r in rows]
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str, user_scope: UserScope = Depends(get_user_scope)):
+    if not await verify_session_ownership(session_id, user_scope):
+        raise HTTPException(status_code=403, detail="Not your session")
+
+    async with get_db_connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "DELETE FROM analitik.chat_sessions WHERE session_id = %s",
+                (session_id,),
+            )
+        await conn.commit()
+
+    redis = get_redis()
+    await redis.delete(f"chat:{session_id}:messages", f"chat:{session_id}:summary")
+
+    return {"status": "deleted"}
 
 @router.post("", response_model=ChatResponse)
 @limiter.limit(settings.RATE_LIMIT_ENDPOINTS["chat"][0])

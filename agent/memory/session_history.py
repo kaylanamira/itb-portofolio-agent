@@ -1,3 +1,5 @@
+# file /agent/memory/session_history.py
+
 from __future__ import annotations
 
 import logging
@@ -114,6 +116,7 @@ class SessionHistoryStore:
         query_type: str | None = None,
         summary: str | None = None,
         metadata: dict | None = None,
+        title: str | None = None,
     ) -> None:
         if not settings.CHAT_ARCHIVE_ENABLED:
             return
@@ -128,23 +131,25 @@ class SessionHistoryStore:
                 async with conn.cursor() as cur:
                     await cur.execute(
                         """
-                        INSERT INTO agent_memory.chat_sessions (session_id, user_id, active_role, summary)
-                        VALUES (%s, %s, %s, %s)
+                        INSERT INTO analitik.chat_sessions (session_id, user_id, active_role, title, summary)
+                        VALUES (%s, %s, %s, %s, %s)
                         ON CONFLICT (session_id) DO UPDATE SET
-                            summary = COALESCE(EXCLUDED.summary, agent_memory.chat_sessions.summary),
+                            title = COALESCE(analitik.chat_sessions.title, EXCLUDED.title),
+                            summary = COALESCE(EXCLUDED.summary, analitik.chat_sessions.summary),
                             updated_at = now()
                         """,
                         (
                             session_id,
                             user_scope.user_id,
-                            user_scope.role.value,
+                            json.dumps(user_scope.role.value),
+                            title,
                             summary,
                         ),
                     )
                     await cur.execute(
                         """
                         SELECT COALESCE(MAX(turn_index), 0) + 1
-                        FROM agent_memory.chat_messages
+                        FROM analitik.chat_messages
                         WHERE session_id = %s
                         """,
                         (session_id,),
@@ -153,7 +158,7 @@ class SessionHistoryStore:
                     turn_index = row[0] if row else 1
                     await cur.executemany(
                         """
-                        INSERT INTO agent_memory.chat_messages
+                        INSERT INTO analitik.chat_messages
                             (session_id, user_id, turn_index, role, content, query_type, metadata)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                         """,
@@ -205,6 +210,69 @@ class SessionHistoryStore:
             if content:
                 parts.append(f"{message.role}: {content[:240]}")
         return "\n".join(parts)[-2000:]
+    
+    
+    async def reload_from_archive(self, session_id: str) -> ConversationHistory:
+        if not settings.CHAT_ARCHIVE_ENABLED:
+            return ConversationHistory(session_id=session_id)
+
+        try:
+            from core.database import get_db_connection
+
+            async with get_db_connection() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "SELECT summary FROM analitik.chat_sessions WHERE session_id = %s",
+                        (session_id,),
+                    )
+                    row = await cur.fetchone()
+                    if row is None:
+                        return ConversationHistory(session_id=session_id)
+                    summary = row[0]
+
+                    await cur.execute(
+                        """
+                        SELECT role, content, created_at
+                        FROM analitik.chat_messages
+                        WHERE session_id = %s
+                        ORDER BY turn_index DESC, message_id DESC
+                        LIMIT %s
+                        """,
+                        (session_id, self.max_turns * 2),
+                    )
+                    rows = await cur.fetchall()
+        except Exception as exc:
+            logger.warning("Failed to reload history from archive: %s", exc)
+            return ConversationHistory(session_id=session_id)
+
+        if not rows and not summary:
+            return ConversationHistory(session_id=session_id)
+
+        messages = [
+            ConversationMessage(role=r[0], content=r[1], ts=r[2].isoformat())
+            for r in reversed(rows)  # query ambil DESC (terbaru dulu), balik jadi kronologis
+        ]
+
+        await self._write_back_to_redis(session_id, summary, messages)
+
+        return ConversationHistory(session_id=session_id, summary=summary, messages=messages)
+
+    async def _write_back_to_redis(
+        self,
+        session_id: str,
+        summary: str | None,
+        messages: list[ConversationMessage],
+    ) -> None:
+        try:
+            redis = get_redis()
+            key = self.messages_key(session_id)
+            if messages:
+                await redis.rpush(key, *[m.model_dump_json() for m in messages])
+                await redis.expire(key, self.ttl_seconds)
+            if summary:
+                await redis.setex(self.summary_key(session_id), self.ttl_seconds, summary)
+        except Exception as exc:
+            logger.warning("Failed to write back reloaded history to Redis: %s", exc)
 
 
 _session_history_store = SessionHistoryStore()

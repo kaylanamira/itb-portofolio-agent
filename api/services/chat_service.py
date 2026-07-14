@@ -3,10 +3,15 @@ from core.scope import UserScope
 from agent.state import AgentState, ChartContext
 from agent.memory import get_session_history_store
 from core.config import settings
+from core.database import get_db_connection
 
 async def build_initial_state(payload: ChatRequest, user_scope: UserScope) -> AgentState:
     history_store = get_session_history_store()
     history = await history_store.load_history(payload.session_id)
+
+    if not history.messages and not history.summary:
+        history = await history_store.reload_from_archive(payload.session_id)
+
     messages = [message.model_dump(exclude_none=True) for message in history.messages]
     messages.append({"role": "user", "content": payload.query})
     chart_context = ChartContext.model_validate(payload.chart_context) if payload.chart_context else None
@@ -86,6 +91,8 @@ async def save_conversation_turn(
         metadata["sql"] = final_state.get("generated_sql")
     if not metadata:
         metadata = None
+    
+    title = payload.query[:50] + ("..." if len(payload.query) > 50 else "")
 
     await history_store.save_turn_to_archive(
         session_id=payload.session_id,
@@ -95,6 +102,7 @@ async def save_conversation_turn(
         query_type=query_type.value if hasattr(query_type, "value") else query_type,
         summary=history.summary,
         metadata=metadata,
+        title=title,
     )
 
 def to_chat_response(resp) -> ChatResponse:
@@ -106,3 +114,16 @@ def to_chat_response(resp) -> ChatResponse:
         clarification_question=resp.clarification_question,
         disclaimer=resp.disclaimer,
     )
+
+async def verify_session_ownership(session_id: str, user_scope: UserScope) -> bool:
+    async with get_db_connection() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute(
+                "SELECT user_id FROM analitik.chat_sessions WHERE session_id = %s",
+                (session_id,),
+            )
+            row = await cur.fetchone()
+
+    if row is None:
+        return True
+    return row[0] == user_scope.user_id
