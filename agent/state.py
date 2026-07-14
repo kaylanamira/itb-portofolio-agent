@@ -171,6 +171,10 @@ class AgentState(MessagesState):
     faithfulness_score: Optional[float]
     faithfulness_action: Optional[str]
 
+    # -- RAG Generation --
+    rag_generated_answer: Optional[str]
+    rag_citations: Optional[list[dict]]
+
     answer_is_valid: Optional[bool]
     next_step: Optional[str]
 

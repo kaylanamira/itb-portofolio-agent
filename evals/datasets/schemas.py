@@ -130,6 +130,16 @@ class ErrorHandlerCase(BaseModel):
 
 class RagRetrieverCase(BaseCase):
     task: str
+    scope_role: str = "kaprodi"
+    complexity: str | None = None  # "simple", "compound", "temporal", "multi_entity"
+    expected_hyde_triggered: bool | None = None
+    expected_dosen_resolved: bool | None = None
+    expected_matkul_resolved: bool | None = None
+    expected_verifikator_filter: bool | None = None
+    expected_min_confidence: float | None = None
+    expected_faithfulness_min: float | None = None
+    expected_citation_present: bool = True
+    expected_empty_result_ok: bool = False  # True: legitimately no matching data, absence of chunks/citations is a PASS
 
 
 class ChartInterpreterCase(BaseCase):

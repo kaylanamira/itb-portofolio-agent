@@ -1,16 +1,303 @@
 [
   {
     "id": "RAG-001",
-    "description": "Basic policy document retrieval",
+    "description": "Basic policy question -- not covered by portfolio/komentar data, empty result is legitimate",
     "query": "Apa syarat kelulusan S1 Informatika?",
     "task": "Cari dokumen kebijakan syarat kelulusan S1 Informatika",
-    "tags": ["policy"]
+    "tags": ["policy", "out_of_domain"],
+    "complexity": "simple",
+    "expected_hyde_triggered": false,
+    "expected_citation_present": false,
+    "expected_empty_result_ok": true
   },
   {
     "id": "RAG-002",
-    "description": "Syllabus retrieval",
+    "description": "Syllabus/RPKPS question -- not covered by portfolio/komentar data, empty result is legitimate",
     "query": "Apa materi minggu ke-3 IF1220?",
     "task": "Cari silabus atau RPKPS IF1220 untuk materi minggu ke-3",
-    "tags": ["syllabus"]
+    "tags": ["syllabus", "out_of_domain"],
+    "complexity": "simple",
+    "expected_hyde_triggered": false,
+    "expected_citation_present": false,
+    "expected_empty_result_ok": true
+  },
+  {
+    "id": "RAG-003",
+    "description": "Sentiment-laden, vague query naming a specific dosen -- the canonical Multi-HyDE trigger case",
+    "query": "tolong carikan komentar mahasiswa yang kesal dengan dosen John Doe",
+    "task": "Cari komentar mahasiswa yang menunjukkan kekesalan terhadap dosen John Doe",
+    "tags": ["sentiment", "hyde", "entity_filter"],
+    "complexity": "simple",
+    "expected_hyde_triggered": true,
+    "expected_dosen_resolved": false,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-004",
+    "description": "Sentiment query naming a dosen expected to exist in a fully-ingested environment",
+    "query": "bagaimana kesan mahasiswa terhadap gaya mengajar dosen yang mengajar IF4031?",
+    "task": "Cari komentar mahasiswa mengenai gaya mengajar dosen pengampu IF4031",
+    "tags": ["sentiment", "hyde"],
+    "complexity": "simple",
+    "scope_role": "kaprodi",
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-005",
+    "description": "Query mentioning a dosen name that does not exist -- must degrade gracefully, not error",
+    "query": "carikan komentar mahasiswa untuk dosen Zzyzx Nonexistent",
+    "task": "Cari komentar mahasiswa untuk dosen bernama Zzyzx Nonexistent",
+    "tags": ["entity_filter", "graceful_degradation"],
+    "complexity": "simple",
+    "expected_dosen_resolved": false,
+    "expected_citation_present": false,
+    "expected_empty_result_ok": true
+  },
+  {
+    "id": "RAG-006",
+    "description": "Summarization request over portfolio narrative -- should still cite sources",
+    "query": "rangkumkan refleksi dosen terhadap pelaksanaan perkuliahan semester lalu",
+    "task": "Rangkum refleksi pelaksanaan perkuliahan dari portofolio dosen semester lalu",
+    "tags": ["summarization", "hyde"],
+    "complexity": "simple",
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-007",
+    "description": "Dosen name with an honorific prefix -- fuzzy resolution must strip 'Pak'/'Bu'/'Dr' etc.",
+    "query": "apa pendapat mahasiswa tentang cara mengajar Ibu Nur Ulfa?",
+    "task": "Cari komentar mahasiswa mengenai cara mengajar dosen Ibu Nur Ulfa",
+    "tags": ["entity_filter", "honorific"],
+    "complexity": "simple",
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-008",
+    "description": "Dosen mentioned by academic title/gelar only, no honorific -- resolution should still work off nama_gelar similarity",
+    "query": "bagaimana evaluasi mahasiswa terhadap Prof. Dr. Ir. Rinaldi, M.T?",
+    "task": "Cari evaluasi mahasiswa terhadap dosen Prof. Dr. Ir. Rinaldi, M.T",
+    "tags": ["entity_filter", "honorific"],
+    "complexity": "simple"
+  },
+  {
+    "id": "RAG-009",
+    "description": "Course code given directly -- no fuzzy resolution needed, should anchor retrieval precisely",
+    "query": "apa metode pembelajaran yang dipakai di kelas IF4031?",
+    "task": "Cari metode pembelajaran yang digunakan pada mata kuliah IF4031",
+    "tags": ["entity_filter", "course_code"],
+    "complexity": "simple",
+    "expected_matkul_resolved": true,
+    "expected_hyde_triggered": false,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-010",
+    "description": "Course name given without code -- requires fuzzy resolution via nama_matkul, same pg_trgm path as dosen names",
+    "query": "apa metode pembelajaran untuk mata kuliah Struktur Data?",
+    "task": "Cari metode pembelajaran mata kuliah Struktur Data",
+    "tags": ["entity_filter", "course_name"],
+    "complexity": "simple",
+    "expected_matkul_resolved": true,
+    "expected_hyde_triggered": false
+  },
+  {
+    "id": "RAG-011",
+    "description": "Compound temporal/trend query -- the canonical multi-hop case: track a single course's teaching method across two prior semesters",
+    "query": "bagaimana perkembangan metode pembelajaran mata kuliah IF4031 di 2 semester ke belakang?",
+    "task": "Bandingkan metode pembelajaran mata kuliah IF4031 pada 2 semester terakhir untuk melihat perkembangannya",
+    "tags": ["compound", "temporal", "course_code"],
+    "complexity": "temporal",
+    "expected_matkul_resolved": true,
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-012",
+    "description": "Compound temporal comparison across two specific academic years for the same dosen",
+    "query": "apakah refleksi dosen Budi Santoso terhadap pelaksanaan perkuliahan berubah dari tahun ajaran 2022/2023 ke 2023/2024?",
+    "task": "Bandingkan refleksi pelaksanaan perkuliahan dosen Budi Santoso antara tahun ajaran 2022/2023 dan 2023/2024",
+    "tags": ["compound", "temporal", "multi_entity"],
+    "complexity": "temporal",
+    "expected_dosen_resolved": false,
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-013",
+    "description": "Compound trend query across multiple years, no specific dosen/course anchor -- broad, should trigger HyDE",
+    "query": "rangkumkan tren keluhan mahasiswa terhadap sarana prasarana di prodi Informatika selama 3 tahun terakhir",
+    "task": "Rangkum tren keluhan mahasiswa mengenai sarana prasarana di prodi Informatika dalam 3 tahun terakhir",
+    "tags": ["compound", "temporal", "sentiment", "hyde"],
+    "complexity": "temporal",
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-014",
+    "description": "Compound semester-over-semester comparison (ganjil vs genap) within a single year, same course",
+    "query": "bandingkan refleksi dosen terhadap pelaksanaan perkuliahan IF2150 semester ganjil dan genap tahun 2023",
+    "task": "Bandingkan refleksi pelaksanaan perkuliahan IF2150 antara semester ganjil dan genap tahun 2023",
+    "tags": ["compound", "temporal", "course_code"],
+    "complexity": "temporal",
+    "expected_matkul_resolved": true
+  },
+  {
+    "id": "RAG-015",
+    "description": "Multi-entity compound: sentiment + dosen + course + year combined in one query",
+    "query": "carikan komentar negatif mahasiswa untuk dosen Ani Wijaya di mata kuliah Basis Data tahun 2023",
+    "task": "Cari komentar negatif mahasiswa terhadap dosen Ani Wijaya pada mata kuliah Basis Data tahun 2023",
+    "tags": ["compound", "multi_entity", "sentiment", "hyde"],
+    "complexity": "multi_entity",
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-016",
+    "description": "Compound ranking-style query across classes -- 'most complained about', no single anchor entity",
+    "query": "kelas mana yang paling banyak dikeluhkan mahasiswa semester lalu?",
+    "task": "Identifikasi kelas dengan keluhan mahasiswa terbanyak pada semester lalu",
+    "tags": ["compound", "sentiment", "hyde"],
+    "complexity": "compound",
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-017",
+    "description": "Verifikator/reviewer-specific query -- must set is_verifikator=true, distinct from the dosen's own account",
+    "query": "apa catatan verifikator terhadap ketercapaian outcomes kelas IF4031?",
+    "task": "Cari catatan verifikator terhadap ketercapaian outcomes kelas IF4031",
+    "tags": ["verifikator", "course_code"],
+    "complexity": "simple",
+    "expected_verifikator_filter": true,
+    "expected_matkul_resolved": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-018",
+    "description": "Verifikator query about a dosen's teaching, distinguishing reviewer evaluation from the dosen's self-report",
+    "query": "bagaimana evaluasi reviewer terhadap penyelenggaraan perkuliahan yang diampu dosen Budi Santoso?",
+    "task": "Cari evaluasi verifikator terhadap penyelenggaraan perkuliahan dosen Budi Santoso",
+    "tags": ["verifikator", "entity_filter"],
+    "complexity": "simple",
+    "expected_verifikator_filter": true
+  },
+  {
+    "id": "RAG-019",
+    "description": "Explicitly asks for the dosen's OWN reflection, not the reviewer's -- is_verifikator should resolve to false, not left unset",
+    "query": "apa refleksi dosen (bukan catatan verifikator) terhadap pelaksanaan perkuliahan IF4031?",
+    "task": "Cari refleksi dosen terhadap pelaksanaan perkuliahan IF4031, bukan catatan verifikator",
+    "tags": ["verifikator", "course_code"],
+    "complexity": "simple",
+    "expected_verifikator_filter": false,
+    "expected_matkul_resolved": true
+  },
+  {
+    "id": "RAG-020",
+    "description": "Faculty-level (kode_fakultas) filter query, no course/dosen anchor",
+    "query": "apa pendapat mahasiswa STEI tentang praktikum semester ini?",
+    "task": "Cari pendapat mahasiswa fakultas STEI mengenai praktikum semester ini",
+    "tags": ["prodi_filter", "sentiment", "hyde"],
+    "complexity": "simple",
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-021",
+    "description": "Program-of-study (prodi) + academic year filter combined",
+    "query": "bagaimana metode pembelajaran di prodi Informatika tahun ajaran 2023/2024?",
+    "task": "Cari metode pembelajaran yang digunakan di prodi Informatika pada tahun ajaran 2023/2024",
+    "tags": ["prodi_filter", "temporal"],
+    "complexity": "compound",
+    "expected_hyde_triggered": false
+  },
+  {
+    "id": "RAG-022",
+    "description": "Completely out-of-domain query (billing/administrative, not academic content) -- must not hallucinate, empty result expected",
+    "query": "berapa biaya kuliah semester ini?",
+    "task": "Cari informasi biaya kuliah semester ini",
+    "tags": ["out_of_domain", "graceful_degradation"],
+    "complexity": "simple",
+    "expected_citation_present": false,
+    "expected_empty_result_ok": true
+  },
+  {
+    "id": "RAG-023",
+    "description": "Short, anchor-less, ambiguous query -- exercises the should_use_hyde word-count heuristic directly",
+    "query": "gimana kelas itu kemarin?",
+    "task": "Cari informasi mengenai kelas yang dimaksud",
+    "tags": ["hyde", "graceful_degradation"],
+    "complexity": "simple",
+    "expected_hyde_triggered": true,
+    "expected_empty_result_ok": true
+  },
+  {
+    "id": "RAG-024",
+    "description": "Dosen-scoped role asking about their own class's student comments -- RLS must still return their own results, not empty",
+    "query": "apa komentar mahasiswa terhadap kelas yang saya ajar semester ini?",
+    "task": "Cari komentar mahasiswa terhadap kelas yang diajar dosen ini pada semester ini",
+    "tags": ["rls", "sentiment", "hyde"],
+    "complexity": "simple",
+    "scope_role": "dosen",
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-025",
+    "description": "Dekan-scoped role asking a faculty-wide question -- RLS scopes to their kode_fakultas, not a single prodi",
+    "query": "bagaimana tanggapan mahasiswa terhadap kuesioner di fakultas ini secara umum?",
+    "task": "Rangkum tanggapan mahasiswa terhadap kuesioner di seluruh fakultas",
+    "tags": ["rls", "prodi_filter", "hyde"],
+    "complexity": "compound",
+    "scope_role": "dekan",
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-026",
+    "description": "Admin-scoped broad query across all prodi/fakultas -- no RLS restriction, exercises the unfiltered path",
+    "query": "rangkumkan usulan perbaikan yang paling sering muncul dari dosen ke ITB",
+    "task": "Rangkum usulan perbaikan yang paling sering diajukan dosen kepada ITB",
+    "tags": ["compound", "hyde"],
+    "complexity": "compound",
+    "scope_role": "admin",
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-027",
+    "description": "Portfolio-value-conditioned query (nilai_portofolio) combined with sentiment -- exercises a filter dimension with no dedicated RagEntityExtraction field, should still degrade to plain hybrid search rather than fail",
+    "query": "carikan kelas dengan nilai portofolio rendah dan banyak keluhan mahasiswa",
+    "task": "Cari kelas dengan nilai portofolio rendah yang juga banyak dikeluhkan mahasiswa",
+    "tags": ["compound", "sentiment", "hyde", "graceful_degradation"],
+    "complexity": "compound",
+    "expected_hyde_triggered": true
+  },
+  {
+    "id": "RAG-028",
+    "description": "Positive-sentiment query (not just negative) -- confirms should_use_hyde and sentiment_hint extraction aren't negative-only",
+    "query": "mata kuliah apa yang paling disukai dan dianggap memuaskan oleh mahasiswa semester ini?",
+    "task": "Cari mata kuliah yang paling disukai dan memuaskan menurut mahasiswa semester ini",
+    "tags": ["sentiment", "hyde", "compound"],
+    "complexity": "compound",
+    "expected_hyde_triggered": true,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-029",
+    "description": "Precise, entity-anchored, non-sentiment query -- negative control for HyDE alongside RAG-009, confirms course-code anchoring alone suppresses the trigger even with more words",
+    "query": "apa sistem penilaian yang digunakan pada mata kuliah IF2150 tahun ajaran 2023/2024?",
+    "task": "Cari sistem penilaian mata kuliah IF2150 pada tahun ajaran 2023/2024",
+    "tags": ["course_code", "temporal"],
+    "complexity": "simple",
+    "expected_matkul_resolved": true,
+    "expected_hyde_triggered": false,
+    "expected_citation_present": true
+  },
+  {
+    "id": "RAG-030",
+    "description": "Compound cross-source query needing both dosen narrative and student comments reconciled -- 'apakah dosen dan mahasiswa sepakat'",
+    "query": "apakah refleksi dosen dan komentar mahasiswa untuk kelas IF4031 semester lalu sejalan atau bertentangan?",
+    "task": "Bandingkan refleksi dosen dengan komentar mahasiswa untuk kelas IF4031 semester lalu, apakah sejalan atau bertentangan",
+    "tags": ["compound", "multi_entity", "course_code"],
+    "complexity": "compound",
+    "expected_matkul_resolved": true,
+    "expected_citation_present": true
   }
 ]
