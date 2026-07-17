@@ -62,6 +62,16 @@ class Settings(BaseSettings):
     CRAG_CONFIDENCE_REFINE: float = 0.40
     RAG_MAX_ATTEMPTS: int = 2
 
+    # Multi-HyDE
+    RAG_HYDE_ENABLED: bool = True
+    RAG_HYDE_NUM_HYPOTHESES: int = 3
+
+    # Generation self-eval loop
+    RAG_MAX_GENERATION_ATTEMPTS: int = 2
+
+    # Ingestion
+    RAG_INGEST_BATCH_SIZE: int = 32
+
     # Faithfulness
     FAITH_ACCEPT: float = 0.85
     FAITH_REVISE: float = 0.60
@@ -72,8 +82,8 @@ class Settings(BaseSettings):
     CHUNK_TOKEN_MAX: int = 600
     CHUNK_PARENT_MAX_CHUNKS: int = 20
 
-    # Embedding
-    EMBEDDING_MODEL: str = "BAAI/bge-m3"
+    EMBEDDING_PROVIDER: str = os.getenv("EMBEDDING_PROVIDER", "local")
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-large")
     EMBEDDING_DIMS: int = 1024
     EMBEDDING_API_URL: str | None = os.getenv("EMBEDDING_API_URL")
     EMBEDDING_API_KEY: str | None = os.getenv("EMBEDDING_API_KEY")

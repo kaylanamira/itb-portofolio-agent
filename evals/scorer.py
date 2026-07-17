@@ -134,6 +134,12 @@ class MetricFlag(str, Enum):
     SYNTH_FAITHFULNESS_PASSED = "synth_faithfulness_passed"
     SYNTH_TOXICITY_PASSED = "synth_toxicity_passed"
     ANALYSIS_EXISTS = "analysis_exists"
+    RAG_RETRIEVAL_RELEVANCE_PASSED = "rag_retrieval_relevance_passed"
+    RAG_FAITHFULNESS_PASSED = "rag_faithfulness_passed"
+    RAG_CITATION_VALID = "rag_citation_valid"
+    RAG_HYDE_TRIGGER_CORRECT = "rag_hyde_trigger_correct"
+    RAG_ENTITY_RESOLUTION_CORRECT = "rag_entity_resolution_correct"
+    RAG_VERIFIKATOR_FILTER_CORRECT = "rag_verifikator_filter_correct"
 
 class NodeTestResult(BaseModel):
     case_id: str
@@ -393,6 +399,42 @@ def score_chart_interpreter(results: list[NodeTestResult]) -> list[MetricSummary
     ]
 
 
+def score_rag_retriever(results: list[NodeTestResult]) -> list[MetricSummary]:
+    relevance_total = sum(1 for r in results if MetricFlag.RAG_RETRIEVAL_RELEVANCE_PASSED in r.metric_flags)
+    relevance_passed = sum(1 for r in results if r.metric_flags.get(MetricFlag.RAG_RETRIEVAL_RELEVANCE_PASSED))
+
+    faith_total = sum(1 for r in results if MetricFlag.RAG_FAITHFULNESS_PASSED in r.metric_flags)
+    faith_passed = sum(1 for r in results if r.metric_flags.get(MetricFlag.RAG_FAITHFULNESS_PASSED))
+
+    citation_total = sum(1 for r in results if MetricFlag.RAG_CITATION_VALID in r.metric_flags)
+    citation_passed = sum(1 for r in results if r.metric_flags.get(MetricFlag.RAG_CITATION_VALID))
+
+    hyde_total = sum(1 for r in results if MetricFlag.RAG_HYDE_TRIGGER_CORRECT in r.metric_flags)
+    hyde_correct = sum(1 for r in results if r.metric_flags.get(MetricFlag.RAG_HYDE_TRIGGER_CORRECT))
+
+    entity_total = sum(1 for r in results if MetricFlag.RAG_ENTITY_RESOLUTION_CORRECT in r.metric_flags)
+    entity_correct = sum(1 for r in results if r.metric_flags.get(MetricFlag.RAG_ENTITY_RESOLUTION_CORRECT))
+
+    verifikator_total = sum(1 for r in results if MetricFlag.RAG_VERIFIKATOR_FILTER_CORRECT in r.metric_flags)
+    verifikator_correct = sum(1 for r in results if r.metric_flags.get(MetricFlag.RAG_VERIFIKATOR_FILTER_CORRECT))
+
+    summaries = []
+    if relevance_total > 0:
+        summaries.append(_summarize("rag_retriever", "context_precision", _ratio(relevance_passed, relevance_total)))
+    if faith_total > 0:
+        summaries.append(_summarize("rag_retriever", "faithfulness", _ratio(faith_passed, faith_total)))
+    if citation_total > 0:
+        summaries.append(_summarize("rag_retriever", "citation_validity", _ratio(citation_passed, citation_total)))
+    if hyde_total > 0:
+        summaries.append(_summarize("rag_retriever", "hyde_trigger_accuracy", _ratio(hyde_correct, hyde_total)))
+    if entity_total > 0:
+        summaries.append(_summarize("rag_retriever", "entity_resolution_accuracy", _ratio(entity_correct, entity_total)))
+    if verifikator_total > 0:
+        summaries.append(_summarize("rag_retriever", "verifikator_filter_accuracy", _ratio(verifikator_correct, verifikator_total)))
+
+    return summaries
+
+
 def score_sql_executor(results: list[NodeTestResult]) -> list[MetricSummary]:
     total = len(results)
     correct_rows = sum(1 for r in results if r.metric_flags.get(MetricFlag.CORRECT_ROW_RETURN))
@@ -422,6 +464,7 @@ _SCORERS: dict[str, Any] = {
     "clarification_handler": score_clarification_handler,
     "chart_interpreter": score_chart_interpreter,
     "sql_executor": score_sql_executor,
+    "rag_retriever": score_rag_retriever,
 }
 
 

@@ -18,18 +18,38 @@ async def step_reasoner(state: AgentState) -> dict:
     generated_sql = state.get("generated_sql")
     rag_query = state.get("rag_query")
 
+    result_data = {}
+    action_parts = []
+    query_parts = []
+
     if sql_res is not None:
-        action = "sql"
-        result_data = sql_res
-        query_used = generated_sql or "N/A"
-    elif rag_res is not None:
-        action = "rag"
-        result_data = rag_res
-        query_used = rag_query or "N/A"
-    else:
-        action = "unknown"
-        result_data = []
-        query_used = "N/A"
+        action_parts.append("sql")
+        result_data["sql"] = sql_res
+        query_parts.append(f"SQL: {generated_sql}")
+
+    if rag_res is not None:
+        action_parts.append("rag")
+        generated_answer = state.get("rag_generated_answer")
+        if generated_answer:
+            result_data["rag"] = {
+                "answer": generated_answer,
+                "citations": state.get("rag_citations", []),
+            }
+        else:
+            # FALLBACK/empty-chunk case: no generated answer, fall back to raw chunks.
+            result_data["rag"] = [
+                {"source": chunk.get("source_type"), "content": chunk.get("chunk_text")}
+                for chunk in rag_res
+            ]
+        query_parts.append(f"RAG: {rag_query}")
+
+    if not action_parts:
+        action_parts.append("unknown")
+        result_data["unknown"] = []
+        query_parts.append("N/A")
+
+    action = " + ".join(action_parts)
+    query_used = " | ".join(query_parts)
 
     llm = get_llm("step_reasoning")
     step_desc = plan[idx].get("task", "") if idx < len(plan) else "Final step"
@@ -76,6 +96,8 @@ async def step_reasoner(state: AgentState) -> dict:
         "sql_row_count": None,
         "rag_query": None,
         "rag_chunks": None,
+        "rag_generated_answer": None,
+        "rag_citations": None,
         "answer_is_valid": None,
         "next_step": None,
         "attempt_count": 0,

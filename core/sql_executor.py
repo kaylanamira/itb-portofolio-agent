@@ -32,7 +32,7 @@ class QueryExecutor(Protocol):
         self,
         sql: str,
         user_scope: UserScope,
-        params: list | tuple | None = None,
+        params: Optional[tuple] = None,
     ) -> QueryResult: ...
 
 
@@ -43,13 +43,14 @@ class PsycopgExecutor:
         self,
         sql: str,
         user_scope: UserScope,
-        params: list | tuple | None = None,
+        params: Optional[tuple] = None,
     ) -> QueryResult:
         """Execute SQL with RLS session vars set for the current user.
 
         Args:
-            sql: Validated SELECT query.
+            sql: Validated SELECT query. May contain %s placeholders if params is given.
             user_scope: UserScope providing RLS session variable values.
+            params: Optional parameters for %s placeholders in sql (parameterized query).
 
         Returns:
             QueryResult with rows (Decimal values coerced to float), row_count, and error.
@@ -66,7 +67,7 @@ class PsycopgExecutor:
                             )
                         )
 
-                    cursor = await conn.execute(sql, params)
+                    cursor = await conn.execute(sql, params) if params is not None else await conn.execute(sql)
                     rows = await cursor.fetchall()
 
                     if cursor.description:

@@ -19,6 +19,10 @@ OPENROUTER_MODEL_ENVS: dict[str, tuple[str, ...]] = {
     "chart_interpretation": ("CHART_INTERPRETATION_MODEL", "SYNTHESIS_MODEL"),
     "clarification": ("CLARIFICATION_MODEL",),
     "llm_evaluation": ("EVAL_MODEL", "LLM_EVALUATION_MODEL"),
+    "rag_generation": ("RAG_GEN_MODEL",),
+    "rag_faithfulness": ("RAG_FAITH_MODEL",),
+    "rag_hyde": ("RAG_HYDE_MODEL",),
+    "rag_entity_extraction": ("RAG_ENTITY_MODEL",),
 }
 
 
@@ -74,12 +78,23 @@ TASK_MODEL_MAPPING: dict[str, dict[str, str]] = {
         "schema_linking",
         "sql_generation",
         "general",
-        "llm_evaluation"
+        "llm_evaluation",
+        "rag_hyde",
+        "rag_entity_extraction",
     )
 }
 TASK_MODEL_MAPPING["llm_evaluation"] = {
-    "provider": os.getenv("EVAL_PROVIDER", "google"), 
+    "provider": os.getenv("EVAL_PROVIDER", "google"),
     "model": os.getenv("EVAL_MODEL", os.getenv("GOOGLE_MODEL", "gemini-1.5-pro"))
+}
+
+TASK_MODEL_MAPPING["rag_generation"] = {
+    "provider": os.getenv("RAG_GEN_PROVIDER", "google"),
+    "model": os.getenv("RAG_GEN_MODEL", os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")),
+}
+TASK_MODEL_MAPPING["rag_faithfulness"] = {
+    "provider": os.getenv("RAG_FAITH_PROVIDER", "google"),
+    "model": os.getenv("RAG_FAITH_MODEL", os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")),
 }
 
 
