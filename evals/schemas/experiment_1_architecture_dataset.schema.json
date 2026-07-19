@@ -1,0 +1,558 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://itb-portofolio.local/schemas/experiment_1_architecture_dataset.schema.json",
+  "title": "Experiment I Architecture Orchestration Dataset",
+  "description": "Schema for manually curated cases used to compare orchestration architectures A1 Direct Tool Calling, A2 ReAct-style Agent, A3 Plan-Execute Agent, and A4 Proposed Planner-Orchestrator with iterative reasoning.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dataset_name",
+    "version",
+    "description",
+    "total_cases",
+    "distribution",
+    "cases"
+  ],
+  "properties": {
+    "dataset_name": {
+      "type": "string",
+      "description": "Stable dataset identifier, for example architecture_orchestration_cases."
+    },
+    "version": {
+      "type": "string",
+      "description": "Dataset version used to freeze the evaluation run, for example 1.0.0."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short explanation of the dataset purpose and construction rules."
+    },
+    "total_cases": {
+      "type": "integer",
+      "description": "Total number of cases. For the planned experiment this should be 80.",
+      "minimum": 1
+    },
+    "distribution": {
+      "type": "object",
+      "description": "Expected stratification of cases by query type and orchestration complexity.",
+      "additionalProperties": false,
+      "required": [
+        "query_type_counts",
+        "orchestration_complexity_counts"
+      ],
+      "properties": {
+        "query_type_counts": {
+          "type": "object",
+          "description": "Number of cases for each planner QueryType label.",
+          "additionalProperties": false,
+          "required": [
+            "data_lookup",
+            "text_lookup",
+            "analytical_numeric",
+            "analytical_text",
+            "analytical_hybrid",
+            "diagnostic",
+            "comparative",
+            "summarization",
+            "chart_interpret",
+            "clarification_needed"
+          ],
+          "properties": {
+            "data_lookup": {
+              "type": "integer",
+              "description": "Count of factual structured-data lookup cases."
+            },
+            "text_lookup": {
+              "type": "integer",
+              "description": "Count of textual evidence retrieval cases."
+            },
+            "analytical_numeric": {
+              "type": "integer",
+              "description": "Count of numerical analytical cases involving aggregation, ranking, trend, or thresholds."
+            },
+            "analytical_text": {
+              "type": "integer",
+              "description": "Count of text-analysis cases over comments, reflections, or narrative portfolio data."
+            },
+            "analytical_hybrid": {
+              "type": "integer",
+              "description": "Count of cases that combine structured numerical evidence and unstructured textual evidence."
+            },
+            "diagnostic": {
+              "type": "integer",
+              "description": "Count of explanatory diagnostic cases."
+            },
+            "comparative": {
+              "type": "integer",
+              "description": "Count of comparison cases across courses, classes, lecturers, programs, faculties, or periods."
+            },
+            "summarization": {
+              "type": "integer",
+              "description": "Count of summarization cases."
+            },
+            "chart_interpret": {
+              "type": "integer",
+              "description": "Count of cases that require interpretation of supplied dashboard chart context."
+            },
+            "clarification_needed": {
+              "type": "integer",
+              "description": "Count of cases where execution should stop and ask for clarification."
+            }
+          }
+        },
+        "orchestration_complexity_counts": {
+          "type": "object",
+          "description": "Number of cases for each orchestration complexity level.",
+          "additionalProperties": false,
+          "required": [
+            "C1_single_tool",
+            "C2_parallel_multi_tool",
+            "C3_sequential",
+            "C4_dependent_multi_step"
+          ],
+          "properties": {
+            "C1_single_tool": {
+              "type": "integer",
+              "description": "Cases requiring one tool call or one terminal clarification response."
+            },
+            "C2_parallel_multi_tool": {
+              "type": "integer",
+              "description": "Cases requiring multiple independent evidence sources."
+            },
+            "C3_sequential": {
+              "type": "integer",
+              "description": "Cases where one step provides shallow context for the next step."
+            },
+            "C4_dependent_multi_step": {
+              "type": "integer",
+              "description": "Cases requiring a dependent reasoning chain with planning, observation, continuation, and stopping."
+            }
+          }
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "description": "Evaluation cases. Each case should have one query type and one orchestration complexity label.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/architecture_case"
+      }
+    }
+  },
+  "$defs": {
+    "architecture_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "query_type",
+        "orchestration_complexity",
+        "domain",
+        "raw_query",
+        "language",
+        "user_scope",
+        "input_context",
+        "expected_behavior",
+        "scoring_rubric",
+        "notes_for_dataset_author"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique case identifier. Recommended format: ARCH-QT-CX-###, for example ARCH-DATA-C1-001."
+        },
+        "query_type": {
+          "type": "string",
+          "description": "Expected planner QueryType label for this case.",
+          "enum": [
+            "data_lookup",
+            "text_lookup",
+            "analytical_numeric",
+            "analytical_text",
+            "analytical_hybrid",
+            "diagnostic",
+            "comparative",
+            "summarization",
+            "chart_interpret",
+            "clarification_needed"
+          ]
+        },
+        "orchestration_complexity": {
+          "type": "string",
+          "description": "Expected orchestration complexity level used for stratified reporting.",
+          "enum": [
+            "C1_single_tool",
+            "C2_parallel_multi_tool",
+            "C3_sequential",
+            "C4_dependent_multi_step"
+          ]
+        },
+        "domain": {
+          "type": "string",
+          "description": "Expected top-level domain route selected by intent_classifier.",
+          "enum": [
+            "portfolio",
+            "out_of_scope"
+          ]
+        },
+        "raw_query": {
+          "type": "string",
+          "description": "User question exactly as submitted to the agent."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language of the query.",
+          "enum": [
+            "id",
+            "en",
+            "mixed"
+          ]
+        },
+        "user_scope": {
+          "type": "object",
+          "description": "User access scope used for the evaluation case.",
+          "additionalProperties": false,
+          "required": [
+            "role"
+          ],
+          "properties": {
+            "role": {
+              "type": "string",
+              "description": "Role value passed to UserScope, for example dosen, kaprodi, dekan, or admin."
+            },
+            "allowed_faculties": {
+              "type": "array",
+              "description": "Optional faculty codes allowed for this user.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowed_programs": {
+              "type": "array",
+              "description": "Optional study program identifiers allowed for this user.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowed_courses": {
+              "type": "array",
+              "description": "Optional course codes allowed for this user.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "input_context": {
+          "type": "object",
+          "description": "Additional context needed to reproduce the case.",
+          "additionalProperties": false,
+          "required": [
+            "conversation_history",
+            "chart_context"
+          ],
+          "properties": {
+            "conversation_history": {
+              "type": "array",
+              "description": "Prior user and assistant messages. Use an empty array when the query is self-contained.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "role",
+                  "content"
+                ],
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "description": "Message role.",
+                    "enum": [
+                      "user",
+                      "assistant"
+                    ]
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Message content."
+                  }
+                }
+              }
+            },
+            "chart_context": {
+              "description": "ChartContext object for chart_interpret cases. Use null for non-chart cases.",
+              "oneOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "expected_behavior": {
+          "type": "object",
+          "description": "Ground truth behavior expected from the final architecture.",
+          "additionalProperties": false,
+          "required": [
+            "expected_query_type",
+            "expected_tool_sequence",
+            "expected_node_sequence",
+            "expected_plan_steps",
+            "expected_response_type",
+            "required_answer_facts",
+            "acceptable_answer_patterns"
+          ],
+          "properties": {
+            "expected_query_type": {
+              "type": "string",
+              "description": "Expected planner QueryType. Usually identical to query_type.",
+              "enum": [
+                "data_lookup",
+                "text_lookup",
+                "analytical_numeric",
+                "analytical_text",
+                "analytical_hybrid",
+                "diagnostic",
+                "comparative",
+                "summarization",
+                "chart_interpret",
+                "clarification_needed"
+              ]
+            },
+            "expected_tool_sequence": {
+              "type": "array",
+              "description": "Expected logical tool sequence. Use tool labels rather than internal implementation details.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "sql",
+                  "rag",
+                  "catalog_lookup",
+                  "chart_interpreter",
+                  "clarification",
+                  "synthesis_only"
+                ]
+              }
+            },
+            "expected_node_sequence": {
+              "type": "array",
+              "description": "Expected production node sequence for A4. Used to evaluate routing and traceability.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "input_guard",
+                  "intent_classifier",
+                  "query_rewriter",
+                  "planner",
+                  "sql_pipeline",
+                  "wisudawan_pipeline",
+                  "catalog_lookup",
+                  "rag_retriever",
+                  "chart_interpreter",
+                  "step_reasoner",
+                  "clarification_handler",
+                  "synthesizer"
+                ]
+              }
+            },
+            "expected_plan_steps": {
+              "type": "array",
+              "description": "Expected high-level plan. This is not exact prompt output, but the semantic plan the evaluator should accept.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "task",
+                  "tool",
+                  "required"
+                ],
+                "properties": {
+                  "task": {
+                    "type": "string",
+                    "description": "Expected task description for the plan step."
+                  },
+                  "tool": {
+                    "type": "string",
+                    "description": "Expected tool for the step.",
+                    "enum": [
+                      "sql",
+                      "rag",
+                      "chart_interpreter",
+                      "clarification"
+                    ]
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "description": "Whether the step should route to catalog_lookup before SQL execution."
+                  }
+                }
+              }
+            },
+            "expected_response_type": {
+              "type": "string",
+              "description": "Expected final FormattedResponse response_type.",
+              "enum": [
+                "text",
+                "mixed",
+                "clarification",
+                "error"
+              ]
+            },
+            "required_answer_facts": {
+              "type": "array",
+              "description": "Facts that must appear or be correctly represented in the final answer. These support correctness scoring.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "acceptable_answer_patterns": {
+              "type": "array",
+              "description": "Acceptable textual patterns or semantic requirements for the final answer.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expected_clarification_slots": {
+              "type": "array",
+              "description": "For clarification_needed cases, fields the clarification question must ask for.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "scoring_rubric": {
+          "type": "object",
+          "description": "Rubric used by code-based scoring and LLM-as-a-Judge scoring.",
+          "additionalProperties": false,
+          "required": [
+            "task_success_criteria",
+            "faithfulness_reference",
+            "completeness_criteria"
+          ],
+          "properties": {
+            "task_success_criteria": {
+              "type": "array",
+              "description": "Checklist for determining whether the case is solved.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "faithfulness_reference": {
+              "type": "string",
+              "description": "Description of the evidence source that final answer claims must be grounded in."
+            },
+            "completeness_criteria": {
+              "type": "array",
+              "description": "Checklist for determining whether all required answer parts are present.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "dataset_name": "architecture_orchestration_cases",
+      "version": "1.0.0",
+      "description": "Stratified architecture evaluation dataset.",
+      "total_cases": 80,
+      "distribution": {
+        "query_type_counts": {
+          "data_lookup": 8,
+          "text_lookup": 8,
+          "analytical_numeric": 8,
+          "analytical_text": 8,
+          "analytical_hybrid": 8,
+          "diagnostic": 8,
+          "comparative": 8,
+          "summarization": 8,
+          "chart_interpret": 8,
+          "clarification_needed": 8
+        },
+        "orchestration_complexity_counts": {
+          "C1_single_tool": 20,
+          "C2_parallel_multi_tool": 20,
+          "C3_sequential": 20,
+          "C4_dependent_multi_step": 20
+        }
+      },
+      "cases": [
+        {
+          "id": "ARCH-DATA-C1-001",
+          "query_type": "data_lookup",
+          "orchestration_complexity": "C1_single_tool",
+          "domain": "portfolio",
+          "raw_query": "Berapa rata-rata evaluasi kelas IF2210 pada semester 2024-1?",
+          "language": "id",
+          "user_scope": {
+            "role": "kaprodi",
+            "allowed_faculties": [
+              "STEI"
+            ],
+            "allowed_programs": [
+              "135"
+            ],
+            "allowed_courses": [
+              "IF2210"
+            ]
+          },
+          "input_context": {
+            "conversation_history": [],
+            "chart_context": null
+          },
+          "expected_behavior": {
+            "expected_query_type": "data_lookup",
+            "expected_tool_sequence": [
+              "sql"
+            ],
+            "expected_node_sequence": [
+              "input_guard",
+              "intent_classifier",
+              "query_rewriter",
+              "planner",
+              "sql_pipeline",
+              "step_reasoner",
+              "synthesizer"
+            ],
+            "expected_plan_steps": [
+              {
+                "task": "Retrieve the average evaluation score for IF2210 in semester 2024-1.",
+                "tool": "sql",
+                "required": false
+              }
+            ],
+            "expected_response_type": "text",
+            "required_answer_facts": [
+              "Mentions the average evaluation score for IF2210.",
+              "Uses semester 2024-1 as the time filter."
+            ],
+            "acceptable_answer_patterns": [
+              "Answer includes a numerical average or states that data is unavailable."
+            ],
+            "expected_clarification_slots": []
+          },
+          "scoring_rubric": {
+            "task_success_criteria": [
+              "Routes to portfolio domain.",
+              "Uses SQL exactly once.",
+              "Final answer contains the requested average."
+            ],
+            "faithfulness_reference": "Final answer must be supported by SQL result.",
+            "completeness_criteria": [
+              "Course code is addressed.",
+              "Semester is addressed.",
+              "Average value is addressed."
+            ]
+          },
+          "notes_for_dataset_author": "Single factual lookup; no multi-step planning is required."
+        }
+      ]
+    }
+  ]
+}

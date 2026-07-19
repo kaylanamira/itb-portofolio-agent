@@ -1,0 +1,477 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://itb-portofolio.local/schemas/experiment_2_sql_grounding_dataset.schema.json",
+  "title": "Experiment II SQL Grounding Dataset",
+  "description": "Schema for manually curated SQL grounding cases used to compare S1 Static Schema, S2 Dynamic Schema Grounding, and S3 Full Grounded SQL Pipeline.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dataset_name",
+    "version",
+    "description",
+    "total_cases",
+    "distribution",
+    "database_snapshot",
+    "cases"
+  ],
+  "properties": {
+    "dataset_name": {
+      "type": "string",
+      "description": "Stable dataset identifier, for example sql_grounding_cases."
+    },
+    "version": {
+      "type": "string",
+      "description": "Dataset version used to freeze the evaluation run, for example 1.0.0."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short explanation of the dataset purpose and construction rules."
+    },
+    "total_cases": {
+      "type": "integer",
+      "description": "Total number of SQL cases. For the planned experiment this should be 80.",
+      "minimum": 1
+    },
+    "database_snapshot": {
+      "type": "object",
+      "description": "Database snapshot information used to make SQL execution results reproducible.",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_id",
+        "description"
+      ],
+      "properties": {
+        "snapshot_id": {
+          "type": "string",
+          "description": "Stable identifier for the database dump or evaluation database version."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the snapshot contents."
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Optional ISO-8601 timestamp for the snapshot creation time."
+        }
+      }
+    },
+    "distribution": {
+      "type": "object",
+      "description": "Expected stratification of SQL cases by complexity category.",
+      "additionalProperties": false,
+      "required": [
+        "sql_complexity_counts"
+      ],
+      "properties": {
+        "sql_complexity_counts": {
+          "type": "object",
+          "description": "Number of cases for each SQL complexity category.",
+          "additionalProperties": false,
+          "required": [
+            "single_table_query",
+            "multi_table_join",
+            "aggregation",
+            "nested_query",
+            "window_function",
+            "conditional_aggregation",
+            "ambiguous_or_typo_entity",
+            "questionnaire_metadata"
+          ],
+          "properties": {
+            "single_table_query": {
+              "type": "integer",
+              "description": "Count of simple single-table selection or filtering cases."
+            },
+            "multi_table_join": {
+              "type": "integer",
+              "description": "Count of cases requiring joins or data from multiple views."
+            },
+            "aggregation": {
+              "type": "integer",
+              "description": "Count of COUNT, AVG, SUM, GROUP BY, or similar aggregation cases."
+            },
+            "nested_query": {
+              "type": "integer",
+              "description": "Count of EXISTS, IN, subquery, or nested selection cases."
+            },
+            "window_function": {
+              "type": "integer",
+              "description": "Count of ranking, trend, or comparative analytics cases using SQL window functions."
+            },
+            "conditional_aggregation": {
+              "type": "integer",
+              "description": "Count of cases requiring CASE WHEN or conditional aggregation."
+            },
+            "ambiguous_or_typo_entity": {
+              "type": "integer",
+              "description": "Count of cases requiring entity resolution because the user phrase contains typo, abbreviation, or informal name."
+            },
+            "questionnaire_metadata": {
+              "type": "integer",
+              "description": "Count of cases requiring catalog lookup for questionnaire code or option metadata."
+            }
+          }
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "description": "SQL evaluation cases. Each case should isolate one main SQL grounding challenge.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/sql_grounding_case"
+      }
+    }
+  },
+  "$defs": {
+    "sql_grounding_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sql_complexity",
+        "question",
+        "language",
+        "domain",
+        "user_scope",
+        "plan_step_context",
+        "expected_grounding",
+        "expected_sql_behavior",
+        "scoring",
+        "notes_for_dataset_author"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique case identifier. Recommended format: SQL-CATEGORY-###, for example SQL-ENTITY-001."
+        },
+        "sql_complexity": {
+          "type": "string",
+          "description": "SQL challenge category used for stratified reporting.",
+          "enum": [
+            "single_table_query",
+            "multi_table_join",
+            "aggregation",
+            "nested_query",
+            "window_function",
+            "conditional_aggregation",
+            "ambiguous_or_typo_entity",
+            "questionnaire_metadata"
+          ]
+        },
+        "question": {
+          "type": "string",
+          "description": "Natural language task sent to the SQL pipeline."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language of the question.",
+          "enum": [
+            "id",
+            "en",
+            "mixed"
+          ]
+        },
+        "user_scope": {
+          "type": "object",
+          "description": "User access scope used during SQL generation and execution.",
+          "additionalProperties": false,
+          "required": [
+            "role"
+          ],
+          "properties": {
+            "role": {
+              "type": "string",
+              "description": "Role value passed to UserScope."
+            },
+            "allowed_faculties": {
+              "type": "array",
+              "description": "Optional faculty codes allowed for this user.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowed_programs": {
+              "type": "array",
+              "description": "Optional study program identifiers allowed for this user.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "allowed_courses": {
+              "type": "array",
+              "description": "Optional course codes allowed for this user.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "plan_step_context": {
+          "type": "object",
+          "description": "Plan step context passed to the SQL pipeline so S1, S2, and S3 solve the same subtask.",
+          "additionalProperties": false,
+          "required": [
+            "task",
+            "tool",
+            "required"
+          ],
+          "properties": {
+            "task": {
+              "type": "string",
+              "description": "Current step task that SQL should solve."
+            },
+            "tool": {
+              "type": "string",
+              "description": "Expected tool label. For this experiment it should normally be sql.",
+              "enum": [
+                "sql"
+              ]
+            },
+            "required": {
+              "type": "boolean",
+              "description": "Whether catalog_lookup should be used before SQL generation in S3."
+            }
+          }
+        },
+        "prior_steps_context": {
+          "type": "string",
+          "description": "Optional context from previous steps, especially for questionnaire_metadata cases. Use an empty string if not needed."
+        },
+        "expected_grounding": {
+          "type": "object",
+          "description": "Expected schema linking and entity grounding outputs.",
+          "additionalProperties": false,
+          "required": [
+            "expected_tables",
+            "expected_entities",
+            "expected_catalog_references"
+          ],
+          "properties": {
+            "expected_tables": {
+              "type": "array",
+              "description": "Tables or views that should be selected by schema_linker.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expected_entities": {
+              "type": "object",
+              "description": "Canonical entities expected after entity resolution. Keys should match DetectedEntities fields where possible.",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "integer"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "expected_catalog_references": {
+              "type": "array",
+              "description": "Questionnaire codes, option groups, or metadata labels expected from catalog_lookup. Use an empty array when not applicable.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "expected_sql_behavior": {
+          "type": "object",
+          "description": "SQL-level expectations used for validation, execution accuracy, and result scoring.",
+          "additionalProperties": false,
+          "required": [
+            "must_include_sql_patterns",
+            "must_not_include_sql_patterns",
+            "expected_result_facts",
+            "gold_sql"
+          ],
+          "properties": {
+            "must_include_sql_patterns": {
+              "type": "array",
+              "description": "SQL fragments, table names, columns, clauses, or operations that should appear in a correct SQL query.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "must_not_include_sql_patterns": {
+              "type": "array",
+              "description": "SQL fragments, unsafe operations, sensitive columns, or wrong tables that must not appear.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expected_result_facts": {
+              "type": "array",
+              "description": "Facts expected from executing a correct SQL query. Can be exact values, row-count expectations, or semantic result requirements.",
+              "items": {
+                "type": "string"
+              }
+            },
+            "gold_sql": {
+              "description": "Optional gold SQL for reference. Use null if scoring is based only on execution result facts.",
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "numeric_tolerance": {
+              "type": "number",
+              "description": "Optional tolerance for numeric result comparison."
+            }
+          }
+        },
+        "scoring": {
+          "type": "object",
+          "description": "Metric-specific scoring flags for this case.",
+          "additionalProperties": false,
+          "required": [
+            "execution_accuracy_required",
+            "schema_selection_required",
+            "entity_resolution_required",
+            "catalog_lookup_required",
+            "retry_expected"
+          ],
+          "properties": {
+            "execution_accuracy_required": {
+              "type": "boolean",
+              "description": "Whether execution accuracy should be scored for this case."
+            },
+            "schema_selection_required": {
+              "type": "boolean",
+              "description": "Whether schema selection accuracy is meaningful for this case."
+            },
+            "entity_resolution_required": {
+              "type": "boolean",
+              "description": "Whether entity resolution is expected to affect this case."
+            },
+            "catalog_lookup_required": {
+              "type": "boolean",
+              "description": "Whether catalog_lookup is expected to affect this case."
+            },
+            "retry_expected": {
+              "type": "boolean",
+              "description": "Whether a retry may reasonably be needed for a correct final answer."
+            }
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "dataset_name": "sql_grounding_cases",
+      "version": "1.0.0",
+      "description": "Stratified SQL grounding evaluation dataset.",
+      "total_cases": 80,
+      "database_snapshot": {
+        "snapshot_id": "six_portfolio_eval_2026_07",
+        "description": "Frozen evaluation database containing portfolio academic views and questionnaire metadata.",
+        "created_at": "2026-07-19T00:00:00+07:00"
+      },
+      "distribution": {
+        "sql_complexity_counts": {
+          "single_table_query": 12,
+          "multi_table_join": 12,
+          "aggregation": 12,
+          "nested_query": 8,
+          "window_function": 8,
+          "conditional_aggregation": 8,
+          "ambiguous_or_typo_entity": 12,
+          "questionnaire_metadata": 8
+        }
+      },
+      "cases": [
+        {
+          "id": "SQL-ENTITY-001",
+          "sql_complexity": "ambiguous_or_typo_entity",
+          "question": "Berapa rata-rata evaluasi untuk Alstrukdat semester 2024-1?",
+          "language": "id",
+          "domain": "portfolio",
+          "user_scope": {
+            "role": "kaprodi",
+            "allowed_faculties": [
+              "STEI"
+            ],
+            "allowed_programs": [
+              "135"
+            ],
+            "allowed_courses": [
+              "IF2110"
+            ]
+          },
+          "plan_step_context": {
+            "task": "Retrieve the average evaluation score for the course referred to as Alstrukdat in semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          "prior_steps_context": "",
+          "expected_grounding": {
+            "expected_tables": [
+              "analitik.v_akademik_kelas"
+            ],
+            "expected_entities": {
+              "kode_matkul": "IF2110",
+              "nama_matkul": "Algoritma dan Struktur Data",
+              "tahun_ajaran": "2024",
+              "semester": 1
+            },
+            "expected_catalog_references": []
+          },
+          "expected_sql_behavior": {
+            "must_include_sql_patterns": [
+              "analitik.v_akademik_kelas",
+              "IF2110"
+            ],
+            "must_not_include_sql_patterns": [
+              "INSERT",
+              "UPDATE",
+              "DELETE",
+              "DROP"
+            ],
+            "expected_result_facts": [
+              "Returns an average evaluation value for IF2110 in semester 2024-1 or a valid empty result if the database has no matching rows."
+            ],
+            "gold_sql": null,
+            "numeric_tolerance": 0.01
+          },
+          "scoring": {
+            "execution_accuracy_required": true,
+            "schema_selection_required": true,
+            "entity_resolution_required": true,
+            "catalog_lookup_required": false,
+            "retry_expected": false
+          }
+        }
+      ]
+    }
+  ]
+}
