@@ -31,6 +31,7 @@ LLM_TEST_FILES = {
     "test_step_reasoner.py",
     "test_synthesizer.py",
     "test_clarification_handler.py",
+    "test_chart_interpreter.py",
 }
 
 T = TypeVar("T", bound=BaseModel)

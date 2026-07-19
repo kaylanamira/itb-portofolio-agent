@@ -3,7 +3,7 @@ import pytest
 from langchain_core.messages import HumanMessage, AIMessage
 
 from tests.conftest import load_cases
-from agent.nodes.query_rewriter import should_rewrite, query_rewriter
+from agent.nodes.query_rewriter import query_rewriter
 from evals.datasets.schemas import QueryRewriterCase
 from evals.scorer import NodeTestResult
 import os
@@ -24,14 +24,6 @@ ANAPHORIC_PATTERN = re.compile(
 CASES = load_cases("query_rewriter_cases.json", QueryRewriterCase)
 
 
-@pytest.mark.parametrize("case", CASES)
-def test_should_rewrite_heuristic(case: QueryRewriterCase):
-    """Verify the deterministic heuristic without LLM calls."""
-    actual = should_rewrite(case.query, case.history)
-    assert actual == case.expected_should_rewrite, (
-        f"[{case.id}] expected should_rewrite={case.expected_should_rewrite}, got {actual}"
-    )
-
 
 @pytest.mark.parametrize("case", CASES)
 @pytest.mark.asyncio
@@ -41,7 +33,7 @@ async def test_query_rewriter_node(case: QueryRewriterCase, make_state, node_res
     for i, content in enumerate(case.history_messages):
         messages.append(HumanMessage(content=content) if i % 2 == 0 else AIMessage(content=content))
 
-    state = make_state(query=case.query, messages=messages)
+    state = make_state(query=case.query, messages=messages, needs_rewrite=case.expected_should_rewrite)
     result = await query_rewriter(state)
 
     rewritten = result.get("effective_query", "")
@@ -77,7 +69,7 @@ async def test_query_rewriter_deepeval_metrics(case: QueryRewriterCase, make_sta
     for i, content in enumerate(case.history_messages):
         messages.append(HumanMessage(content=content) if i % 2 == 0 else AIMessage(content=content))
 
-    state = make_state(query=case.query, messages=messages)
+    state = make_state(query=case.query, messages=messages, needs_rewrite=case.expected_should_rewrite)
     result = await query_rewriter(state)
     rewritten = result.get("effective_query", "")
 

@@ -23,7 +23,40 @@ def main():
     # 3. Draw Main Orchestrator Graph with X-Ray (subgraphs expanded!)
     print("Generating main_graph_xray.png...")
     try:
-        main_xray_png = main_graph.get_graph(xray=1).draw_mermaid_png()
+        from langchain_core.runnables.graph_mermaid import draw_mermaid_png
+        mermaid_text = main_graph.get_graph(xray=1).draw_mermaid()
+        
+        # Customizations:
+        # 1. Remove catalog_lookup
+        # 2. Add box around sql_pipeline, rag_retriever, chart_interpreter
+        lines = mermaid_text.split('\n')
+        new_lines = []
+        tools = [
+            "portfolio_agent\\3asql_pipeline(sql_pipeline)",
+            "portfolio_agent\\3arag_retriever(rag_retriever)",
+            "portfolio_agent\\3achart_interpreter(chart_interpreter)"
+        ]
+        tools_inserted = False
+
+        for line in lines:
+            if "catalog_lookup" in line:
+                continue
+            
+            is_tool_def = any(t in line and not "-->" in line and not "-.->" in line for t in tools)
+            if is_tool_def:
+                if not tools_inserted:
+                    new_lines.append("\tsubgraph tools_box [Tools]")
+                    for t in tools:
+                        new_lines.append(f"\t{t}")
+                    new_lines.append("\tend")
+                    tools_inserted = True
+                continue
+                
+            new_lines.append(line)
+
+        new_mermaid = '\n'.join(new_lines)
+        main_xray_png = draw_mermaid_png(new_mermaid)
+        
         with open(os.path.join(output_dir, "main_graph_xray.png"), "wb") as f:
             f.write(main_xray_png)
     except Exception as e:
@@ -50,4 +83,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# how to run : uv run python utils/visualize_all_graphs.py
+# how to run : uv run python -m agent.utils.visualize_all_graphs

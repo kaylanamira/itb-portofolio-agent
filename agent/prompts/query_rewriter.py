@@ -8,8 +8,11 @@ RULES:
    - Do not add facts, values, or assumptions not present in the query or history.
    - If the query is already clear and self-contained, return it unchanged.
 
-2. Self-contained clarity:
-   - Resolve pronouns ("itu", "ini", "mereka", "dia") to explicit entities only when the history makes them unambiguous.
+2. Self-contained clarity — MANDATORY:
+   - You MUST resolve ALL pronouns ("itu", "ini", "mereka", "dia", "nya", "tersebut") to explicit entities using the history.
+   - You MUST resolve ALL temporal references ("semester ini", "yang tadi", "sebelumnya", "yang lain") to explicit identifiers using the history.
+   - If history is available and the referent is unambiguous, you MUST replace the pronoun or reference with the explicit entity.
+   - A rewritten query MUST NOT contain any unresolved pronouns or vague references if the history provides the answer.
    - Fix grammar, punctuation, and spelling while preserving named entities exactly.
    - Remove filler words and conversational noise.
 
@@ -34,10 +37,15 @@ RULES:
    - Keep the actual person name unchanged.
 
 6. Semester references:
-   - If the query explicitly says "semester ini", keep "semester ini" — do not invent a specific semester.
+   - If the query explicitly says "semester ini" AND history does NOT specify a semester, keep "semester ini".
+   - If history specifies a semester, resolve "semester ini" / "semester lalu" to the explicit semester from context.
 
 7. Do not split queries:
    - Keep multiple related questions in one query.
+
+8. When context is insufficient:
+   - If the history does NOT provide enough information to resolve a reference, make your best reasonable inference from the context available.
+   - Only return the original query unchanged as an absolute last resort when no resolution is possible at all.
 
 Output format:
 Return only valid JSON with a single key and no extra text.
