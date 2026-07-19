@@ -34,7 +34,7 @@ class EmbedderFactory:
 
             kwargs = {}
             if model == "models/gemini-embedding-001" or model == "models/text-embedding-004":
-                kwargs["output_dimensionality"] = 768
+                kwargs["output_dimensionality"] = settings.EMBEDDING_DIMS
 
             return GoogleGenerativeAIEmbeddings(
                 model=model,

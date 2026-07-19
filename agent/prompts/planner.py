@@ -20,7 +20,9 @@ TIPE QUERY (KLASIFIKASI):
 - text_lookup       : Membaca konten teks panjang/naratif (komentar mahasiswa, refleksi dosen, metode perkuliahan, usulan perbaikan). Kata kunci: "tampilkan komentar", "apa yang ditulis dosen", "tunjukkan usulan".
 - analytical_numeric: Interpretasi data numerik, butuh narasi penjelasan. Kata kunci: "bagaimana", "sejauh mana" + data angka/skor/kehadiran.
 - analytical_text   : Interpretasi teks (komentar, sentimen, tema keluhan). Kata kunci: "apa tema", "bagaimana sentimen", "apakah mahasiswa puas".
-- analytical_hybrid : Butuh data numerik DAN teks untuk jawaban lengkap. Kata kunci: "apakah perkuliahan terlaksana baik" (butuh skor + refleksi).
+- analytical_hybrid : Butuh data numerik DAN teks untuk jawaban lengkap.
+  Trigger: "bagaimana pelaksanaan", "bagaimana kualitas", "bagaimana kondisi", "bagaimana perkuliahan", "seberapa baik", "apakah sudah baik", "evaluasi kelas", "nilai dan komentar", "isu yang dialami", "masalah yang terjadi".
+  Aturan: jika query menggunakan kata "bagaimana" atau "apakah" + subjek yang punya DIMENSI KUALITATIF (pelaksanaan, kualitas, kondisi, efektivitas, pengalaman), maka WAJIB hybrid kecuali query hanya meminta angka/skor saja.
 - comparative       : Perbandingan eksplisit antar entitas. Kata kunci: "bandingkan", "perbedaan antara", "mana yang lebih".
 - diagnostic        : Mencari penyebab/alasan di balik pola. Kata kunci: "kenapa", "mengapa", "apa penyebab", "faktor apa".
 - chart_generate    : User ingin output visual/grafik. Kata kunci: "tunjukkan grafik", "buat chart", "plot", "visualisasikan".
@@ -38,6 +40,9 @@ KAPAN 1 LANGKAH CUKUP:
 
 KAPAN BUTUH BEBERAPA LANGKAH:
 - Query butuh kombinasi angka (dari SQL) dan teks (dari RAG) untuk jawaban yang lengkap.
+- Query dengan kata "bagaimana" atau "apakah" yang mengevaluasi KUALITAS / PENGALAMAN / KONDISI suatu kelas, matkul, atau prodi — angka saja tidak cukup, perlu konteks teks (refleksi dosen, komentar mahasiswa).
+  Contoh trigger → hybrid: "bagaimana pelaksanaan IF2210", "bagaimana kondisi kelas RPL", "apakah pembelajaran berjalan baik", "isu apa yang dialami mahasiswa", "seberapa efektif perkuliahan".
+  Contoh BUKAN hybrid: "bagaimana distribusi nilai" (hanya angka), "bagaimana perbandingan skor" (comparative).
 - Query diagnostik ("kenapa", "mengapa") yang memerlukan data statistik untuk melihat pola dan teks komentar/refleksi untuk mencari penyebabnya.
 - Query menyebut dimensi/topik survei secara semantik (contoh: "kepuasan dosen", "masalah psikologis") tanpa kode pertanyaan eksplisit dan membutuhkan filter atau agregasi per nilai jawaban — gunakan step pertama (required) untuk mengambil kode pertanyaan beserta seluruh opsi jawaban (nilai + label) dari katalog, lalu step kedua menggunakan hasil tersebut.
 - Langkah berikutnya hanya ditambahkan jika langkah sebelumnya tidak bisa menjawab pertanyaan tanpa konteks tambahan.
@@ -52,13 +57,15 @@ ATURAN KRITIS (KLASIFIKASI):
 - "bagaimana perbandingan" → comparative atau analytical_numeric (bukan chart_generate)
 - "tampilkan" + field teks spesifik (komentar, refleksi, usulan) → text_lookup (bukan chart_generate)
 - chart_interpret HANYA jika chart_context = present DAN query merujuk chart tersebut
-- Untuk chart_interpret, gunakan satu step dengan tool "chart_interpreter". 
+- Untuk chart_interpret, gunakan satu step dengan tool "chart_interpreter".
 - "ada berapa yang nilainya bagus/jelek" → clarification_needed (threshold ambigu)
 - "ada berapa yang nilainya ≥ B?" → data_lookup (threshold jelas)
 - "kenapa/mengapa" → diagnostic, bukan analytical
 - "berapa" + entitas spesifik → data_lookup, bukan analytical
 - "siapa" atau "apa saja" untuk mencari daftar nama (dosen, matkul) → data_lookup, bukan text_lookup (text_lookup HANYA untuk tulisan paragraf panjang seperti komentar/refleksi)
 - Mencari isi/daftar "pertanyaan kuesioner" atau "pertanyaan portofolio" → data_lookup (tabel referensi di database, bukan teks naratif RAG)
+- "bagaimana" + [pelaksanaan / kualitas / kondisi / pengalaman / efektivitas] → analytical_hybrid (BUKAN analytical_numeric) karena evaluasi kualitas butuh data angka DAN narasi teks
+- "bagaimana" + [distribusi / perbandingan / tren / statistik] → analytical_numeric atau comparative (cukup SQL)
 
 FORMAT OUTPUT (JSON)
 {{
@@ -135,6 +142,21 @@ Plan: [
   {{"task": "Ambil data numerik: skor evaluasi, kehadiran, rata-rata nilai kelas IF2210.", "tool": "sql"}},
   {{"task": "Ambil refleksi dan usulan perbaikan dosen IF2210 untuk konteks kualitatif.", "tool": "rag", "rag_source_types": ["teks_portofolio"], "rag_tipe_konten": ["refleksi_pelaksanaan", "usulan_perbaikan_dosen"]}}
 ]
+
+"Bagaimana pelaksanaan mata kuliah RPL semester genap 2024?"
+→ analytical_hybrid
+Plan: [
+  {{"task": "Ambil data numerik: skor evaluasi, kehadiran, rata-rata nilai seluruh kelas RPL semester genap 2024.", "tool": "sql"}},
+  {{"task": "Ambil refleksi pelaksanaan dan komentar mahasiswa kelas RPL semester genap 2024 untuk melengkapi gambaran kualitatif.", "tool": "rag", "rag_source_types": ["teks_portofolio", "komentar_mahasiswa"], "rag_tipe_konten": ["refleksi_pelaksanaan", "analisis_capaian_kelas"]}}
+]
+
+"Bagaimana kondisi kelas IF3110 semester ini?"
+→ analytical_hybrid
+Plan: [
+  {{"task": "Ambil data numerik kelas IF3110 semester ini: kehadiran, nilai, skor kuesioner.", "tool": "sql"}},
+  {{"task": "Ambil komentar mahasiswa dan catatan refleksi dosen kelas IF3110 semester ini.", "tool": "rag", "rag_source_types": ["komentar_mahasiswa", "teks_portofolio"], "rag_tipe_konten": ["refleksi_pelaksanaan", "isu"]}}
+]
+
 
 ── Diagnostik (SQL untuk pola + RAG untuk penyebab) ──
 
