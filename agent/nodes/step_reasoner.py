@@ -29,13 +29,18 @@ async def step_reasoner(state: AgentState) -> dict:
 
     if rag_res is not None:
         action_parts.append("rag")
-        formatted_rag = []
-        for chunk in rag_res:
-            formatted_rag.append({
-                "source": chunk.get("source_type"),
-                "content": chunk.get("chunk_text")
-            })
-        result_data["rag"] = formatted_rag
+        generated_answer = state.get("rag_generated_answer")
+        if generated_answer:
+            result_data["rag"] = {
+                "answer": generated_answer,
+                "citations": state.get("rag_citations", []),
+            }
+        else:
+            # FALLBACK/empty-chunk case: no generated answer, fall back to raw chunks.
+            result_data["rag"] = [
+                {"source": chunk.get("source_type"), "content": chunk.get("chunk_text")}
+                for chunk in rag_res
+            ]
         query_parts.append(f"RAG: {rag_query}")
 
     if not action_parts:
@@ -91,6 +96,8 @@ async def step_reasoner(state: AgentState) -> dict:
         "sql_row_count": None,
         "rag_query": None,
         "rag_chunks": None,
+        "rag_generated_answer": None,
+        "rag_citations": None,
         "answer_is_valid": None,
         "next_step": None,
         "attempt_count": 0,

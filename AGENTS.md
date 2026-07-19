@@ -12,8 +12,11 @@ This project is a production-grade LangGraph agentic system that translates natu
 
 ## Architecture Overview
 The system follows a Two-Phase approach:
-- **Phase 1 (Current)**: Text-to-SQL agent with orchestrator, planner, SQL pipeline, and synthesizer.
-- **Phase 2**: RAG extension. The graph already supports `rag` plan steps, but the current `rag_retriever` is a Phase 2 placeholder.
+- **Phase 1**: Text-to-SQL agent with orchestrator, planner, SQL pipeline, and synthesizer.
+- **Phase 2**: RAG extension. `agent/tools/rag/pipeline.py` is the modular, standalone-callable
+  RAG engine (hybrid dense+sparse retrieval with metadata filtering, CRAG-style corrective retrieval,
+  Multi-HyDE query expansion, Gemini-based generation with citations, RAGAS-style faithfulness self-check
+  with a Self-RAG-style regenerate loop). `agent/nodes/rag_retriever.py` is a thin LangGraph adapter over it.
 
 See `docs/ARCHITECTURE.md` and `docs/AGENT_NODES.md` for deep dives into node responsibilities.
 

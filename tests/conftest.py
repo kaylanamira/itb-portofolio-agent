@@ -31,6 +31,7 @@ LLM_TEST_FILES = {
     "test_step_reasoner.py",
     "test_synthesizer.py",
     "test_clarification_handler.py",
+    "test_rag_retriever.py",
     "test_chart_interpreter.py",
 }
 
@@ -49,7 +50,6 @@ def load_cases(filename: str, schema: Type[T] | None = None) -> list:
 
 def pytest_configure(config: Config):
     config.addinivalue_line("markers", "llm_eval: requires live LLM credentials and may call external services")
-    config.addinivalue_line("markers", "rag_phase2: scaffolded RAG tests, blocked until Phase 2")
 
 
 def pytest_collection_modifyitems(config: Config, items: list[Item]):
