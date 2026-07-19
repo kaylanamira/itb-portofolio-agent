@@ -115,7 +115,7 @@ Each query type contains the same orchestration complexity distribution: 2 singl
 
 #### 2.4.5 Dataset JSON Schema Summary
 
-The dataset file should be generated as `evals/datasets/architecture_orchestration_cases.json` using the schema in `docs/TA/schemas/experiment_1_architecture_dataset.schema.json`.
+The dataset file should be generated as `evals/datasets/architecture_orchestration_cases.json` using the schema in `evals/schemas/experiment_1_architecture_dataset.schema.json`.
 
 | Field Group | Required Fields | Purpose |
 |---|---|---|
