@@ -128,7 +128,7 @@ elif [ "${1:-}" = "--chart2" ]; then
 JSON
 )
 else
-  QUERY="${1:-apakah ada isu yg dialamai mahasiswa untuk mata kuliah IF3170?}"
+  QUERY="${1:-bagaimana pelaksanaan perkuliahan mata kuliah if3170 ?}"
   BODY=$(cat <<JSON
 {
   "query": "${QUERY}",
