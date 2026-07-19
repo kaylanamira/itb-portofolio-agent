@@ -1,0 +1,4300 @@
+{
+  "dataset_name": "sql_grounding_cases",
+  "version": "0.1.0",
+  "description": "Experiment II dataset: 80 manually-curated (first-pass, auto-templated) SQL grounding cases stratified by 8 SQL challenge categories, used to compare S1 Static Schema, S2 Dynamic Schema Grounding, and S3 Full Grounded SQL Pipeline.",
+  "total_cases": 80,
+  "database_snapshot": {
+    "snapshot_id": "TBD-snapshot-id",
+    "description": "Placeholder — set to the actual DB dump/version identifier used for the evaluation run before executing the experiment."
+  },
+  "distribution": {
+    "sql_complexity_counts": {
+      "single_table_query": 12,
+      "multi_table_join": 12,
+      "aggregation": 12,
+      "nested_query": 8,
+      "window_function": 8,
+      "conditional_aggregation": 8,
+      "ambiguous_or_typo_entity": 12,
+      "questionnaire_metadata": 8
+    }
+  },
+  "cases": [
+    {
+      "id": "SQL-SINGLE-001",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF2220 pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF2220 pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF2220 in semester 2023-2.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2220' AND semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF2220', 'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-002",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF3130 pada semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF3130 pada semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF3130 in semester 2023-1.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3130' AND semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF3130', 'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-003",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF3140 pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF3140 pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140",
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF3140 in semester 2022-2.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3140' AND semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF3140', 'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-004",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF3150 pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF3150 pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3150",
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF3150 in semester 2024-1.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3150' AND semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF3150', 'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-005",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF2211 pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF2211 pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211",
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF2211 in semester 2023-2.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2211' AND semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF2211', 'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-006",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF2210 pada semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF2210 pada semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF2210 in semester 2023-1.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-007",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF2220 pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF2220 pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF2220 in semester 2022-2.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2220' AND semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF2220', 'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-008",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF3130 pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF3130 pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF3130 in semester 2024-1.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3130' AND semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF3130', 'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-009",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF3140 pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF3140 pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140",
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF3140 in semester 2023-2.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3140' AND semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF3140', 'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-010",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF3150 pada semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF3150 pada semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3150",
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF3150 in semester 2023-1.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3150' AND semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF3150', 'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-011",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF2211 pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF2211 pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211",
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF2211 in semester 2022-2.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2211' AND semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF2211', 'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-SINGLE-012",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan rata-rata evaluasi kelas IF2210 pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan rata-rata evaluasi kelas IF2210 pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "kode_matkul",
+          "semester"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns exactly one row for IF2210 in semester 2024-1.",
+          "rata_rata_evaluasi is a numeric value between 0 and 4."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, semester, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=single_table_query. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-001",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2220 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2220 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF2220 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF2220';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF2220'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-002",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3130 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3130 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF3130 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF3130';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF3130'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-003",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3140 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3140 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF3140 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF3140';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF3140'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-004",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3150 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3150 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3150"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF3150 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF3150';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF3150'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-005",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2211 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2211 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF2211 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF2211';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF2211'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-006",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2210 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2210 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF2210 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF2210';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF2210'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-007",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2220 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2220 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF2220 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF2220';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF2220'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-008",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3130 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3130 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF3130 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF3130';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF3130'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-009",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3140 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3140 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF3140 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF3140';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF3140'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-010",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3150 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF3150 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3150"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF3150 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF3150';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF3150'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-011",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2211 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2211 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF2211 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF2211';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF2211'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-JOIN-012",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2210 beserta nama fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dan rata-rata evaluasi untuk kelas IF2210 beserta nama fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio",
+          "v_info_umum_kelas_matkul",
+          "v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "v_info_umum_dosen",
+          "JOIN"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result rows include dosen name and faculty name for IF2210 classes."
+        ],
+        "gold_sql": "SELECT p.kode_matkul, d.nama_dosen, p.rata_rata_evaluasi, k.nama_fakultas FROM v_akademik_portofolio p JOIN v_info_umum_kelas_matkul k ON p.no_kelas = k.no_kelas JOIN v_info_umum_dosen d ON k.id_dosen = d.id_dosen WHERE p.kode_matkul = 'IF2210';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=multi_table_join. Placeholder course/semester values ({'kode_matkul': 'IF2210'}); verify gold_sql column names against actual v_akademik_portofolio, v_info_umum_kelas_matkul, v_info_umum_dosen schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-001",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FMIPA",
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FMIPA in 2023-2.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FMIPA' AND semester = '2023-2';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FMIPA', 'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-002",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FTMD",
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FTMD in 2023-1.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FTMD' AND semester = '2023-1';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FTMD', 'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-003",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "STEI",
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty STEI in 2022-2.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'STEI' AND semester = '2022-2';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'STEI', 'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-004",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FMIPA",
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FMIPA in 2024-1.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FMIPA' AND semester = '2024-1';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FMIPA', 'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-005",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FTMD",
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FTMD in 2023-2.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FTMD' AND semester = '2023-2';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FTMD', 'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-006",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "STEI",
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty STEI in 2023-1.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'STEI' AND semester = '2023-1';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'STEI', 'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-007",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FMIPA",
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FMIPA in 2022-2.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FMIPA' AND semester = '2022-2';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FMIPA', 'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-008",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FTMD",
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FTMD in 2024-1.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FTMD' AND semester = '2024-1';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FTMD', 'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-009",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "STEI",
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty STEI in 2023-2.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'STEI' AND semester = '2023-2';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'STEI', 'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-010",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FMIPA pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FMIPA",
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FMIPA in 2023-1.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FMIPA' AND semester = '2023-1';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FMIPA', 'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-011",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas FTMD pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "FTMD",
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty FTMD in 2022-2.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'FTMD' AND semester = '2022-2';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'FTMD', 'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-AGG-012",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi seluruh kelas di fakultas STEI pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "STEI",
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "COUNT",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "avg_eval reflects mean evaluation for faculty STEI in 2024-1.",
+          "jumlah_kelas equals number of active classes in that scope."
+        ],
+        "gold_sql": "SELECT AVG(rata_rata_evaluasi) AS avg_eval, COUNT(*) AS jumlah_kelas FROM v_akademik_portofolio WHERE kode_fakultas = 'STEI' AND semester = '2024-1';",
+        "numeric_tolerance": 0.05
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=aggregation. Placeholder course/semester values ({'kode_fakultas': 'STEI', 'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-001",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2023-2 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2023-2' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2023-2');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-002",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2023-1 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2023-1' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2023-1');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-003",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2022-2 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2022-2' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2022-2');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-004",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2024-1 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2024-1' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2024-1');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-005",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2023-2 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2023-2' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2023-2');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-006",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2023-1 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2023-1' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2023-1');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-007",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2022-2 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2022-2' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2022-2');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-NESTED-008",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah apa saja yang rata-rata evaluasinya di bawah rata-rata institusi pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SELECT",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Only courses in 2024-1 with rata_rata_evaluasi below the institution mean are returned."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE semester = '2024-1' AND rata_rata_evaluasi < (SELECT AVG(rata_rata_evaluasi) FROM v_akademik_portofolio WHERE semester = '2024-1');"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=nested_query. Placeholder course/semester values ({'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-001",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2023-2' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-002",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2023-1' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-003",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2022-2' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-004",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2024-1' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-005",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2023-2' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-006",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2023-1' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-007",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2022-2' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-WINDOW-008",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan evaluasi tertinggi pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Top 5 courses ranked descending by rata_rata_evaluasi.",
+          "Rank values are monotonically increasing with decreasing score."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi, RANK() OVER (ORDER BY rata_rata_evaluasi DESC) AS peringkat FROM v_akademik_portofolio WHERE semester = '2024-1' LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=window_function. Placeholder course/semester values ({'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-001",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-002",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-003",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-004",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-005",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2023-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-006",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2023-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2023-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-007",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2022-2"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2022-2'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-CONDAGG-008",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan evaluasi 'baik' (>=3) dan 'kurang' (<3) pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun_ajaran": "2024-1"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "jumlah_baik and jumlah_kurang sum to the total class count for the semester."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN rata_rata_evaluasi >= 3 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN rata_rata_evaluasi < 3 THEN 1 ELSE 0 END) AS jumlah_kurang FROM v_akademik_portofolio WHERE semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=conditional_aggregation. Placeholder course/semester values ({'tahun_ajaran': '2024-1'}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-001",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas if 2210 pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas if 2210 pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2023-2",
+          "entity_candidates": {
+            "raw_input": "if 2210"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2210"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'if 2210' to canonical course code IF2210."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2023-2', 'entity_candidates': {'raw_input': 'if 2210'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-002",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas Pemrogramn Berorientasi Objek pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas Pemrogramn Berorientasi Objek pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2023-1",
+          "entity_candidates": {
+            "raw_input": "Pemrogramn Berorientasi Objek"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2210"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'Pemrogramn Berorientasi Objek' to canonical course code IF2210."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2023-1', 'entity_candidates': {'raw_input': 'Pemrogramn Berorientasi Objek'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-003",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas IF-2220 pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas IF-2220 pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun_ajaran": "2022-2",
+          "entity_candidates": {
+            "raw_input": "IF-2220"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2220"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'IF-2220' to canonical course code IF2220."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2220' AND semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2220', 'tahun_ajaran': '2022-2', 'entity_candidates': {'raw_input': 'IF-2220'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-004",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas if3130 pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas if3130 pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun_ajaran": "2024-1",
+          "entity_candidates": {
+            "raw_input": "if3130"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF3130"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'if3130' to canonical course code IF3130."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3130' AND semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF3130', 'tahun_ajaran': '2024-1', 'entity_candidates': {'raw_input': 'if3130'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-005",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas Rekayasa Perangkat  Lunak pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas Rekayasa Perangkat  Lunak pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140",
+          "tahun_ajaran": "2023-2",
+          "entity_candidates": {
+            "raw_input": "Rekayasa Perangkat  Lunak"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF3140"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'Rekayasa Perangkat  Lunak' to canonical course code IF3140."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3140' AND semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF3140', 'tahun_ajaran': '2023-2', 'entity_candidates': {'raw_input': 'Rekayasa Perangkat  Lunak'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-006",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas IF221O pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas IF221O pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2023-1",
+          "entity_candidates": {
+            "raw_input": "IF221O"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2210"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'IF221O' to canonical course code IF2210."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2023-1', 'entity_candidates': {'raw_input': 'IF221O'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-007",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas if 2210 pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas if 2210 pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2022-2",
+          "entity_candidates": {
+            "raw_input": "if 2210"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2210"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'if 2210' to canonical course code IF2210."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2022-2', 'entity_candidates': {'raw_input': 'if 2210'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-008",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas Pemrogramn Berorientasi Objek pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas Pemrogramn Berorientasi Objek pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2024-1",
+          "entity_candidates": {
+            "raw_input": "Pemrogramn Berorientasi Objek"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2210"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'Pemrogramn Berorientasi Objek' to canonical course code IF2210."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2024-1', 'entity_candidates': {'raw_input': 'Pemrogramn Berorientasi Objek'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-009",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas IF-2220 pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas IF-2220 pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun_ajaran": "2023-2",
+          "entity_candidates": {
+            "raw_input": "IF-2220"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2220"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'IF-2220' to canonical course code IF2220."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2220' AND semester = '2023-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2220', 'tahun_ajaran': '2023-2', 'entity_candidates': {'raw_input': 'IF-2220'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-010",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas if3130 pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas if3130 pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun_ajaran": "2023-1",
+          "entity_candidates": {
+            "raw_input": "if3130"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF3130"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'if3130' to canonical course code IF3130."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3130' AND semester = '2023-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF3130', 'tahun_ajaran': '2023-1', 'entity_candidates': {'raw_input': 'if3130'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-011",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas Rekayasa Perangkat  Lunak pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas Rekayasa Perangkat  Lunak pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140",
+          "tahun_ajaran": "2022-2",
+          "entity_candidates": {
+            "raw_input": "Rekayasa Perangkat  Lunak"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF3140"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'Rekayasa Perangkat  Lunak' to canonical course code IF3140."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF3140' AND semester = '2022-2';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF3140', 'tahun_ajaran': '2022-2', 'entity_candidates': {'raw_input': 'Rekayasa Perangkat  Lunak'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-ENTITY-012",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa rata-rata evaluasi kelas IF221O pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata evaluasi kelas IF221O pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun_ajaran": "2024-1",
+          "entity_candidates": {
+            "raw_input": "IF221O"
+          }
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IF2210"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Fuzzy entity resolver maps 'IF221O' to canonical course code IF2210."
+        ],
+        "gold_sql": "SELECT kode_matkul, rata_rata_evaluasi FROM v_akademik_portofolio WHERE kode_matkul = 'IF2210' AND semester = '2024-1';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=ambiguous_or_typo_entity. Placeholder course/semester values ({'kode_matkul': 'IF2210', 'tahun_ajaran': '2024-1', 'entity_candidates': {'raw_input': 'IF221O'}}); verify gold_sql column names against actual v_akademik_portofolio schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-001",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2220?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2220?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF2220' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF2220'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-002",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3130?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3130?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF3130' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF3130'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-003",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3140?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3140?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3140"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF3140' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF3140'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-004",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3150?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3150?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3150"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF3150' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF3150'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-005",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2211?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2211?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF2211' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF2211'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-006",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2210?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2210?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF2210' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF2210'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-007",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2220?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF2220?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF2220' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF2220'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    },
+    {
+      "id": "SQL-QMETA-008",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3130?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa arti skor komponen 'Kejelasan Penyampaian Materi' untuk kelas IF3130?",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kejelasan Penyampaian Materi' to questionnaire code KEJELASAN_MATERI.",
+      "expected_grounding": {
+        "expected_tables": [
+          "v_akademik_komponen_evaluasi_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130"
+        },
+        "expected_catalog_references": [
+          "kode_pertanyaan_frontend:KEJELASAN_MATERI"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_komponen_evaluasi_kelas",
+          "kode_pertanyaan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Score is correctly mapped to the catalog-resolved questionnaire item 'Kejelasan Penyampaian Materi', not a partial/wrong item."
+        ],
+        "gold_sql": "SELECT kode_matkul, kode_pertanyaan, pertanyaan, skor FROM v_akademik_komponen_evaluasi_kelas WHERE kode_matkul = 'IF3130' AND pertanyaan ILIKE '%Kejelasan Penyampaian Materi%';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Auto-generated first-pass case for category=questionnaire_metadata. Placeholder course/semester values ({'kode_matkul': 'IF3130'}); verify gold_sql column names against actual v_akademik_komponen_evaluasi_kelas schema before use as ground truth."
+    }
+  ]
+}

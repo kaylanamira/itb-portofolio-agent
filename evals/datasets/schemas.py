@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from enum import Enum
+from typing import Any, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -145,3 +146,172 @@ class RagRetrieverCase(BaseCase):
 class ChartInterpreterCase(BaseCase):
     chart_context: dict[str, Any]
     expected_facts: list[str] = Field(default_factory=list)
+
+
+# --- Experiment I & II ---
+
+class QueryTypeLabel(str, Enum):
+    DATA_LOOKUP = "data_lookup"
+    TEXT_LOOKUP = "text_lookup"
+    ANALYTICAL_NUMERIC = "analytical_numeric"
+    ANALYTICAL_TEXT = "analytical_text"
+    ANALYTICAL_HYBRID = "analytical_hybrid"
+    DIAGNOSTIC = "diagnostic"
+    COMPARATIVE = "comparative"
+    SUMMARIZATION = "summarization"
+    CHART_INTERPRET = "chart_interpret"
+    CLARIFICATION_NEEDED = "clarification_needed"
+
+
+class OrchestrationComplexity(str, Enum):
+    C1_SINGLE_TOOL = "C1_single_tool"
+    C2_PARALLEL_MULTI_TOOL = "C2_parallel_multi_tool"
+    C3_SEQUENTIAL = "C3_sequential"
+    C4_DEPENDENT_MULTI_STEP = "C4_dependent_multi_step"
+
+
+class ArchDomain(str, Enum):
+    PORTFOLIO = "portfolio"
+    OUT_OF_SCOPE = "out_of_scope"
+
+
+class UserScopeCase(BaseModel):
+    role: str
+    allowed_faculties: list[str] = Field(default_factory=list)
+    allowed_programs: list[str] = Field(default_factory=list)
+    allowed_courses: list[str] = Field(default_factory=list)
+
+
+class ConversationMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ArchInputContext(BaseModel):
+    conversation_history: list[ConversationMessage] = Field(default_factory=list)
+    chart_context: Optional[dict] = None
+
+
+class ExpectedPlanStep(BaseModel):
+    task: str
+    tool: str
+    required: bool
+
+
+class ArchExpectedBehavior(BaseModel):
+    expected_query_type: QueryTypeLabel
+    expected_tool_sequence: list[str]
+    expected_node_sequence: list[str]
+    expected_plan_steps: list[ExpectedPlanStep]
+    expected_response_type: str
+    required_answer_facts: list[str]
+    acceptable_answer_patterns: list[str]
+    expected_clarification_slots: Optional[list[str]] = None
+
+
+class ArchScoringRubric(BaseModel):
+    task_success_criteria: list[str]
+    faithfulness_reference: str
+    completeness_criteria: list[str]
+
+
+class ArchitectureCase(BaseModel):
+    id: str
+    query_type: QueryTypeLabel
+    orchestration_complexity: OrchestrationComplexity
+    domain: ArchDomain
+    raw_query: str
+    language: str
+    user_scope: UserScopeCase
+    input_context: ArchInputContext
+    expected_behavior: ArchExpectedBehavior
+    scoring_rubric: ArchScoringRubric
+    notes_for_dataset_author: str
+
+
+class ArchitectureDistribution(BaseModel):
+    query_type_counts: dict[str, int]
+    orchestration_complexity_counts: dict[str, int]
+
+
+class ArchitectureDataset(BaseModel):
+    dataset_name: str
+    version: str
+    description: str
+    total_cases: int
+    distribution: ArchitectureDistribution
+    cases: list[ArchitectureCase]
+
+
+class SqlComplexity(str, Enum):
+    SINGLE_TABLE_QUERY = "single_table_query"
+    MULTI_TABLE_JOIN = "multi_table_join"
+    AGGREGATION = "aggregation"
+    NESTED_QUERY = "nested_query"
+    WINDOW_FUNCTION = "window_function"
+    CONDITIONAL_AGGREGATION = "conditional_aggregation"
+    AMBIGUOUS_OR_TYPO_ENTITY = "ambiguous_or_typo_entity"
+    QUESTIONNAIRE_METADATA = "questionnaire_metadata"
+
+
+class PlanStepContext(BaseModel):
+    task: str
+    tool: str
+    required: bool
+
+
+class ExpectedGrounding(BaseModel):
+    expected_tables: list[str]
+    expected_entities: dict[str, Union[str, int, float, list, dict, None]]
+    expected_catalog_references: list[str] = Field(default_factory=list)
+
+
+class ExpectedSqlBehavior(BaseModel):
+    must_include_sql_patterns: list[str]
+    must_not_include_sql_patterns: list[str]
+    expected_result_facts: list[str]
+    gold_sql: Optional[str] = None
+    numeric_tolerance: Optional[float] = None
+
+
+class SqlScoringFlags(BaseModel):
+    execution_accuracy_required: bool
+    schema_selection_required: bool
+    entity_resolution_required: bool
+    catalog_lookup_required: bool
+    retry_expected: bool
+
+
+class SqlGroundingCase(BaseModel):
+    id: str
+    sql_complexity: SqlComplexity
+    question: str
+    language: str
+    domain: str
+    user_scope: UserScopeCase
+    plan_step_context: PlanStepContext
+    prior_steps_context: str = ""
+    expected_grounding: ExpectedGrounding
+    expected_sql_behavior: ExpectedSqlBehavior
+    scoring: SqlScoringFlags
+    notes_for_dataset_author: str
+
+
+class DatabaseSnapshot(BaseModel):
+    snapshot_id: str
+    description: str
+    created_at: Optional[str] = None
+
+
+class SqlGroundingDistribution(BaseModel):
+    sql_complexity_counts: dict[str, int]
+
+
+class SqlGroundingDataset(BaseModel):
+    dataset_name: str
+    version: str
+    description: str
+    total_cases: int
+    database_snapshot: DatabaseSnapshot
+    distribution: SqlGroundingDistribution
+    cases: list[SqlGroundingCase]
