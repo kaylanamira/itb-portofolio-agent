@@ -22,6 +22,7 @@ class ScopeEntry(BaseModel):
     no_ps: Optional[int] = None
     kd_fak: Optional[str] = None
     is_prime: bool = False
+    scope_label: Optional[str] = None
 
 
 class UserScope(BaseModel):

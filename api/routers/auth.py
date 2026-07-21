@@ -218,12 +218,14 @@ async def me(request: Request):
         "active_role": {
             "role": data["active_role"]["role"],
             "user_role_id": data["active_role"]["user_role_id"],
+            "scope_label": data["active_role"].get("scope_label"),
         },
         "available_roles": [
             {
                 "role": r["role"],
                 "user_role_id": r["user_role_id"],
                 "is_prime": r["is_prime"],
+                "scope_label": r.get("scope_label"),
             }
             for r in data["available_roles"]
         ],
@@ -265,18 +267,19 @@ async def switch_role(request: Request, body: SwitchRoleRequest):
             detail="Role tidak valid atau tidak dimiliki akun ini.",
         )
 
-    # Return state terbaru (session sudah diperbarui di switch_active_role)
     data = await get_session(session_id)
     return {
         "active_role": {
             "role": data["active_role"]["role"],
             "user_role_id": data["active_role"]["user_role_id"],
+            "scope_label": data["active_role"].get("scope_label"),
         },
         "available_roles": [
             {
                 "role": r["role"],
                 "user_role_id": r["user_role_id"],
                 "is_prime": r["is_prime"],
+                "scope_label": r.get("scope_label"),
             }
             for r in data["available_roles"]
         ],

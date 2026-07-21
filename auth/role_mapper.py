@@ -11,8 +11,9 @@ Pipeline:
     5. Tolak jika tidak ada role valid         → tidak punya akses
     6. Fetch dosen info (opsional)             → ms365.user_dosen JOIN utama.dosen
     7. Build ScopeEntry per role               → isi dosen_id, no_ps, kd_fak, kk_id
-    8. Tentukan active_role                    → role dengan prime=true, atau pertama
-    9. Return AuthUser                         → siap untuk create_session()
+    8. Resolve nama entitas → scope_label      → nama fakultas/prodi/kk per role
+    9. Tentukan active_role                    → role dengan prime=true, atau pertama
+    10. Return AuthUser                        → siap untuk create_session()
 
 Tanggung jawab file ini HANYA:
     - Query PostgreSQL
@@ -129,6 +130,12 @@ async def get_auth_user(ms365_id: str) -> AuthUser:
         scope_entries = [
             await _build_scope_entry(conn, r, dosen_info) for r in authorized
         ]
+
+        # Resolve nama entitas (fakultas/prodi/kk) → scope_label per entry.
+        # Dilakukan sebagai batch step terpisah supaya query nama tidak
+        # berulang untuk kd_fak/no_ps/kk_id yang sama di beberapa entry.
+        scope_entries = await _attach_scope_labels(conn, scope_entries)
+
         user_scope = _build_user_scope(user["user_id"], scope_entries)
 
         logger.info(
@@ -240,6 +247,111 @@ async def _fetch_prodi_kd_fak(conn, no_ps: int) -> str | None:
     )
     row = await cursor.fetchone()
     return row[0] if row else None
+
+
+async def _fetch_fakultas_names(conn, kd_fak_list: list[str]) -> dict[str, str]:
+    """Batch lookup nama fakultas (id) untuk daftar kd_fak. Kembalikan {} jika kosong."""
+    if not kd_fak_list:
+        return {}
+    cursor = await conn.execute(
+        "SELECT kd_fak, nama->>'id' AS nama_id FROM utama.fakultas WHERE kd_fak = ANY(%s)",
+        (kd_fak_list,),
+    )
+    rows = await cursor.fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+async def _fetch_prodi_names(conn, no_ps_list: list[int]) -> dict[int, str]:
+    """
+    Batch lookup nama prodi (id) + jenjang untuk daftar no_ps. Kembalikan {} jika kosong.
+
+    Label diformat "Nama Prodi (Jenjang)", misal "Teknik Informatika (S1)",
+    supaya prodi dengan nama sama di jenjang berbeda (S1/S2/S3) tetap
+    terbedakan di profil header.
+    """
+    if not no_ps_list:
+        return {}
+    cursor = await conn.execute(
+        "SELECT no_ps, nama->>'id' AS nama_id, kd_strata "
+        "FROM utama.program_studi WHERE no_ps = ANY(%s)",
+        (no_ps_list,),
+    )
+    rows = await cursor.fetchall()
+    return {
+        row[0]: f"{row[1]} ({row[2]})" if row[2] else row[1]
+        for row in rows
+    }
+
+
+async def _fetch_kk_names(conn, kk_id_list: list[int]) -> dict[int, str]:
+    """Batch lookup nama kk (id) untuk daftar kk_id. Kembalikan {} jika kosong."""
+    if not kk_id_list:
+        return {}
+    cursor = await conn.execute(
+        "SELECT kk_id, nama->>'id' AS nama_id FROM utama.kk WHERE kk_id = ANY(%s)",
+        (kk_id_list,),
+    )
+    rows = await cursor.fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+_INSTITUT_LABEL = "Institut Teknologi Bandung"
+
+
+def _compute_scope_label(
+    entry: ScopeEntry,
+    fakultas_names: dict[str, str],
+    prodi_names: dict[int, str],
+    kk_names: dict[int, str],
+) -> str:
+    """
+    Tentukan scope_label yang tampil di profil header, sesuai role:
+        dekan / jajaran_dekanat → nama fakultas (kd_fak)
+        kaprodi / jajaran_prodi → nama prodi (no_ps)
+        dosen                   → nama kk (kk_id); fallback nama fakultas
+                                   rumah kalau dosen belum tergabung KK aktif
+        admin / direktorat      → label institut (scope nasional, tidak terikat entitas)
+    """
+    if entry.role in (UserRole.DEKAN, UserRole.JAJARAN_DEKANAT):
+        if entry.kd_fak and entry.kd_fak in fakultas_names:
+            return fakultas_names[entry.kd_fak]
+        return entry.kd_fak or _INSTITUT_LABEL
+
+    if entry.role in (UserRole.KAPRODI, UserRole.JAJARAN_PRODI):
+        if entry.no_ps is not None and entry.no_ps in prodi_names:
+            return prodi_names[entry.no_ps]
+        return f"Prodi {entry.no_ps}" if entry.no_ps is not None else _INSTITUT_LABEL
+
+    if entry.role == UserRole.DOSEN:
+        if entry.kk_id is not None and entry.kk_id in kk_names:
+            return kk_names[entry.kk_id]
+        if entry.kd_fak and entry.kd_fak in fakultas_names:
+            return fakultas_names[entry.kd_fak]
+        return _INSTITUT_LABEL
+
+    # ADMIN / DIREKTORAT → scope nasional, tidak terikat entitas tunggal
+    return _INSTITUT_LABEL
+
+
+async def _attach_scope_labels(conn, entries: list[ScopeEntry]) -> list[ScopeEntry]:
+    """
+    Batch-resolve nama fakultas/prodi/kk untuk semua entries sekaligus
+    (menghindari N query terpisah), lalu tempel scope_label ke tiap entry.
+    """
+    kd_fak_list = list({e.kd_fak for e in entries if e.kd_fak})
+    no_ps_list  = list({e.no_ps for e in entries if e.no_ps is not None})
+    kk_id_list  = list({e.kk_id for e in entries if e.kk_id is not None})
+
+    fakultas_names = await _fetch_fakultas_names(conn, kd_fak_list)
+    prodi_names    = await _fetch_prodi_names(conn, no_ps_list)
+    kk_names       = await _fetch_kk_names(conn, kk_id_list)
+
+    return [
+        e.model_copy(update={
+            "scope_label": _compute_scope_label(e, fakultas_names, prodi_names, kk_names),
+        })
+        for e in entries
+    ]
 
 
 # ─── Private: Role Mapping ────────────────────────────────────────────────────
