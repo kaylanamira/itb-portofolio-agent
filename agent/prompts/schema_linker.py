@@ -161,7 +161,8 @@ TABLE ROUTING:
 - Master data (KK list, etc.): use utama.* only when v_info_umum_* is insufficient.
 
 COLUMN NAMING — analitik.v_*:
-- kode_matkul (6-char, e.g. "IF2210"), nama_matkul_id, nama_matkul_en
+- kode_matkul (6-char, e.g. "IF2210"), nama_matkul_id, nama_matkul_en, no_kelas
+- SELALU sertakan `kode_matkul`, `nama_matkul_id`, dan `no_kelas` saat SELECT dari `v_akademik_kelas` agar entitas kelas dapat dikenali secara human-readable oleh synthesizer (bukan hanya `kelas_id`).
 - no_prodi (integer, e.g. 135), kode_prodi (varchar 2-char, e.g. "IF"), kode_fakultas
 - avg_ip_akhir_mahasiswa (not rata_ip_akhir_mahasiswa)
 

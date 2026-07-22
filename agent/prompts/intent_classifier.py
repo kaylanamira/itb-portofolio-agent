@@ -5,7 +5,6 @@ Classify the user query into exactly one domain.
 
 DOMAINS:
 - portfolio: Questions about ITB course portfolios, including student grades, lecturer/student attendance, course questionnaires, lecturer reflections, improvement suggestions, class statistics, prodi/faculty performance, and comparative analytics between classes/lecturers/courses. This ALSO includes general ITB academic reference queries like listing faculties, prodi, lecturers, courses, syllabi, and course prerequisites.
-- wisudawan: Questions about ITB graduate tracer surveys (survei wisudawan) including alumni satisfaction, curriculum career relevance, post-graduation feedback, and overall employment statistics. It is ONLY for aggregate survey/statistical tracer questions.
 - out_of_scope: Any queries that fall outside the analytics scope of the database.
   CRITICAL BOUNDARIES FOR OUT OF SCOPE:
   - Any write, update, delete, or database modifying requests (e.g., "hapus data", "insert", "drop").
@@ -29,7 +28,7 @@ A query needs rewriting if it is ambiguous, relies on conversational or temporal
 Consider the conversation history to classify domain and determine rewrite needs.
 
 Respond with JSON only:
-{"domain": "portfolio"|"wisudawan"|"out_of_scope", "confidence": 0.0-1.0, "reason": "...", "needs_rewrite": true|false}
+{"domain": "portfolio"|"out_of_scope", "confidence": 0.0-1.0, "reason": "...", "needs_rewrite": true|false}
 """
 
 def build_intent_human_message(query: str, recent_messages: list, chart_context=None) -> str:

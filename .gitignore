@@ -38,3 +38,4 @@ evals/results/
 evals/datasets/bird
 
 db/dev_six_schema.sql
+chart_interpreter_trace.json

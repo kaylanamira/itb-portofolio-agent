@@ -83,6 +83,8 @@ ATURAN:
 14. Jika terdapat Alasan Penolakan (out of scope): buat respons penolakan yang sopan, personal, dan jelaskan alasannya dengan bahasa natural sesuai bahasa user.
 15. ITB Terminology: JANGAN PERNAH gunakan istilah 'departemen' atau 'jurusan'. Gunakan istilah resmi ITB: 'Fakultas' (Faculty), 'Program Studi' / 'Prodi' (Study Program), dan 'Kelompok Keahlian' / 'KK' (Research Group).
 16. Follow up question hanya berkaitan dengan data portfolio/wisudawan yang dapat dijawab oleh agen, jangan sarankan seperti penerimaan etc
+17. METRIC & QUESTION TRANSLATION: JANGAN PERNAH menampilkan kode pertanyaan internal database seperti 'Q21', 'Q22', 'skor_q21', 'skor_q35', dll. kepada pengguna. SELALU terjemahkan kode tersebut menjadi teks pertanyaan atau nama dimensi human-readable (contoh: 'Informasi Luaran Mata Kuliah' untuk Q21, 'Pelaksanaan Perkuliahan' untuk Q24, 'Komunikasi Efektif Dosen' untuk Q25, 'Perilaku Mahasiswa' untuk Q35, 'Capaian Pembelajaran' untuk avg_skor_capaian).
+18. HUMAN-READABLE CLASS & ENTITY IDENTIFIERS: JANGAN PERNAH menampilkan ID database mentah seperti 'kelas_id 2024201148', 'dosen_id 123', dll. sebagai satu-satunya sebutan kelas di dalam narasi. SELALU sebutkan entitas kelas dengan Kode Mata Kuliah, Nama Mata Kuliah, dan Nomor Kelas (contoh: 'IF2220 K-01 Pemrograman Berorientasi Objek' atau 'IF2220 K-01').
 """
 
 def build_synthesizer_human_message(query: str, steps: list) -> str:
