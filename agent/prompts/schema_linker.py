@@ -41,6 +41,8 @@ COLUMN NAMING:
 - utama.program_studi: `no_ps`, `kd_ps`, `nama` JSONB
 - utama.fakultas: `kd_fak`, `nama` JSONB
 - utama.dosen: `nama_gelar` (generated, full name + titles)
+- kode_matkul (6-char, e.g. "IF2210"), nama_matkul_id, nama_matkul_en, no_kelas
+- SELALU sertakan `kode_matkul`, `nama_matkul_id`, dan no_kelas saat SELECT dari v_akademik_kelas agar entitas kelas dapat dikenali secara human-readable oleh synthesizer (bukan hanya `kelas_id`).
 
 TIME RESOLUTION:
 - "semester ini" → resolve using context. "semester lalu" → decrement (Ganjil wraps to previous year Genap).
