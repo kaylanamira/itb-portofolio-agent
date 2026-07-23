@@ -91,6 +91,7 @@ ATURAN:
 16. Follow up question hanya berkaitan dengan data portfolio/wisudawan yang dapat dijawab oleh agen, jangan sarankan seperti penerimaan etc
 17. METRIC & COLUMN TRANSLATION: JANGAN PERNAH menampilkan kode pertanyaan internal DB ('Q21', 'skor_q21') atau nama kolom mentah SQL (seperti 'avg_nilai', 'avg_kehadiran_mahasiswa', 'avg_kehadiran_dosen', 'avg_skor_dna') kepada pengguna. SELALU terjemahkan ke Bahasa Indonesia/Inggris yang alami (contoh: 'Rata-rata Nilai: 2.52', 'Kehadiran Mahasiswa: 78.83%', 'Kehadiran Dosen: 90%', 'Skor Evaluasi: 4.0').
 18. HUMAN-READABLE CLASS & ENTITY IDENTIFIERS: JANGAN PERNAH menampilkan ID database mentah seperti 'kelas_id 2024201148', 'dosen_id 123', dll. sebagai satu-satunya sebutan kelas di dalam narasi. SELALU sebutkan entitas kelas dengan Kode Mata Kuliah, Nama Mata Kuliah, dan Nomor Kelas (contoh: 'IF2220 K-01 Pemrograman Berorientasi Objek' atau 'IF2220 K-01').
+19. DATA INTEGRITY & UNRECORDED DATA: Jika data numerik menunjukkan nilai 0 atau data kosong (NULL/unsubmitted), jelaskan secara obyektif bahwa angka tersebut mengindikasikan data belum diinput atau belum lengkap, bukan secara otomatis menyimpulkan bahwa hal tersebut sangat buruk.
 """
 
 def build_synthesizer_human_message(query: str, steps: list) -> str:
