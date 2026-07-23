@@ -6,6 +6,15 @@ from agent.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 
+def _clean_narrative(text: str) -> str:
+    if not isinstance(text, str):
+        return str(text)
+    text = text.replace("\\n", "\n")
+    import re
+    text = re.sub(r'([^\n])\n(###?\s)', r'\1\n\n\2', text)
+    return text.strip()
+
+
 async def synthesizer(state: AgentState) -> dict:
     llm = get_llm("synthesis")
     query = state.get("effective_query", state.get("raw_query", ""))
@@ -26,14 +35,14 @@ async def synthesizer(state: AgentState) -> dict:
             content = extract_json_from_llm(response.content)
             formatted = FormattedResponse(
                 response_type="error" if state.get("is_aborted") else "text",
-                narrative=content.get("narrative", abort_reason),
+                narrative=_clean_narrative(content.get("narrative", abort_reason)),
                 artifacts=[],
                 follow_up_suggestions=content.get("follow_up_suggestions", [])
             )
         except Exception:
             formatted = FormattedResponse(
                 response_type="error" if state.get("is_aborted") else "text",
-                narrative=abort_reason,
+                narrative=_clean_narrative(abort_reason),
                 artifacts=[]
             )
         return {"formatted_response": formatted}
@@ -79,7 +88,7 @@ async def synthesizer(state: AgentState) -> dict:
 
         formatted = FormattedResponse(
             response_type="mixed" if artifacts else "text",
-            narrative=content.get("narrative", "Berikut adalah hasil analisis kami."),
+            narrative=_clean_narrative(content.get("narrative", "Berikut adalah hasil analisis kami.")),
             artifacts=artifacts,
             follow_up_suggestions=content.get("follow_up_suggestions", []),
             disclaimer=content.get("disclaimer")
