@@ -147,8 +147,8 @@ def check_sql_security(
 
     stmt = statements[0]
 
-    if not isinstance(stmt, exp.Select):
-        return False, f"Security Violation: Only SELECT allowed, got {type(stmt).__name__}"
+    if not isinstance(stmt, (exp.Query, exp.Subquery)):
+        return False, f"Security Violation: Only read-only queries allowed, got {type(stmt).__name__}"
 
     # Check for write ops in subqueries/CTEs
     for node in stmt.walk():
