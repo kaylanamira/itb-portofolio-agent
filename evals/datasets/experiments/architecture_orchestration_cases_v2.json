@@ -1,0 +1,5562 @@
+{
+  "dataset_name": "architecture_orchestration_cases_v2",
+  "version": "2.0.0",
+  "description": "Experiment I dataset v2: 80 domain-grounded cases. Replaces 'summarization' with 'chart_generate'. C2 uses genuinely parallel retrieval. C3 uses catalog-prerequisite or entity-resolution. C4 has 3-step dependent chains.",
+  "total_cases": 80,
+  "distribution": {
+    "query_type_counts": {
+      "data_lookup": 8,
+      "text_lookup": 8,
+      "analytical_numeric": 8,
+      "analytical_text": 8,
+      "analytical_hybrid": 8,
+      "diagnostic": 8,
+      "comparative": 8,
+      "chart_generate": 8,
+      "chart_interpret": 8,
+      "clarification_needed": 8
+    },
+    "orchestration_complexity_counts": {
+      "C1_single_tool": 20,
+      "C2_parallel_multi_tool": 20,
+      "C3_sequential": 20,
+      "C4_dependent_multi_step": 20
+    }
+  },
+  "cases": [
+    {
+      "id": "ARCH-DATA-C1-001",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Berapa skor evaluasi overall rata-rata kelas IF3170 semester 2024-1 dan berapa jumlah respondennya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall dan jumlah_responden seluruh kelas IF3170 semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut angka skor overall IF3170 semester 2024-1.",
+          "Jawaban menyebut jumlah responden kuesioner."
+        ],
+        "acceptable_answer_patterns": [
+          "Jawaban langsung menyebut skor dan jumlah responden IF3170 2024-1."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor numerik IF3170.",
+          "Jawaban menyebut jumlah responden.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi avg_skor_overall dan jumlah_responden IF3170 2024-1.",
+        "completeness_criteria": [
+          "Mencakup skor overall dan jumlah responden IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C1-002",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Siapa saja dosen yang mengajar kelas IF3110 pada semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil daftar nama dosen pengampu semua kelas IF3110 semester 2024-1 beserta kode kelasnya.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut nama dosen yang mengajar IF3110 semester 2024-1.",
+          "Jawaban menyebut kode kelas (K01, K02, dst)."
+        ],
+        "acceptable_answer_patterns": [
+          "Daftar dosen IF3110 2024-1 dengan kode kelasnya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut nama dosen spesifik.",
+          "Jawaban menyebut kode kelas.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi daftar nama_dosen dan kode_kelas IF3110 2024-1.",
+        "completeness_criteria": [
+          "Mencakup seluruh dosen pengampu IF3110 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C2-001",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Berapa rata-rata kehadiran mahasiswa di prodi IF dan berapa rata-rata kehadiran mahasiswa di prodi EL semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil rata-rata kehadiran mahasiswa prodi IF semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil rata-rata kehadiran mahasiswa prodi EL semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut angka kehadiran mahasiswa prodi IF.",
+          "Jawaban menyebut angka kehadiran mahasiswa prodi EL."
+        ],
+        "acceptable_answer_patterns": [
+          "Angka kehadiran IF dan EL disajikan secara terpisah."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut kehadiran IF dan EL.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql step 1 (kehadiran IF) dan step 2 (kehadiran EL).",
+        "completeness_criteria": [
+          "Mencakup kehadiran mahasiswa IF dan EL semester 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C2-002",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Berapa jumlah kelas aktif IF3170 dan berapa jumlah kelas aktif IF3140 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Hitung jumlah kelas aktif IF3170 semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Hitung jumlah kelas aktif IF3140 semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut jumlah kelas aktif IF3170 2024-1.",
+          "Jawaban menyebut jumlah kelas aktif IF3140 2024-1."
+        ],
+        "acceptable_answer_patterns": [
+          "Jumlah kelas IF3170 dan IF3140 disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut jumlah kelas IF3170 dan IF3140.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql step 1 (IF3170) dan step 2 (IF3140).",
+        "completeness_criteria": [
+          "Mencakup jumlah kelas IF3170 dan IF3140."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C3-001",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Berapa persentase mahasiswa IF semester 2024-1 yang menilai beban kerja tidak sesuai dengan jumlah SKS mata kuliah?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner dimensi pelaksanaan perkuliahan untuk kode pertanyaan beban kerja/SKS.",
+            "tool": "sql",
+            "required": true,
+            "catalog_dimension": "Pelaksanaan perkuliahan"
+          },
+          {
+            "task": "Hitung persentase mahasiswa IF 2024-1 dengan respons rendah (≤2) pada Q28 dari langkah sebelumnya.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut persentase mahasiswa IF yang menilai beban tidak sesuai SKS.",
+          "Jawaban mengacu pada Q28 atau beban kerja/SKS."
+        ],
+        "acceptable_answer_patterns": [
+          "Persentase mahasiswa IF dengan respons rendah pada Q28 disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut persentase numerik.",
+          "Grounded dari catalog lookup + sql_pipeline."
+        ],
+        "faithfulness_reference": "catalog Q28 + sql persentase mahasiswa IF Q28 rendah.",
+        "completeness_criteria": [
+          "Menyebut persentase mahasiswa IF dengan Q28 rendah."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C3-002",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Berapa persen mahasiswa prodi IF semester 2024-1 yang memberi nilai setuju (≥3) pada seluruh dimensi evaluasi?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Catalog lookup: kode pertanyaan dimensi capaian, pelaksanaan, sarana, dan perilaku dosen untuk prodi IF.",
+            "tool": "sql",
+            "required": true,
+            "catalog_dimension": "all"
+          },
+          {
+            "task": "Hitung persentase mahasiswa IF 2024-1 yang memberi skor ≥3 pada semua dimensi dari langkah sebelumnya.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut persentase mahasiswa IF yang memberi skor ≥3 pada semua dimensi.",
+          "Jawaban mengacu pada data kuesioner portofolio IF."
+        ],
+        "acceptable_answer_patterns": [
+          "Persentase mahasiswa IF dengan skor ≥3 di semua dimensi disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut persentase numerik.",
+          "Grounded dari catalog lookup + sql_pipeline."
+        ],
+        "faithfulness_reference": "catalog all dimensions + sql persentase mahasiswa IF skor ≥3 semua dimensi.",
+        "completeness_criteria": [
+          "Menyebut persentase mahasiswa IF yang memberi nilai setuju di semua dimensi."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C4-001",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari seluruh matkul di prodi IF semester 2024-1, temukan yang memiliki tingkat kelulusan terendah, lalu tampilkan distribusi nilai lengkap untuk matkul tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil matkul prodi IF semester 2024-1 diurutkan dari dist_pct_lulus terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil distribusi nilai lengkap (dist_jumlah_a/ab/b/bc/c/d/e) matkul kelulusan terendah dari langkah sebelumnya.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi matkul IF 2024-1 dengan kelulusan terendah.",
+          "Jawaban menyebut distribusi nilai lengkap untuk matkul tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Matkul terendah dan distribusi nilainya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi matkul terendah.",
+          "Jawaban menyebut distribusi nilai.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (ranking kelulusan IF) dan sql (distribusi nilai matkul terendah).",
+        "completeness_criteria": [
+          "Menyebut matkul terendah dan distribusi nilainya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C4-002",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Temukan semester dengan skor overall STEI paling rendah dalam 3 tahun terakhir, kemudian tampilkan skor per dimensi (capaian, pelaksanaan, sarana, perilaku) untuk semester tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil tren avg_skor_overall per semester STEI dalam 3 tahun terakhir, urutkan dari terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil avg_skor_capaian, avg_skor_pelaksanaan, avg_skor_sarana_prasarana, avg_skor_perilaku_mahasiswa STEI untuk semester terburuk dari langkah sebelumnya.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi semester STEI dengan skor overall terendah.",
+          "Jawaban menyebut skor per dimensi untuk semester tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Semester terburuk STEI dan skor dimensinya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi semester terendah STEI.",
+          "Jawaban menyebut skor 4 dimensi.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql tren STEI + sql breakdown dimensi semester terburuk.",
+        "completeness_criteria": [
+          "Menyebut semester terendah STEI dan skor per dimensinya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C1-001",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Tampilkan komentar-komentar mahasiswa dari kelas IF3170 K01 semester 2024-1.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil komentar mahasiswa IF3170 K01 semester 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170",
+              "kode_kelas": "K01"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban berisi komentar mahasiswa IF3170 K01 2024-1.",
+          "Komentar berasal dari semester 2024-1."
+        ],
+        "acceptable_answer_patterns": [
+          "Komentar mahasiswa IF3170 K01 2024-1 disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban berisi komentar mahasiswa IF3170 K01.",
+          "Grounded dari rag_retriever."
+        ],
+        "faithfulness_reference": "rag_chunks berisi komentar_mahasiswa IF3170 K01 2024-1.",
+        "completeness_criteria": [
+          "Mencakup komentar mahasiswa IF3170 K01 semester 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C1-002",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa yang ditulis dosen pengampu IF3140 sebagai usulan perbaikan di portofolio kelas semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil teks usulan perbaikan dosen dari portofolio IF3140 semester 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "usulan_perbaikan_dosen"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3140"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban berisi usulan perbaikan dosen IF3140 dari portofolio.",
+          "Isi berasal dari teks portofolio."
+        ],
+        "acceptable_answer_patterns": [
+          "Usulan perbaikan dosen IF3140 dari portofolio disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban berisi usulan perbaikan spesifik.",
+          "Grounded dari rag_retriever teks_portofolio."
+        ],
+        "faithfulness_reference": "rag_chunks berisi teks usulan_perbaikan_dosen IF3140 2024-1.",
+        "completeness_criteria": [
+          "Mencakup usulan perbaikan dosen IF3140 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C2-001",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Tampilkan komentar mahasiswa IF3170 dan refleksi pelaksanaan dosen IF3170 dari semester 2024-1.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil komentar mahasiswa IF3170 semester 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          },
+          {
+            "task": "Ambil refleksi pelaksanaan dosen IF3170 semester 2024-1 dari portofolio.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban berisi komentar mahasiswa IF3170 2024-1.",
+          "Jawaban berisi refleksi dosen IF3170 2024-1."
+        ],
+        "acceptable_answer_patterns": [
+          "Komentar mahasiswa dan refleksi dosen IF3170 disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban berisi komentar mahasiswa dan refleksi dosen IF3170.",
+          "Grounded dari dua rag_retriever."
+        ],
+        "faithfulness_reference": "rag step 1 (komentar IF3170) dan step 2 (refleksi IF3170).",
+        "completeness_criteria": [
+          "Mencakup komentar mahasiswa DAN refleksi dosen IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C2-002",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Tunjukkan usulan perbaikan dosen IF3170 dan rekomendasi dosen ke ITB dari portofolio kelas semester 2024-1.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil usulan perbaikan dosen IF3170 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "usulan_perbaikan_dosen"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          },
+          {
+            "task": "Ambil rekomendasi dosen IF3170 ke ITB 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "rekomendasi_ke_itb"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban berisi usulan perbaikan dosen IF3170.",
+          "Jawaban berisi rekomendasi dosen IF3170 ke ITB."
+        ],
+        "acceptable_answer_patterns": [
+          "Dua jenis teks portofolio IF3170 disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban memuat usulan perbaikan dan rekomendasi IF3170.",
+          "Grounded dari dua rag_retriever."
+        ],
+        "faithfulness_reference": "rag step 1 (usulan_perbaikan) dan step 2 (rekomendasi_ke_itb) IF3170.",
+        "completeness_criteria": [
+          "Mencakup usulan perbaikan DAN rekomendasi ke ITB IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C3-001",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Di antara kelas IF1220 semester 2024-1, kelas mana yang mendapat skor evaluasi terendah? Tampilkan komentar mahasiswanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil kode kelas IF1220 semester 2024-1 dengan skor overall terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dari kelas IF1220 dengan skor terendah berdasarkan langkah sebelumnya.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kode kelas IF1220 dengan skor terendah.",
+          "Jawaban menyajikan komentar mahasiswa dari kelas tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Kelas IF1220 terendah dan komentar mahasiswanya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut kelas IF1220 terendah.",
+          "Jawaban berisi komentar mahasiswanya.",
+          "sql_pipeline identify, rag_retriever retrieve."
+        ],
+        "faithfulness_reference": "sql (kelas IF1220 terendah) dan rag_chunks komentar kelas tersebut.",
+        "completeness_criteria": [
+          "Menyebut kelas terendah IF1220 dan komentarnya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C3-002",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Temukan dosen dengan kehadiran terendah di prodi IF semester 2024-1, lalu tampilkan refleksi yang mereka tulis di portofolio.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil nama dosen prodi IF semester 2024-1 dengan rata-rata kehadiran_dosen terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi pelaksanaan dari portofolio dosen kehadiran terendah berdasarkan langkah sebelumnya.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi nama dosen kehadiran terendah IF.",
+          "Jawaban menyajikan refleksi dosen tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Dosen kehadiran terendah IF dan refleksinya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut nama dosen kehadiran terendah.",
+          "Refleksi dosen tersebut disajikan.",
+          "sql resolve, rag retrieve."
+        ],
+        "faithfulness_reference": "sql (dosen kehadiran terendah IF) dan rag_chunks refleksi dosen tersebut.",
+        "completeness_criteria": [
+          "Menyebut dosen kehadiran terendah IF dan refleksinya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C4-001",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari matkul di prodi IF semester 2024-1 yang skor evaluasinya paling rendah, tampilkan komentar mahasiswanya dan refleksi dosen pengampunya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil matkul prodi IF semester 2024-1 dengan avg_skor_overall terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dari matkul terendah tersebut.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          },
+          {
+            "task": "Ambil refleksi dan usulan perbaikan dosen dari portofolio matkul tersebut.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan",
+              "usulan_perbaikan_dosen"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi matkul IF 2024-1 dengan skor terendah.",
+          "Jawaban berisi komentar mahasiswa matkul tersebut.",
+          "Jawaban berisi refleksi dosen matkul tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Tiga komponen: matkul terendah, komentar mahasiswa, refleksi dosen."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Matkul terendah diidentifikasi.",
+          "Komentar mahasiswa disajikan.",
+          "Refleksi dosen disajikan.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql (matkul terendah IF), rag komentar, rag refleksi.",
+        "completeness_criteria": [
+          "Mencakup matkul terendah, komentar mahasiswa, dan refleksi dosen."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C4-002",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Temukan prodi di STEI dengan kehadiran dosen paling rendah semester 2024-1, lalu tampilkan komentar mahasiswa dan catatan refleksi dosen di prodi tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil prodi STEI dengan avg kehadiran_dosen terendah semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dari kelas-kelas prodi dengan kehadiran dosen terendah.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          },
+          {
+            "task": "Ambil refleksi pelaksanaan dosen dari portofolio prodi tersebut.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi prodi STEI kehadiran dosen terendah.",
+          "Jawaban berisi komentar mahasiswa prodi tersebut.",
+          "Jawaban berisi refleksi dosen prodi tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Prodi terendah, komentar, dan refleksi disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Prodi terendah diidentifikasi.",
+          "Komentar dari rag.",
+          "Refleksi dari rag.",
+          "3 langkah."
+        ],
+        "faithfulness_reference": "sql (prodi terendah STEI), rag komentar, rag refleksi.",
+        "completeness_criteria": [
+          "Mencakup prodi terendah STEI, komentar, dan refleksi dosen."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C1-001",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana distribusi skor evaluasi per aspek (capaian, pelaksanaan, sarana prasarana, perilaku mahasiswa) di prodi IF semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_capaian, avg_skor_pelaksanaan, avg_skor_sarana_prasarana, avg_skor_perilaku_mahasiswa, avg_skor_overall prodi IF 2024-1 dari v_akademik_statistik_prodi.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor numerik minimal 3 dari 4 dimensi evaluasi IF 2024-1.",
+          "Jawaban menyebut aspek tertinggi dan terendah."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor per dimensi IF 2024-1 dengan interpretasi disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor dimensi evaluasi IF.",
+          "Jawaban menyebut aspek tertinggi/terendah.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi avg_skor per dimensi prodi IF 2024-1.",
+        "completeness_criteria": [
+          "Mencakup semua dimensi evaluasi IF dan interpretasinya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C1-002",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana tren rata-rata skor overall IF3170 dalam 6 semester terakhir?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall IF3170 per semester untuk 6 semester terakhir, diurutkan kronologis.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor overall IF3170 untuk beberapa semester (minimal 4 titik data).",
+          "Jawaban menginterpretasikan arah tren."
+        ],
+        "acceptable_answer_patterns": [
+          "Tren skor IF3170 dengan angka per semester dan interpretasi tren."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor IF3170 beberapa semester.",
+          "Jawaban menyimpulkan tren."
+        ],
+        "faithfulness_reference": "sql berisi avg_skor_overall IF3170 per semester.",
+        "completeness_criteria": [
+          "Mencakup tren skor IF3170 dengan data historis."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C2-001",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana skor capaian pembelajaran IF di kuesioner portofolio semester 2024-1, dan bagaimana skor pelaksanaan perkuliahan di semester yang sama?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_capaian prodi IF semester 2024-1 dari v_akademik_statistik_prodi.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil avg_skor_pelaksanaan prodi IF semester 2024-1 dari v_akademik_statistik_prodi.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor capaian pembelajaran IF 2024-1.",
+          "Jawaban menyebut skor pelaksanaan perkuliahan IF 2024-1."
+        ],
+        "acceptable_answer_patterns": [
+          "Dua dimensi skor IF (capaian dan pelaksanaan) disajikan dan dibandingkan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor capaian dan pelaksanaan IF.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (avg_skor_capaian IF 2024-1) dan sql (avg_skor_pelaksanaan IF 2024-1).",
+        "completeness_criteria": [
+          "Mencakup skor capaian dan pelaksanaan prodi IF semester 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C2-002",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Pada semester 2024-1, bagaimana komposisi bobot komponen penilaian (UTS/UAS/tugas) di prodi IF, dan bagaimana rata-rata tingkat kelulusannya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_bobot_uts, avg_bobot_uas, avg_bobot_tugas prodi IF semester 2024-1 dari v_akademik_komponen_evaluasi_kelas.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil rata-rata dist_pct_lulus prodi IF semester 2024-1 dari v_akademik_kelas.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut komposisi bobot penilaian (UTS/UAS/tugas) prodi IF 2024-1.",
+          "Jawaban menyebut rata-rata tingkat kelulusan prodi IF 2024-1."
+        ],
+        "acceptable_answer_patterns": [
+          "Komposisi bobot dan kelulusan IF disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut bobot komponen.",
+          "Jawaban menyebut kelulusan IF.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (bobot komponen IF) dan sql (kelulusan IF 2024-1).",
+        "completeness_criteria": [
+          "Mencakup komposisi penilaian dan kelulusan IF."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C3-001",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Seberapa baik komunikasi dan kepedulian dosen di prodi IF semester 2024-1 berdasarkan kuesioner mahasiswa?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner dimensi pelaksanaan untuk kode Q25 (komunikasi) dan Q26 (kepedulian dosen).",
+            "tool": "sql",
+            "required": true,
+            "catalog_dimension": "Pelaksanaan perkuliahan"
+          },
+          {
+            "task": "Hitung rata-rata skor Q25 dan Q26 prodi IF semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor Q25 (komunikasi dosen) prodi IF 2024-1.",
+          "Jawaban menyebut skor Q26 (kepedulian dosen) prodi IF 2024-1.",
+          "Jawaban menginterpretasikan skor tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor Q25 dan Q26 prodi IF dengan interpretasi disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor Q25 dan Q26.",
+          "Grounded dari catalog + sql."
+        ],
+        "faithfulness_reference": "catalog (Q25, Q26) + sql skor Q25 Q26 prodi IF 2024-1.",
+        "completeness_criteria": [
+          "Mencakup skor komunikasi dan kepedulian dosen IF."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C3-002",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Seberapa baik sarana prasarana perkuliahan menurut mahasiswa prodi IF semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner dimensi sarana prasarana untuk kode Q29 dan Q30.",
+            "tool": "sql",
+            "required": true,
+            "catalog_dimension": "Sarana prasarana"
+          },
+          {
+            "task": "Hitung rata-rata skor Q29 dan Q30 prodi IF semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor Q29 (sarana prasarana memadai) prodi IF 2024-1.",
+          "Jawaban menyebut skor Q30 (fasilitas pendukung) prodi IF 2024-1.",
+          "Jawaban menginterpretasikan hasilnya."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor Q29 dan Q30 prodi IF dengan interpretasi disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor sarana (Q29/Q30) numerik.",
+          "Grounded dari catalog + sql."
+        ],
+        "faithfulness_reference": "catalog (Q29, Q30) + sql skor Q29 Q30 prodi IF 2024-1.",
+        "completeness_criteria": [
+          "Mencakup skor sarana prasarana IF semester 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C4-001",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Identifikasi semester dengan skor keseluruhan IF paling rendah dalam 3 tahun terakhir, lalu analisis dimensi mana (capaian/pelaksanaan/sarana/perilaku) yang paling berkontribusi terhadap rendahnya skor tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil tren avg_skor_overall prodi IF per semester 3 tahun terakhir, urutkan dari terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil avg_skor_capaian, avg_skor_pelaksanaan, avg_skor_sarana_prasarana, avg_skor_perilaku prodi IF untuk semester terburuk dari langkah sebelumnya.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner untuk dimensi dengan skor terendah untuk konteks interpretasi.",
+            "tool": "sql",
+            "required": false,
+            "catalog_dimension": "Pelaksanaan perkuliahan"
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi semester IF dengan skor overall terendah.",
+          "Jawaban mengidentifikasi dimensi dengan skor terendah di semester itu.",
+          "Jawaban menginterpretasikan pola."
+        ],
+        "acceptable_answer_patterns": [
+          "Semester terburuk dan dimensi penyumbang teridentifikasi."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi semester terendah IF.",
+          "Jawaban mengidentifikasi dimensi terendah.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql tren IF, sql breakdown dimensi, sql catalog dimensi terendah.",
+        "completeness_criteria": [
+          "Mencakup semester terendah, breakdown dimensi, dan interpretasinya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C4-002",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari matkul di prodi IF dengan tingkat kelulusan di bawah 70%, identifikasi pola skor kuesioner yang membedakan mereka dari matkul dengan kelulusan normal.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil daftar matkul prodi IF semester 2024-1 dengan dist_pct_lulus < 70%.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Bandingkan rata-rata skor kuesioner (overall, capaian, pelaksanaan) antara matkul < 70% dan seluruh matkul IF.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner dimensi yang paling berbeda antara dua kelompok.",
+            "tool": "sql",
+            "required": false,
+            "catalog_dimension": "Pelaksanaan perkuliahan"
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi matkul IF dengan kelulusan < 70%.",
+          "Jawaban membandingkan skor kuesioner dua kelompok.",
+          "Jawaban menginterpretasikan pola."
+        ],
+        "acceptable_answer_patterns": [
+          "Matkul bermasalah dan perbedaan skor kuesionernya dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut matkul < 70%.",
+          "Jawaban membandingkan skor dua kelompok.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql daftar matkul, sql perbandingan skor, sql catalog konteks.",
+        "completeness_criteria": [
+          "Mencakup matkul bermasalah dan pola skor kuesionernya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C1-001",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa tema utama keluhan yang muncul dalam komentar mahasiswa kelas IF3170 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil dan analisis komentar mahasiswa IF3170 semester 2024-1 untuk tema keluhan dominan.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi setidaknya satu tema keluhan spesifik IF3170.",
+          "Tema harus spesifik, bukan generik."
+        ],
+        "acceptable_answer_patterns": [
+          "Tema keluhan mahasiswa IF3170 diidentifikasi dan dijelaskan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi tema keluhan spesifik IF3170.",
+          "Grounded dari rag_retriever komentar_mahasiswa."
+        ],
+        "faithfulness_reference": "rag_chunks berisi komentar_mahasiswa IF3170 2024-1.",
+        "completeness_criteria": [
+          "Mencakup tema utama keluhan mahasiswa IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C1-002",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana sentimen mahasiswa terhadap metode perkuliahan IF3140 berdasarkan komentar semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil dan analisis sentimen komentar mahasiswa IF3140 2024-1 terkait metode perkuliahan.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3140"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengkarakterisasi sentimen komentar IF3140.",
+          "Jawaban menyebut aspek perkuliahan yang muncul."
+        ],
+        "acceptable_answer_patterns": [
+          "Sentimen dan topik perkuliahan IF3140 dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengkarakterisasi sentimen IF3140.",
+          "Grounded dari rag_retriever."
+        ],
+        "faithfulness_reference": "rag_chunks berisi komentar_mahasiswa IF3140 2024-1.",
+        "completeness_criteria": [
+          "Mencakup sentimen dan aspek perkuliahan IF3140 dari komentar."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C2-001",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa perbedaan tema komentar mahasiswa IF3170 dan IF3110 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil komentar mahasiswa IF3170 semester 2024-1 untuk analisis tema.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF3110 semester 2024-1 untuk analisis tema.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3110"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi tema komentar IF3170.",
+          "Jawaban mengidentifikasi tema komentar IF3110.",
+          "Jawaban membandingkan temanya."
+        ],
+        "acceptable_answer_patterns": [
+          "Tema komentar IF3170 dan IF3110 dibandingkan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban membahas tema dari IF3170 dan IF3110.",
+          "Grounded dari dua rag_retriever."
+        ],
+        "faithfulness_reference": "rag step 1 (komentar IF3170) dan step 2 (komentar IF3110).",
+        "completeness_criteria": [
+          "Mencakup perbandingan tema komentar IF3170 dan IF3110."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C2-002",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Isu apa yang sering muncul di refleksi dosen IF3170, dan isu apa yang sering diusulkan di usulan perbaikan dosen IF3140 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil refleksi pelaksanaan dosen IF3170 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          },
+          {
+            "task": "Ambil usulan perbaikan dosen IF3140 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "usulan_perbaikan_dosen"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3140"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi isu dari refleksi dosen IF3170.",
+          "Jawaban mengidentifikasi usulan dari dosen IF3140."
+        ],
+        "acceptable_answer_patterns": [
+          "Isu refleksi IF3170 dan usulan IF3140 dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban membahas isu IF3170 dan IF3140.",
+          "Grounded dari dua rag_retriever."
+        ],
+        "faithfulness_reference": "rag step 1 (refleksi IF3170) dan step 2 (usulan IF3140).",
+        "completeness_criteria": [
+          "Mencakup isu refleksi IF3170 dan usulan perbaikan IF3140."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C3-001",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Kelas IF3170 mana yang mendapat komentar paling negatif semester 2024-1? Analisis tema keluhannya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil kelas IF3170 semester 2024-1 dengan skor overall terendah (proxy komentar paling negatif).",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil dan analisis tema komentar mahasiswa kelas IF3170 skor terendah.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kelas IF3170 dengan komentar paling negatif.",
+          "Jawaban menganalisis tema keluhannya."
+        ],
+        "acceptable_answer_patterns": [
+          "Kelas IF3170 teridentifikasi dan tema keluhannya dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut kelas IF3170 terendah.",
+          "Tema komentar dianalisis.",
+          "sql resolve + rag retrieve."
+        ],
+        "faithfulness_reference": "sql (kelas terendah IF3170) dan rag_chunks komentar.",
+        "completeness_criteria": [
+          "Menyebut kelas IF3170 terendah dan temanya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C3-002",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Untuk prodi di STEI dengan kehadiran dosen paling rendah semester 2024-1, apa yang ditulis dosen-dosennya di refleksi portofolio?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil prodi STEI dengan rata-rata kehadiran_dosen terendah semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil dan analisis refleksi pelaksanaan dosen dari portofolio prodi tersebut.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi prodi STEI kehadiran dosen terendah.",
+          "Jawaban menganalisis tema refleksi dosen prodi tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Prodi terendah dan tema refleksi dosennya dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut prodi kehadiran terendah.",
+          "Tema refleksi dianalisis.",
+          "sql resolve + rag retrieve."
+        ],
+        "faithfulness_reference": "sql (prodi kehadiran terendah STEI) dan rag_chunks refleksi.",
+        "completeness_criteria": [
+          "Menyebut prodi terendah STEI dan tema refleksi dosennya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C4-001",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari kelas IF yang skor evaluasinya turun paling signifikan dibanding semester sebelumnya, analisis tema komentar mahasiswanya dan bandingkan dengan refleksi dosennya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "sql",
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Hitung delta skor overall kelas IF antara 2024-1 dan 2023-2, ambil kelas dengan penurunan terbesar.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil dan analisis tema komentar mahasiswa dari kelas IF dengan penurunan terbesar.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          },
+          {
+            "task": "Ambil dan analisis refleksi dosen kelas yang sama untuk perbandingan perspektif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kelas IF dengan penurunan terbesar.",
+          "Jawaban menganalisis tema komentar mahasiswanya.",
+          "Jawaban membandingkan dengan refleksi dosen."
+        ],
+        "acceptable_answer_patterns": [
+          "Kelas turun terbesar, tema komentar, dan refleksi dosen dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut kelas IF turun terbesar.",
+          "Tema komentar dianalisis.",
+          "Refleksi diperbandingkan.",
+          "3 langkah."
+        ],
+        "faithfulness_reference": "sql delta, rag komentar, rag refleksi.",
+        "completeness_criteria": [
+          "Mencakup kelas IF turun terbesar, komentar, dan refleksi dosen."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C4-002",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Apakah komentar mahasiswa IF3110 mencerminkan masalah yang sama dengan yang ditulis dosen di refleksi portofolionya? Analisis keselarasan perspektif keduanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "sql",
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil data numerik IF3110 semester terbaru (skor, kehadiran) sebagai konteks.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF3110 semester terbaru.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3110"
+            }
+          },
+          {
+            "task": "Ambil refleksi pelaksanaan dosen IF3110 semester terbaru.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3110"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban membahas isu dari perspektif mahasiswa (komentar).",
+          "Jawaban membahas isu dari perspektif dosen (refleksi).",
+          "Jawaban menganalisis apakah keduanya selaras."
+        ],
+        "acceptable_answer_patterns": [
+          "Perspektif mahasiswa dan dosen IF3110 dibandingkan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan komentar dan refleksi IF3110.",
+          "Jawaban menganalisis keselarasannya."
+        ],
+        "faithfulness_reference": "sql konteks IF3110, rag komentar, rag refleksi.",
+        "completeness_criteria": [
+          "Mencakup perspektif mahasiswa, dosen IF3110, dan analisis keselarasannya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C1-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana pelaksanaan perkuliahan IF3170 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil data numerik IF3170 2024-1: skor evaluasi per dimensi, kehadiran dosen dan mahasiswa, distribusi nilai.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen dan komentar mahasiswa IF3170 2024-1 untuk konteks kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio",
+              "komentar_mahasiswa"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan",
+              "usulan_perbaikan_dosen"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut data numerik IF3170 (skor atau kehadiran).",
+          "Jawaban menyebut elemen kualitatif dari refleksi atau komentar.",
+          "Jawaban memberikan penilaian menyeluruh."
+        ],
+        "acceptable_answer_patterns": [
+          "Data numerik dan kualitatif IF3170 digabung dalam analisis pelaksanaan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut data numerik IF3170.",
+          "Jawaban menyebut elemen kualitatif.",
+          "sql dan rag digunakan."
+        ],
+        "faithfulness_reference": "sql IF3170 (skor, kehadiran) dan rag_chunks (refleksi+komentar) IF3170 2024-1.",
+        "completeness_criteria": [
+          "Mencakup data numerik dan kualitatif pelaksanaan IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C1-002",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagimana keberjalanan IF3140 di semester 2024-1? Tinjau dari data evaluasi dan komentar mahasiswanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil data evaluasi IF3140 2024-1: skor overall, kehadiran, distribusi nilai.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dan refleksi dosen IF3140 untuk penilaian kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa",
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3140"
+            }
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut skor evaluasi atau kehadiran IF3140.",
+          "Jawaban menyebut sentimen/isu dari komentar mahasiswa.",
+          "Jawaban memberikan kesimpulan."
+        ],
+        "acceptable_answer_patterns": [
+          "Penilaian menyeluruh IF3140 dengan data numerik dan kualitatif."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor/kehadiran IF3140.",
+          "Jawaban menyebut sentimen komentar.",
+          "Jawaban memberikan kesimpulan."
+        ],
+        "faithfulness_reference": "sql IF3140 (evaluasi) dan rag_chunks (komentar+refleksi) IF3140 2024-1.",
+        "completeness_criteria": [
+          "Mencakup data numerik dan kualitatif IF3140."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C2-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana kualitas pengajaran dosen IF3170 tahun 2024 berdasarkan penilaian mahasiswa dan ISU yg dialami?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil skor kuesioner pelaksanaan (Q25-Q27: komunikasi, kepedulian, keadilan dosen) IF3170 2024.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF3170 untuk konfirmasi kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut skor kuesioner pelaksanaan IF3170 terkait dosen.",
+          "Jawaban mengintegrasikan komentar mahasiswa aktif."
+        ],
+        "acceptable_answer_patterns": [
+          "Dua sumber data (kuesioner IF3170, komentar) diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut data kuesioner IF3170 dan komentar mahasiswa.",
+          "Jawaban menyebut komentar mahasiswa.",
+          "2 tool calls grounded."
+        ],
+        "faithfulness_reference": "sql kuesioner IF3170, rag komentar IF3170.",
+        "completeness_criteria": [
+          "Mencakup perspektif mahasiswa aktif tentang kualitas dosen IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C2-002",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana kondisi sarana prasarana pembelajaran di prodi IF dari sisi skor kuesioner dan komentar mahasiswa semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_sarana_prasarana dan skor Q29 (sarana memadai), Q30 (fasilitas pendukung) prodi IF 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF 2024-1 yang menyebut sarana, fasilitas, atau ruangan.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut skor sarana atau Q29/Q30 prodi IF.",
+          "Jawaban menyebut komentar mahasiswa terkait sarana/fasilitas.",
+          "Jawaban memberikan gambaran kondisi sarana."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor sarana dan komentar mahasiswa tentang fasilitas diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor sarana IF.",
+          "Jawaban menyebut komentar terkait sarana.",
+          "Grounded dari sql dan rag."
+        ],
+        "faithfulness_reference": "sql (sarana skor IF) dan rag_chunks (komentar sarana IF).",
+        "completeness_criteria": [
+          "Mencakup skor sarana IF dan komentar mahasiswa terkait fasilitas."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C3-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Apakah kepuasan mahasiswa prodi IF terhadap beban kuliah sudah memadai? Dukung dengan data numerik dan komentar mahasiswanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner dimensi pelaksanaan untuk kode pertanyaan beban kerja dan SKS.",
+            "tool": "sql",
+            "required": true,
+            "catalog_dimension": "Pelaksanaan perkuliahan"
+          },
+          {
+            "task": "Ambil rata-rata skor Q28 (beban kerja sesuai SKS) prodi IF semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF 2024-1 terkait beban tugas, SKS, atau workload.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut skor Q28 (beban kerja sesuai SKS) prodi IF.",
+          "Jawaban menyebut komentar mahasiswa terkait beban kuliah.",
+          "Jawaban memberikan penilaian memadai atau tidak."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor Q28 dan komentar mahasiswa tentang beban kuliah diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor Q28 IF.",
+          "Komentar beban dari rag.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "catalog Q28, sql skor Q28 IF, rag komentar beban.",
+        "completeness_criteria": [
+          "Mencakup skor Q28 dan komentar mahasiswa IF tentang beban kuliah."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C3-002",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana kondisi matkul dengan skor evaluasi paling rendah di prodi IF semester 2024-1 secara menyeluruh?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil matkul prodi IF 2024-1 dengan avg_skor_overall terendah beserta kode matkul dan kelasnya.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil statistik detail matkul tersebut: kehadiran, nilai, semua dimensi skor.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen dan komentar mahasiswa matkul terendah untuk konteks kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio",
+              "komentar_mahasiswa"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi matkul IF dengan skor terendah.",
+          "Jawaban menyebut statistik detail matkul tersebut.",
+          "Jawaban menyebut elemen kualitatif dari refleksi atau komentar."
+        ],
+        "acceptable_answer_patterns": [
+          "Profil lengkap matkul terendah IF: numerik dan kualitatif."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi matkul terendah.",
+          "Jawaban menyebut statistik detailnya.",
+          "Jawaban menyebut konteks kualitatif.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql (matkul terendah), sql (detail stats), rag (refleksi+komentar).",
+        "completeness_criteria": [
+          "Mencakup profil lengkap matkul terendah IF."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C4-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari kelas IF yang skor evaluasinya turun lebih dari 0.2 poin dibanding semester 2023-2, analisis profil lengkapnya: statistik, komentar mahasiswa, dan refleksi dosen.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Hitung delta skor overall kelas IF antara 2024-1 dan 2023-2, filter yang turun > 0.2.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil statistik detail (kehadiran, nilai, semua dimensi) kelas-kelas yang turun.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dan refleksi dosen dari kelas-kelas yang turun tersebut.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa",
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kelas IF yang skor turun > 0.2.",
+          "Jawaban menyebut statistik detail kelas tersebut.",
+          "Jawaban menyebut komentar atau refleksi dari kelas itu."
+        ],
+        "acceptable_answer_patterns": [
+          "Kelas IF turun signifikan diprofilkan numerik dan kualitatif."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi kelas IF turun.",
+          "Statistik dan konteks kualitatif disajikan.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql delta, sql detail, rag komentar+refleksi.",
+        "completeness_criteria": [
+          "Mencakup kelas IF turun, statistiknya, dan konteks kualitatif."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C4-002",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Untuk memahami penyebab rendahnya skor sarana prasarana prodi IF 2024-1, analisis tren historisnya, serta komentar mahasiswa tentang fasilitas.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil tren avg_skor_sarana_prasarana prodi IF per semester 3 tahun terakhir.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil skor Q29 (sarana prasarana memadai) dan Q30 (fasilitas pendukung) prodi IF 2024-1 beserta perbandingan dengan prodi lain STEI.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF yang menyinggung sarana, ruangan, laboratorium, atau fasilitas 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut tren skor sarana IF historis.",
+          "Jawaban menyebut skor Q29 dan Q30 IF.",
+          "Jawaban menyebut komentar mahasiswa terkait fasilitas.",
+          "Jawaban memberikan gambaran penyebab."
+        ],
+        "acceptable_answer_patterns": [
+          "Tren, skor Q29/Q30, dan komentar mahasiswa diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut tren sarana IF.",
+          "Skor Q29/Q30 disebut.",
+          "Komentar dari rag.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql tren sarana, sql Q29/Q30, rag komentar fasilitas.",
+        "completeness_criteria": [
+          "Mencakup tren historis, skor Q29/Q30, dan komentar sarana IF."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C1-001",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apakah ada matkul di prodi IF semester 2024-1 yang tingkat kelulusannya di bawah 50%?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil matkul prodi IF 2024-1 dengan dist_pct_lulus < 50%, beserta distribusi nilai dan skor evaluasi sebagai konteks diagnostik.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi matkul IF 2024-1 dengan kelulusan < 50%.",
+          "Jawaban menyebut distribusi nilai sebagai dasar diagnostik."
+        ],
+        "acceptable_answer_patterns": [
+          "Matkul < 50% kelulusan dengan data distribusi nilai sebagai dasar jawaban."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut matkul bermasalah.",
+          "Jawaban menyebut data distribusi nilai.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi matkul IF kelulusan < 50% beserta distribusi nilai.",
+        "completeness_criteria": [
+          "Mengidentifikasi matkul bermasalah dan datanya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C1-002",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apakah skor evaluasi kelas-kelas IF3170 semester 2024-1 bervariasi antar kelas paralel?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil skor evaluasi per dimensi per kelas paralel IF3170 2024-1 (per kode_kelas) beserta kehadiran dosen.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi variasi skor antar kelas IF3170 (menyebut rentang skor).",
+          "Jawaban menyebut faktor dari data (dosen berbeda, kehadiran berbeda)."
+        ],
+        "acceptable_answer_patterns": [
+          "Variasi skor per kelas IF3170 dan faktor pendukungnya dari data."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut variasi skor IF3170 per kelas.",
+          "Jawaban menyebut faktor dari data.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi skor dan kehadiran per kode_kelas IF3170 2024-1.",
+        "completeness_criteria": [
+          "Mengidentifikasi variasi dan faktor pendukung dari data."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C2-001",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa penyebab rendahnya skor sarana prasarana di prodi IF semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil skor Q29 dan Q30 prodi IF 2024-1, bandingkan dengan rata-rata STEI.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF 2024-1 yang menyebut sarana, ruangan, atau fasilitas.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor Q29/Q30 IF sebagai bukti sarana rendah.",
+          "Jawaban menyebut keluhan mahasiswa spesifik tentang sarana/fasilitas."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor sarana dan komentar mahasiswa sebagai dasar diagnostik."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor sarana rendah.",
+          "Jawaban menyebut komentar mahasiswa.",
+          "Grounded dari sql dan rag."
+        ],
+        "faithfulness_reference": "sql (Q29/Q30 IF) dan rag_chunks (komentar sarana IF).",
+        "completeness_criteria": [
+          "Mencakup data skor sarana dan komentar mahasiswa sebagai penyebab."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C2-002",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Kenapa tingkat kelulusan prodi EL lebih rendah dari prodi IF pada semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil dan bandingkan avg_pct_lulus, avg_skor_overall, kehadiran IF dan EL 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen prodi EL 2024-1 untuk mencari faktor kualitatif penyebab.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban membandingkan kelulusan IF dan EL dengan angka.",
+          "Jawaban menyebut faktor dari refleksi dosen EL."
+        ],
+        "acceptable_answer_patterns": [
+          "Perbandingan kuantitatif dan faktor kualitatif kelulusan EL vs IF."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut data kelulusan IF dan EL.",
+          "Jawaban menyebut faktor refleksi EL.",
+          "Grounded dari sql dan rag."
+        ],
+        "faithfulness_reference": "sql (kelulusan IF vs EL) dan rag_chunks (refleksi dosen EL).",
+        "completeness_criteria": [
+          "Mencakup perbandingan dan faktor kualitatif kelulusan EL."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C3-001",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Kenapa kelas IF3170 K01 mendapat skor evaluasi lebih rendah dari K02 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil perbandingan skor per dimensi dan kehadiran antara IF3170 K01 dan K02 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dan refleksi dosen IF3170 K01 2024-1 untuk faktor kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa",
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut perbedaan skor antara K01 dan K02 IF3170.",
+          "Jawaban menyebut faktor kualitatif (komentar atau refleksi) dari K01."
+        ],
+        "acceptable_answer_patterns": [
+          "Perbandingan K01 vs K02 dan faktor penyebab dari komentar/refleksi."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut perbedaan skor K01 vs K02.",
+          "Jawaban menyebut faktor dari komentar atau refleksi K01.",
+          "sql perbandingan + rag konteks K01."
+        ],
+        "faithfulness_reference": "sql (K01 vs K02) dan rag_chunks (komentar+refleksi K01).",
+        "completeness_criteria": [
+          "Mencakup perbandingan K01 vs K02 dan penyebab kualitatif K01."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C3-002",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Mengapa tingkat kelulusan IF3140 pada 2023 menurun dibandingkan dua semester sebelumnya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil tren kelulusan IF3140 untuk 3 semester terakhir sejak 2023 beserta skor evaluasi dan kehadiran per semester.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen dan komentar mahasiswa IF3140 2024-1 untuk mencari penyebab.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa",
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3140"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut tren kelulusan IF3140 minimal 2 periode.",
+          "Jawaban menyebut faktor dari refleksi atau komentar IF3140."
+        ],
+        "acceptable_answer_patterns": [
+          "Tren penurunan kelulusan IF3140 dan faktor penyebabnya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut tren kelulusan IF3140.",
+          "Jawaban menyebut penyebab dari komentar atau refleksi.",
+          "sql tren + rag konteks."
+        ],
+        "faithfulness_reference": "sql (tren kelulusan IF3140) dan rag_chunks (komentar+refleksi IF3140).",
+        "completeness_criteria": [
+          "Mencakup tren penurunan dan penyebab kelulusan IF3140."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C4-001",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Apakah ada hubungan antara kehadiran dosen rendah dan skor evaluasi rendah di STEI? Jika ada, matkul apa yang paling terdampak dan apa yang dosen sampaikan di portofolionya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil data kehadiran_dosen dan avg_skor_overall per matkul STEI 2024-1 untuk melihat pola.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil matkul STEI dengan kehadiran_dosen < 85% DAN skor_overall < 3.4 (paling terdampak).",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen dari matkul-matkul paling terdampak.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban membahas hubungan kehadiran dosen dan skor evaluasi STEI.",
+          "Jawaban mengidentifikasi matkul STEI paling terdampak.",
+          "Jawaban menyebut refleksi dosen matkul tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Pola kehadiran-skor, identifikasi matkul terdampak, dan refleksi dosen."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban membahas pola kehadiran vs skor.",
+          "Matkul paling terdampak diidentifikasi.",
+          "Refleksi dosen disebut.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql pola, sql matkul terdampak, rag refleksi.",
+        "completeness_criteria": [
+          "Mencakup korelasi, matkul terdampak, dan refleksi dosennya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C4-002",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari kelas IF yang skor turun lebih dari 0.3 poin dibanding semester sebelumnya, cari faktor pembeda dengan kelas yang stabil, dan lihat apa yang dosen sampaikan.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Hitung delta skor overall kelas IF antara 2024-1 dan 2023-2, pisahkan kelas turun > 0.3 dan stabil.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Bandingkan karakteristik (kehadiran, distribusi nilai, skor dimensi) antara kelompok turun dan stabil.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen dan komentar mahasiswa kelas IF yang turun untuk mencari penyebab.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa",
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kelas IF dengan penurunan > 0.3.",
+          "Jawaban menyebut perbedaan karakteristik antara kelas turun dan stabil.",
+          "Jawaban menyebut faktor dari refleksi atau komentar."
+        ],
+        "acceptable_answer_patterns": [
+          "Kelas IF turun teridentifikasi, faktor pembeda ditemukan, konteks kualitatif disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut kelas IF yang turun.",
+          "Jawaban membandingkan karakteristik.",
+          "Refleksi/komentar disebut.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql delta, sql karakteristik, rag refleksi+komentar.",
+        "completeness_criteria": [
+          "Mencakup kelas turun, faktor pembeda, dan konteks kualitatif."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C1-001",
+      "query_type": "comparative",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Mana yang lebih baik: skor evaluasi overall IF3170 atau IF3110 pada semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil dan bandingkan avg_skor_overall IF3170 dan IF3110 semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor overall IF3170 dan IF3110 dengan angka.",
+          "Jawaban menyatakan mana yang lebih tinggi."
+        ],
+        "acceptable_answer_patterns": [
+          "Perbandingan skor IF3170 vs IF3110 disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut angka skor kedua matkul.",
+          "Jawaban menyebut mana lebih tinggi.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi avg_skor_overall IF3170 dan IF3110 2024-1.",
+        "completeness_criteria": [
+          "Mencakup perbandingan skor IF3170 vs IF3110."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C1-002",
+      "query_type": "comparative",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Prodi mana di STEI yang memiliki kehadiran dosen terendah semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil dan ranking avg_kehadiran_dosen semua prodi STEI 2024-1, urutkan dari terendah.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut nama prodi STEI dengan kehadiran dosen terendah.",
+          "Jawaban menyebut angka kehadirannya."
+        ],
+        "acceptable_answer_patterns": [
+          "Prodi STEI dengan kehadiran dosen terendah dan angkanya disajikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut prodi terendah.",
+          "Jawaban menyebut angka kehadiran.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline ranking kehadiran per prodi STEI 2024-1.",
+        "completeness_criteria": [
+          "Mengidentifikasi prodi STEI dengan kehadiran dosen terendah."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C2-001",
+      "query_type": "comparative",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bandingkan skor overall prodi IF dan prodi EL di kuesioner portofolio semester 2024-1.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall prodi IF semester 2024-1 dari kuesioner portofolio.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil avg_skor_overall prodi EL semester 2024-1 dari kuesioner portofolio.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut skor overall IF 2024-1.",
+          "Jawaban menyebut skor overall EL 2024-1.",
+          "Jawaban membandingkan keduanya."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor overall prodi IF dan EL semester 2024-1 dibandingkan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor IF dan EL.",
+          "Jawaban membandingkannya.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (avg_skor_overall IF 2024-1) dan sql (avg_skor_overall EL 2024-1).",
+        "completeness_criteria": [
+          "Mencakup perbandingan skor evaluasi IF dan EL semester 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C2-002",
+      "query_type": "comparative",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bandingkan komentar mahasiswa IF3170 dan IF3110: mana yang lebih banyak memuat keluhan?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil komentar mahasiswa IF3170 semester 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF3110 semester 2024-1.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3110"
+            }
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban membahas komentar IF3170.",
+          "Jawaban membahas komentar IF3110.",
+          "Jawaban menyimpulkan mana yang lebih banyak keluhan."
+        ],
+        "acceptable_answer_patterns": [
+          "Komentar IF3170 dan IF3110 dibandingkan dari sisi keluhan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban membandingkan sentimen/keluhan IF3170 dan IF3110.",
+          "Grounded dari dua rag_retriever."
+        ],
+        "faithfulness_reference": "rag step 1 (komentar IF3170) dan step 2 (komentar IF3110).",
+        "completeness_criteria": [
+          "Mencakup perbandingan keluhan mahasiswa IF3170 vs IF3110."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C3-001",
+      "query_type": "comparative",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Dari kelas-kelas IF3170 semester 2024-1, bandingkan kelas dengan skor tertinggi dan terendah dari semua aspek evaluasi.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil kode kelas IF3170 2024-1 dengan skor overall tertinggi dan terendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil profil lengkap (semua dimensi skor, kehadiran, distribusi nilai) kelas tertinggi dan terendah, lalu bandingkan.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kelas IF3170 tertinggi dan terendah.",
+          "Jawaban menyebut perbedaan skor per dimensi antara dua kelas."
+        ],
+        "acceptable_answer_patterns": [
+          "Perbandingan lengkap kelas IF3170 terbaik vs terburuk."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi kelas IF3170 tertinggi dan terendah.",
+          "Jawaban menyebut perbedaan dimensi skor.",
+          "Grounded dari dua sql."
+        ],
+        "faithfulness_reference": "sql (kelas ekstrem IF3170) dan sql (profil perbandingan).",
+        "completeness_criteria": [
+          "Mencakup kelas IF3170 terbaik dan terburuk beserta profilnya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C3-002",
+      "query_type": "comparative",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Bandingkan kinerja IF3170 semester 2024-1 dengan 2023-1: aspek apa yang membaik dan memburuk?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall, avg_skor_capaian, avg_skor_pelaksanaan, kehadiran IF3170 semester 2023-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil data yang sama IF3170 semester 2024-1 dan hitung delta antar periode.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menyebut angka skor IF3170 di dua semester.",
+          "Jawaban menyebut aspek yang membaik dan memburuk."
+        ],
+        "acceptable_answer_patterns": [
+          "Perbandingan IF3170 antar dua semester dengan delta per aspek."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut data IF3170 dua semester.",
+          "Jawaban mengidentifikasi aspek yang berubah.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (IF3170 2023-1) dan sql (IF3170 2024-1 + delta).",
+        "completeness_criteria": [
+          "Mencakup perbandingan IF3170 antar semester dan aspek yang berubah."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C4-001",
+      "query_type": "comparative",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Prodi mana di STEI yang mengalami peningkatan skor evaluasi terbesar dalam 3 semester terakhir? Bandingkan tren masing-masing prodi.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall per prodi STEI untuk 3 semester terakhir.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Hitung delta dan ranking prodi STEI berdasarkan peningkatan skor terbesar.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil breakdown per dimensi (capaian, pelaksanaan, sarana, perilaku) prodi dengan peningkatan terbesar.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi prodi STEI dengan peningkatan terbesar.",
+          "Jawaban menyebut tren (nilai per semester) prodi-prodi.",
+          "Jawaban menyebut dimensi yang paling berkontribusi."
+        ],
+        "acceptable_answer_patterns": [
+          "Prodi dengan peningkatan terbesar dan tren STEI dianalisis."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi prodi dengan peningkatan terbesar.",
+          "Tren per semester disebut.",
+          "Dimensi penyumbang disebut.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql tren, sql delta ranking, sql breakdown dimensi.",
+        "completeness_criteria": [
+          "Mencakup tren STEI dan prodi dengan peningkatan terbesar."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C4-002",
+      "query_type": "comparative",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Temukan semester terbaik dan terburuk skor STEI dalam 3 tahun terakhir, lalu bandingkan karakteristik matkul (distribusi nilai dan kehadiran) di kedua semester itu.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall STEI per semester 3 tahun terakhir, identifikasi semester terbaik dan terburuk.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil distribusi nilai dan kehadiran rata-rata di semester terbaik STEI.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil distribusi nilai dan kehadiran rata-rata di semester terburuk STEI untuk perbandingan.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi semester terbaik dan terburuk STEI.",
+          "Jawaban membandingkan karakteristik matkul di kedua semester.",
+          "Jawaban menyimpulkan perbedaan."
+        ],
+        "acceptable_answer_patterns": [
+          "Semester terbaik dan terburuk STEI dengan karakteristik matkul dibandingkan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi semester terbaik dan terburuk.",
+          "Karakteristik matkul dibandingkan.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql tren STEI, sql profil semester terbaik, sql profil semester terburuk.",
+        "completeness_criteria": [
+          "Mencakup semester ekstrem STEI dan perbandingan karakteristik matkul."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C1-001",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Buatkan grafik tren rata-rata skor evaluasi overall IF3170 dari tahun 2022 hingga 2024.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall IF3170 per semester dari 2022-1 hingga 2024-1 untuk data tren grafik.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban menyajikan data tren skor IF3170 per semester.",
+          "Data mencakup minimal 4 titik waktu."
+        ],
+        "acceptable_answer_patterns": [
+          "Data tren IF3170 per semester tersaji untuk visualisasi."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan data tren skor IF3170.",
+          "Data mencakup beberapa semester.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi avg_skor_overall IF3170 per semester 2022-2024.",
+        "completeness_criteria": [
+          "Mencakup data tren IF3170 untuk grafik."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C1-002",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Visualisasikan distribusi nilai (A, AB, B, BC, C, D, E) di prodi IF semester 2024-1 dalam bentuk grafik.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil data distribusi nilai lengkap (dist_pct_a, ab, b, bc, c, d, e) prodi IF semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban menyajikan data distribusi nilai IF 2024-1 untuk semua grade.",
+          "Data dalam format persentase yang mendukung visualisasi."
+        ],
+        "acceptable_answer_patterns": [
+          "Distribusi nilai IF 2024-1 tersaji untuk grafik."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan data distribusi nilai per grade IF.",
+          "Grounded dari sql_pipeline."
+        ],
+        "faithfulness_reference": "sql_pipeline berisi distribusi nilai prodi IF 2024-1.",
+        "completeness_criteria": [
+          "Mencakup data distribusi nilai IF 2024-1 untuk visualisasi."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C2-001",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Buat grafik perbandingan tren skor evaluasi prodi IF dan EL dalam satu grafik multi-series untuk 3 semester terakhir.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_skor_overall prodi IF per semester untuk 3 semester terakhir (series IF).",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil avg_skor_overall prodi EL per semester untuk 3 semester terakhir (series EL).",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban menyajikan data tren skor IF untuk 3 semester terakhir.",
+          "Jawaban menyajikan data tren skor EL untuk 3 semester terakhir."
+        ],
+        "acceptable_answer_patterns": [
+          "Data tren IF dan EL untuk 3 semester tersaji untuk grafik multi-series."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan data skor IF per semester.",
+          "Jawaban menyajikan data skor EL per semester.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql step 1 (tren IF) dan sql step 2 (tren EL).",
+        "completeness_criteria": [
+          "Mencakup data tren IF dan EL untuk grafik multi-series."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C2-002",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Tampilkan dua grafik sekaligus: komposisi bobot penilaian (UTS/UAS/tugas) per prodi STEI dan rata-rata kehadiran dosen per prodi STEI semester 2024-1.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_bobot_uts, avg_bobot_uas, avg_bobot_tugas per prodi STEI 2024-1 untuk grafik bobot.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil avg kehadiran_dosen per prodi STEI 2024-1 untuk grafik kehadiran.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban menyajikan data bobot komponen penilaian per prodi STEI.",
+          "Jawaban menyajikan data kehadiran dosen per prodi STEI."
+        ],
+        "acceptable_answer_patterns": [
+          "Data bobot komponen dan kehadiran dosen STEI tersaji untuk dua grafik."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan data bobot komponen.",
+          "Jawaban menyajikan data kehadiran.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (bobot komponen STEI) dan sql (kehadiran dosen STEI).",
+        "completeness_criteria": [
+          "Mencakup data bobot komponen dan kehadiran dosen STEI."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C3-001",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Tampilkan grafik tren skor evaluasi matkul-matkul IF yang mengalami penurunan konsisten selama 2 semester terakhir.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Temukan matkul prodi IF yang skor overall turun berturut-turut di 2023-2 dan 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil data tren skor (minimal 3 periode) untuk matkul yang turun dari langkah sebelumnya.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi matkul IF dengan penurunan konsisten.",
+          "Jawaban menyajikan data tren skor matkul-matkul tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Matkul tren menurun teridentifikasi dan datanya tersaji untuk grafik."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi matkul turun berturut-turut.",
+          "Data tren tersaji.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (matkul turun berturut) dan sql (data tren matkul itu).",
+        "completeness_criteria": [
+          "Mencakup identifikasi matkul tren turun dan datanya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C3-002",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Buat grafik distribusi nilai untuk prodi dengan tingkat kelulusan terendah di STEI semester 2024-1.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Temukan prodi STEI dengan rata-rata dist_pct_lulus terendah semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil data distribusi nilai lengkap prodi terendah tersebut untuk grafik.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi prodi STEI dengan kelulusan terendah.",
+          "Jawaban menyajikan data distribusi nilai prodi tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Prodi terendah teridentifikasi dan distribusi nilainya tersaji."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut prodi terendah.",
+          "Data distribusi nilainya tersaji.",
+          "Grounded dari dua sql_pipeline."
+        ],
+        "faithfulness_reference": "sql (prodi terendah STEI) dan sql (distribusi nilai prodi itu).",
+        "completeness_criteria": [
+          "Mencakup prodi terendah STEI dan data distribusi nilainya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C4-001",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Buat grafik yang memperlihatkan hubungan antara kehadiran dosen dan skor evaluasi untuk setiap matkul di STEI semester 2024-1, dan highlight matkul outlier.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil avg_kehadiran_dosen dan avg_skor_overall per matkul STEI 2024-1 untuk scatter plot.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Hitung threshold outlier: matkul kehadiran rendah-skor rendah atau kehadiran tinggi-skor rendah.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil nama dan prodi matkul-matkul outlier untuk label pada grafik.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban menyajikan data kehadiran dosen dan skor per matkul STEI.",
+          "Jawaban mengidentifikasi matkul outlier."
+        ],
+        "acceptable_answer_patterns": [
+          "Data scatter plot kehadiran vs skor STEI dengan outlier teridentifikasi."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan data kehadiran dan skor per matkul.",
+          "Outlier diidentifikasi.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql scatter data, sql outlier, sql label outlier.",
+        "completeness_criteria": [
+          "Mencakup data scatter STEI dan identifikasi outlier."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CGNT-C4-002",
+      "query_type": "chart_generate",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Buat grafik dashboard: tren skor 6 semester terakhir per dimensi evaluasi dan grade distribution semester ini. Persiapkan data kedua panel.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_generate",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil tren avg_skor_capaian, avg_skor_pelaksanaan, avg_skor_sarana_prasarana, avg_skor_perilaku per semester untuk 6 semester terakhir (STEI scope).",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil dist_pct per grade (A/AB/B/BC/C/D/E) prodi STEI semester 2024-1 untuk panel grade distribution.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil label periode untuk 6 semester terakhir konsisten dengan data step 1.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "chart",
+        "required_answer_facts": [
+          "Jawaban menyajikan data tren per dimensi untuk 6 semester.",
+          "Jawaban menyajikan data distribusi nilai STEI terbaru."
+        ],
+        "acceptable_answer_patterns": [
+          "Data dua panel grafik (tren dimensi + grade distribution) tersaji."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyajikan data tren dimensi.",
+          "Jawaban menyajikan data grade distribution.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql tren dimensi, sql grade distribution, sql label periode.",
+        "completeness_criteria": [
+          "Mencakup dua panel data: tren dimensi dan grade distribution STEI."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C1-001",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa yang bisa disimpulkan dari grafik tren skor evaluasi IF3170 ini?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Tren Skor Evaluasi Overall IF3170 (2022–2024)",
+          "description": "Rata-rata skor evaluasi overall seluruh kelas IF3170 per semester dari 2022-1 hingga 2024-1. Dihasilkan oleh ARCH-CGNT-C1-001.",
+          "data_summary": "2022-1=3.75, 2022-2=3.80, 2023-1=3.72, 2023-2=3.49, 2024-1=3.41. Tren secara umum menurun; penurunan tajam di 2023-2 sebesar -0.23 poin.",
+          "x_axis_label": "Semester",
+          "y_axis_label": "Skor (1–4)",
+          "series": [
+            {
+              "name": "avg_skor_overall",
+              "data": [
+                3.75,
+                3.8,
+                3.72,
+                3.49,
+                3.41
+              ]
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi grafik tren avg_skor_overall IF3170 2022–2024 yang ditampilkan, termasuk titik anomali dan arah tren.",
+            "tool": "chart_interpreter",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menginterpretasikan pola tren dari grafik IF3170.",
+          "Jawaban menyebut penurunan tajam di 2023-2 yang terlihat di data_summary grafik."
+        ],
+        "acceptable_answer_patterns": [
+          "Interpretasi tren IF3170 dengan menyebut titik anomali 2023-2."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menginterpretasikan pola tren dari chart_context.",
+          "Jawaban menyebut semester dengan penurunan terbesar.",
+          "Grounded dari chart_interpreter, bukan database."
+        ],
+        "faithfulness_reference": "Output chart_interpreter dari CTX_C1_001 (tren IF3170 2022-2024).",
+        "completeness_criteria": [
+          "Mencakup interpretasi tren dan penurunan tajam 2023-2."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C1-002",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa yang mencolok dari pola distribusi nilai di grafik ini?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "grade_distribution_single_entity_bar_chart",
+          "title": "Distribusi Nilai Prodi IF Semester 2024-1",
+          "description": "Persentase mahasiswa per grade (A/AB/B/BC/C/D/E) di prodi IF semester 2024-1. Dihasilkan oleh ARCH-CGNT-C1-002.",
+          "data_summary": "A=28%, AB=30%, B=22%, BC=10%, C=6%, D=3%, E=1%. Mayoritas mahasiswa (58%) mendapat grade A atau AB.",
+          "x_axis_label": "Grade",
+          "y_axis_label": "Persentase (%)",
+          "series": [
+            {
+              "name": "pct",
+              "data": [
+                28,
+                30,
+                22,
+                10,
+                6,
+                3,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi distribusi nilai per grade prodi IF semester 2024-1 dari grafik yang ditampilkan.",
+            "tool": "chart_interpreter",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "Jawaban menginterpretasikan pola distribusi dari grafik.",
+          "Jawaban menyebut konsentrasi grade A dan AB (58%) atau pola yang menonjol."
+        ],
+        "acceptable_answer_patterns": [
+          "Interpretasi pola distribusi nilai IF 2024-1 dengan temuan spesifik."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menginterpretasikan pola distribusi dari chart_context.",
+          "Jawaban menyebut grade atau pola yang menonjol.",
+          "Grounded dari chart_interpreter."
+        ],
+        "faithfulness_reference": "Output chart_interpreter dari CTX_C1_002 (distribusi nilai IF 2024-1).",
+        "completeness_criteria": [
+          "Mencakup interpretasi pola distribusi nilai IF 2024-1."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C2-001",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Dari grafik perbandingan tren ini, prodi mana yang lebih mengkhawatirkan? Berapa skor terkini EL di database?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Tren Skor Evaluasi Prodi IF vs EL — 3 Semester Terakhir",
+          "description": "Rata-rata skor overall prodi IF dan prodi EL per semester untuk 3 semester terakhir. Dihasilkan oleh ARCH-CGNT-C2-001.",
+          "data_summary": "IF: 2023-1=3.68, 2023-2=3.55, 2024-1=3.58. EL: 2023-1=3.52, 2023-2=3.38, 2024-1=3.31. IF konsisten di atas EL; EL menunjukkan tren menurun lebih tajam.",
+          "x_axis_label": "Semester",
+          "y_axis_label": "Skor (1–4)",
+          "series": [
+            {
+              "name": "avg_skor_IF",
+              "data": [
+                3.68,
+                3.55,
+                3.58
+              ]
+            },
+            {
+              "name": "avg_skor_EL",
+              "data": [
+                3.52,
+                3.38,
+                3.31
+              ]
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi grafik tren perbandingan IF vs EL: identifikasi prodi yang trennya lebih buruk.",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Ambil avg_skor_overall prodi EL semester 2024-1 (skor terkini) dari database untuk konfirmasi angka.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menginterpretasikan tren IF vs EL dari grafik.",
+          "Jawaban menyebut EL sebagai prodi dengan tren lebih mengkhawatirkan.",
+          "Jawaban menyebut skor terkini EL dari database."
+        ],
+        "acceptable_answer_patterns": [
+          "Interpretasi tren IF vs EL dari grafik dan skor terkini EL dari database."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menginterpretasikan grafik tren IF vs EL.",
+          "Jawaban menyebut skor EL dari sql.",
+          "chart_interpreter dan sql_pipeline digunakan."
+        ],
+        "faithfulness_reference": "chart_interpreter (CTX_C2_001) dan sql (avg_skor_overall EL 2024-1).",
+        "completeness_criteria": [
+          "Mencakup interpretasi tren IF vs EL dan skor terkini EL dari database."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C2-002",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Dari grafik ini, prodi mana yang kehadiran dosennya paling mengkhawatirkan? Tampilkan distribusi nilai prodi tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "grading_composition_single_entity_bar_chart",
+          "title": "Bobot Komponen Penilaian dan Kehadiran Dosen per Prodi STEI — 2024-1",
+          "description": "Dua panel: (1) komposisi bobot UTS/UAS/tugas per prodi, (2) rata-rata kehadiran dosen per prodi. Dihasilkan oleh ARCH-CGNT-C2-002.",
+          "data_summary": "Panel kehadiran dosen: IF=92%, MIF=95%, EL=78%, STI=89% — EL paling rendah. Panel bobot IF: UTS=30%, UAS=40%, Tugas=30%.",
+          "x_axis_label": "Prodi",
+          "y_axis_label": "Persentase (%)",
+          "series": [
+            {
+              "name": "bobot_uts",
+              "data": [
+                30
+              ]
+            },
+            {
+              "name": "bobot_uas",
+              "data": [
+                40
+              ]
+            },
+            {
+              "name": "bobot_tugas",
+              "data": [
+                30
+              ]
+            },
+            {
+              "name": "kehadiran_dosen",
+              "data": [
+                92
+              ]
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi grafik kehadiran dosen per prodi STEI: identifikasi prodi dengan kehadiran terendah (EL=78%).",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Ambil distribusi nilai lengkap (dist_pct per grade) prodi EL semester 2024-1 dari database.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi prodi EL sebagai kehadiran dosen terendah dari grafik.",
+          "Jawaban menyajikan distribusi nilai prodi EL dari database."
+        ],
+        "acceptable_answer_patterns": [
+          "Identifikasi EL dari grafik dan distribusi nilai EL dari database."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi EL sebagai prodi kehadiran terendah.",
+          "Distribusi nilai EL dari sql disajikan.",
+          "chart_interpreter + sql berurutan."
+        ],
+        "faithfulness_reference": "chart_interpreter (CTX_C2_002 kehadiran EL) dan sql (distribusi nilai EL 2024-1).",
+        "completeness_criteria": [
+          "Mencakup identifikasi EL dari grafik dan distribusi nilainya dari database."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C3-001",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Grafik menunjukkan IF3110 turun terus. Kelas mana di IF3110 yang paling berkontribusi pada penurunan ini?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Tren Skor Evaluasi Matkul IF dengan Penurunan Konsisten (2023-1 hingga 2024-1)",
+          "description": "Tren skor overall matkul IF yang mengalami penurunan berturut-turut di 2023-2 dan 2024-1. Dihasilkan oleh ARCH-CGNT-C3-001.",
+          "data_summary": "IF3110: 2023-1=3.55, 2023-2=3.31, 2024-1=3.12. IF3230: 2023-1=3.48, 2023-2=3.25, 2024-1=3.18. IF3140: 2023-1=3.41, 2023-2=3.28, 2024-1=3.20. Semua tren menurun.",
+          "x_axis_label": "Semester",
+          "y_axis_label": "Skor (1–4)",
+          "series": [
+            {
+              "name": "IF3110",
+              "data": [
+                3.55,
+                3.31,
+                3.12
+              ]
+            },
+            {
+              "name": "IF3230",
+              "data": [
+                3.48,
+                3.25,
+                3.18
+              ]
+            },
+            {
+              "name": "IF3140",
+              "data": [
+                3.41,
+                3.28,
+                3.2
+              ]
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi grafik tren matkul IF: konfirmasi IF3110 sebagai yang paling tajam turun.",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Berdasarkan temuan grafik, ambil avg_skor_overall per kode_kelas IF3110 untuk 3 semester terakhir untuk mengidentifikasi kelas penyebab.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengkonfirmasi IF3110 sebagai matkul dengan penurunan tajam dari grafik.",
+          "Jawaban mengidentifikasi kelas spesifik IF3110 yang paling berkontribusi dari database."
+        ],
+        "acceptable_answer_patterns": [
+          "Konfirmasi IF3110 dari grafik → identifikasi kelas IF3110 bermasalah dari sql."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menginterpretasikan grafik tren IF3110 dulu.",
+          "Jawaban mengidentifikasi kelas IF3110 dari sql.",
+          "chart_interpreter + sql berurutan."
+        ],
+        "faithfulness_reference": "chart_interpreter (CTX_C3_001) dan sql (skor per kelas IF3110).",
+        "completeness_criteria": [
+          "Mencakup konfirmasi tren IF3110 dari grafik dan identifikasi kelas bermasalah."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C3-002",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Grafik distribusi nilai prodi EL memperlihatkan BC yang tinggi. Apa yang mahasiswa EL komentarkan terkait perkuliahan?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "grade_distribution_single_entity_bar_chart",
+          "title": "Distribusi Nilai Prodi EL Semester 2024-1 (Kelulusan Terendah di STEI)",
+          "description": "Distribusi nilai A/AB/B/BC/C/D/E prodi EL sebagai prodi dengan tingkat kelulusan terendah di STEI. Dihasilkan oleh ARCH-CGNT-C3-002.",
+          "data_summary": "A=18%, AB=25%, B=28%, BC=14%, C=10%, D=4%, E=1%. Tingkat kelulusan 95%. Vs prodi IF: grade A 10% lebih rendah, BC 4% lebih tinggi.",
+          "x_axis_label": "Grade",
+          "y_axis_label": "Persentase (%)",
+          "series": [
+            {
+              "name": "pct",
+              "data": [
+                18,
+                25,
+                28,
+                14,
+                10,
+                4,
+                1
+              ]
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi distribusi nilai prodi EL dari grafik: identifikasi grade bermasalah (BC tinggi, A rendah).",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Berdasarkan pola distribusi dari grafik, ambil komentar mahasiswa prodi EL 2024-1 terkait perkuliahan.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menginterpretasikan pola distribusi EL dari grafik (BC tinggi, A rendah).",
+          "Jawaban menyebut komentar mahasiswa EL terkait penyebab distribusi tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "Interpretasi distribusi EL dari grafik dan komentar mahasiswa EL diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menginterpretasikan grafik distribusi EL dulu.",
+          "Komentar mahasiswa EL dari rag disajikan.",
+          "chart_interpreter + rag berurutan."
+        ],
+        "faithfulness_reference": "chart_interpreter (CTX_C3_002) dan rag_chunks komentar mahasiswa EL.",
+        "completeness_criteria": [
+          "Mencakup interpretasi distribusi EL dari grafik dan komentar mahasiswanya."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C4-001",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari scatter plot ini, outlier mana yang paling mengkhawatirkan? Cek tren historis dan refleksi dosen untuk matkul outlier tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Scatter Plot: Kehadiran Dosen vs Skor Evaluasi per Matkul STEI — 2024-1",
+          "description": "Hubungan antara rata-rata kehadiran dosen (%) dan skor evaluasi overall per matkul STEI 2024-1. Outlier di-highlight. Dihasilkan oleh ARCH-CGNT-C4-001.",
+          "data_summary": "Mayoritas cluster di kehadiran 85-95% dan skor 3.3-3.8. Outlier: IF3110 (kehadiran 91%, skor 3.12 — kehadiran tinggi tapi skor rendah), EL3010 (kehadiran 72%, skor 3.41 — kehadiran rendah tapi skor relatif baik).",
+          "x_axis_label": "Kehadiran Dosen (%)",
+          "y_axis_label": "Skor Overall (1–4)",
+          "series": [
+            {
+              "name": "matkul",
+              "data": []
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi scatter plot: identifikasi matkul outlier paling mengkhawatirkan (IF3110: kehadiran tinggi tapi skor rendah).",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Ambil tren avg_skor_overall dan avg_kehadiran_dosen IF3110 untuk 4 semester terakhir untuk konfirmasi pola.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi pelaksanaan dosen IF3110 dari portofolio untuk mencari konteks penyebab.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3110"
+            }
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi IF3110 sebagai outlier mengkhawatirkan dari scatter plot.",
+          "Jawaban menyebut tren historis IF3110 dari database.",
+          "Jawaban menyebut refleksi dosen IF3110."
+        ],
+        "acceptable_answer_patterns": [
+          "Scatter plot → tren historis → refleksi dosen IF3110 diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi outlier dari scatter plot.",
+          "Tren historis dari sql.",
+          "Refleksi dosen dari rag.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "chart_interpreter (CTX_C4_001 outlier IF3110), sql (tren IF3110), rag (refleksi IF3110).",
+        "completeness_criteria": [
+          "Mencakup identifikasi outlier dari scatter, tren historis, dan refleksi dosen IF3110."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CINT-C4-002",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari dashboard ini, dimensi sarana prasarana tampak menurun tajam. Cari data detail skor sarana dan komentar mahasiswa yang mengeluhkan fasilitas.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Dashboard STEI: Tren Dimensi Evaluasi (6 Semester) dan Distribusi Nilai 2024-1",
+          "description": "Panel kiri: tren skor per dimensi (capaian/pelaksanaan/sarana/perilaku) STEI selama 6 semester. Panel kanan: distribusi nilai per grade STEI semester 2024-1. Dihasilkan oleh ARCH-CGNT-C4-002.",
+          "data_summary": "Panel tren: Capaian ~3.6 stabil, Pelaksanaan turun 3.5→3.3, Sarana turun paling tajam 3.4→3.0, Perilaku stabil ~3.7. Panel distribusi: A=22%, AB=28%, B=25%, BC=12%, C=8%, DE=5%.",
+          "x_axis_label": "Semester / Grade",
+          "y_axis_label": "Skor (1–4) / Persentase (%)",
+          "series": [
+            {
+              "name": "capaian",
+              "data": []
+            },
+            {
+              "name": "pelaksanaan",
+              "data": []
+            },
+            {
+              "name": "sarana",
+              "data": []
+            },
+            {
+              "name": "perilaku",
+              "data": []
+            },
+            {
+              "name": "grade_dist",
+              "data": []
+            }
+          ]
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Interpretasi dashboard: identifikasi dimensi sarana sebagai yang paling menurun (3.4→3.0) dari panel tren.",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Ambil skor Q29 (sarana prasarana memadai) dan Q30 (fasilitas pendukung) per prodi STEI semester 2024-1 dari database.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa STEI 2024-1 yang menyinggung sarana, ruangan, laboratorium, atau fasilitas.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi dimensi sarana sebagai yang menurun paling tajam dari dashboard.",
+          "Jawaban menyebut skor Q29/Q30 dari database.",
+          "Jawaban menyebut komentar mahasiswa terkait fasilitas."
+        ],
+        "acceptable_answer_patterns": [
+          "Dashboard → skor detail Q29/Q30 → komentar mahasiswa fasilitas diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi dimensi sarana dari dashboard.",
+          "Skor Q29/Q30 dari sql.",
+          "Komentar fasilitas dari rag.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "chart_interpreter (CTX_C4_002 dimensi sarana), sql (Q29/Q30 STEI), rag (komentar fasilitas).",
+        "completeness_criteria": [
+          "Mencakup identifikasi dimensi sarana dari dashboard, skor detail, dan komentar mahasiswa."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C1-001",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana hasilnya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: entitas tidak disebutkan — 'hasilnya' merujuk ke matkul, prodi, atau semester mana?",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi tentang entitas yang dimaksud.",
+          "Jawaban tidak mengasumsikan entitas tertentu."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi spesifik tentang entitas."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi entitas.",
+          "Tidak ada sql/rag eksekusi."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi entitas."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C1-002",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Ada berapa mahasiswa yang nilainya bagus?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: threshold 'bagus' tidak jelas dan matkul/prodi tidak disebutkan.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi threshold 'bagus'.",
+          "Jawaban meminta klarifikasi matkul/prodi yang dimaksud."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi threshold dan entitas."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi threshold dan entitas.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi threshold dan entitas."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C2-001",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bandingkan mereka.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: pronoun 'mereka' tidak memiliki referent dalam konteks percakapan.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi tentang referent 'mereka'.",
+          "Jawaban tidak mengasumsikan entitas tertentu."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi referent 'mereka'."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi referent.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi referent 'mereka'."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C2-002",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Tampilkan data keduanya dan buat perbandingan lengkap.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: 'keduanya' tidak jelas — prodi, matkul, dosen, atau semester mana?",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi referent 'keduanya'.",
+          "Jawaban tidak mengasumsikan entitas."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi referent 'keduanya'."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi 'keduanya'.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi 'keduanya'."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C3-001",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Cari yang paling jelek, lalu lihat kenapa.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: 'paling jelek' merujuk ke metrik apa dan entitas mana yang dimaksud.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi metrik dan entitas.",
+          "Jawaban tidak mengasumsikan interpretasi."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi metrik dan entitas."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi metrik dan entitas.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi metrik dan entitas 'paling jelek'."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C3-002",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Kalau yang ini dibandingkan sebelumnya, bagaimana?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: 'yang ini' dan 'sebelumnya' tidak memiliki referent — perlu tahu matkul/prodi dan periode yang dimaksud.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi referent 'yang ini' dan 'sebelumnya'.",
+          "Jawaban meminta konteks matkul/prodi dan periode."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi dua referent ambigu."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi referent.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi 'yang ini' dan 'sebelumnya'."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C4-001",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Analisis tren performa, temukan penyebabnya, dan buat grafik yang menjelaskan semuanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: entitas, metrik, scope prodi/matkul, dan rentang waktu tidak disebutkan.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi entitas, metrik, scope, dan rentang waktu.",
+          "Jawaban tidak mengasumsikan scope apapun."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi komprehensif semua dimensi ambigu."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi entitas, metrik, scope, dan waktu.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi semua dimensi ambigu."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C4-002",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Ada berapa mahasiswa yang berhasil?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Minta klarifikasi: 'berhasil' ambigu (lulus? nilai A? skor tinggi?), prodi/matkul tidak disebutkan, semester tidak jelas.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "Jawaban meminta klarifikasi definisi 'berhasil' dan entitas.",
+          "Jawaban tidak mengasumsikan threshold atau entitas."
+        ],
+        "acceptable_answer_patterns": [
+          "Permintaan klarifikasi 'berhasil' dan entitas."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban meminta klarifikasi 'berhasil' dan entitas.",
+          "Tidak ada eksekusi tool."
+        ],
+        "faithfulness_reference": "Tidak ada; kasus ini harus menghasilkan permintaan klarifikasi.",
+        "completeness_criteria": [
+          "Jawaban meminta klarifikasi 'berhasil' dan entitas."
+        ]
+      }
+    }
+  ]
+}

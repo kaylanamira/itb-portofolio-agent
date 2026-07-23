@@ -150,11 +150,9 @@
         "domain",
         "raw_query",
         "language",
-        "user_scope",
         "input_context",
         "expected_behavior",
-        "scoring_rubric",
-        "notes_for_dataset_author"
+        "scoring_rubric"
       ],
       "properties": {
         "id": {
@@ -207,41 +205,6 @@
             "en",
             "mixed"
           ]
-        },
-        "user_scope": {
-          "type": "object",
-          "description": "User access scope used for the evaluation case.",
-          "additionalProperties": false,
-          "required": [
-            "role"
-          ],
-          "properties": {
-            "role": {
-              "type": "string",
-              "description": "Role value passed to UserScope, for example dosen, kaprodi, dekan, or admin."
-            },
-            "allowed_faculties": {
-              "type": "array",
-              "description": "Optional faculty codes allowed for this user.",
-              "items": {
-                "type": "string"
-              }
-            },
-            "allowed_programs": {
-              "type": "array",
-              "description": "Optional study program identifiers allowed for this user.",
-              "items": {
-                "type": "string"
-              }
-            },
-            "allowed_courses": {
-              "type": "array",
-              "description": "Optional course codes allowed for this user.",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
         },
         "input_context": {
           "type": "object",
@@ -490,18 +453,6 @@
           "domain": "portfolio",
           "raw_query": "Berapa rata-rata evaluasi kelas IF2210 pada semester 2024-1?",
           "language": "id",
-          "user_scope": {
-            "role": "kaprodi",
-            "allowed_faculties": [
-              "STEI"
-            ],
-            "allowed_programs": [
-              "135"
-            ],
-            "allowed_courses": [
-              "IF2210"
-            ]
-          },
           "input_context": {
             "conversation_history": [],
             "chart_context": null
@@ -549,8 +500,7 @@
               "Semester is addressed.",
               "Average value is addressed."
             ]
-          },
-          "notes_for_dataset_author": "Single factual lookup; no multi-step planning is required."
+          }
         }
       ]
     }

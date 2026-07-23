@@ -1,0 +1,331 @@
+{
+  "dataset_name": "architecture_orchestration_tiny",
+  "version": "2.1.0",
+  "description": "Tiny representative dataset for fast execution",
+  "total_cases": 4,
+  "distribution": {
+    "query_type_counts": {
+      "data_lookup": 0,
+      "text_lookup": 0,
+      "analytical_numeric": 0,
+      "analytical_text": 0,
+      "analytical_hybrid": 4,
+      "diagnostic": 0,
+      "comparative": 0,
+      "chart_generate": 0,
+      "chart_interpret": 0,
+      "clarification_needed": 0
+    },
+    "orchestration_complexity_counts": {
+      "C1_single_tool": 1,
+      "C2_parallel_multi_tool": 1,
+      "C3_sequential": 1,
+      "C4_dependent_multi_step": 1
+    }
+  },
+  "cases": [
+    {
+      "id": "ARCH-AHYB-C1-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana pelaksanaan perkuliahan IF3170 semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil data numerik IF3170 2024-1: skor evaluasi per dimensi, kehadiran dosen dan mahasiswa, distribusi nilai.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil refleksi dosen dan komentar mahasiswa IF3170 2024-1 untuk konteks kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "teks_portofolio",
+              "komentar_mahasiswa"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan",
+              "usulan_perbaikan_dosen"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut data numerik IF3170 (skor atau kehadiran).",
+          "Jawaban menyebut elemen kualitatif dari refleksi atau komentar.",
+          "Jawaban memberikan penilaian menyeluruh."
+        ],
+        "acceptable_answer_patterns": [
+          "Data numerik dan kualitatif IF3170 digabung dalam analisis pelaksanaan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut data numerik IF3170.",
+          "Jawaban menyebut elemen kualitatif.",
+          "sql dan rag digunakan."
+        ],
+        "faithfulness_reference": "sql IF3170 (skor, kehadiran) dan rag_chunks (refleksi+komentar) IF3170 2024-1.",
+        "completeness_criteria": [
+          "Mencakup data numerik dan kualitatif pelaksanaan IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C2-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana kualitas pengajaran dosen IF3170 tahun 2024 berdasarkan penilaian mahasiswa dan ISU yg dialami?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ambil skor kuesioner pelaksanaan (Q25-Q27: komunikasi, kepedulian, keadilan dosen) IF3170 2024.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF3170 untuk konfirmasi kualitatif.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ],
+            "rag_scope_override": {
+              "kode_matkul": "IF3170"
+            }
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut skor kuesioner pelaksanaan IF3170 terkait dosen.",
+          "Jawaban mengintegrasikan komentar mahasiswa aktif."
+        ],
+        "acceptable_answer_patterns": [
+          "Dua sumber data (kuesioner IF3170, komentar) diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut data kuesioner IF3170 dan komentar mahasiswa.",
+          "Jawaban menyebut komentar mahasiswa.",
+          "2 tool calls grounded."
+        ],
+        "faithfulness_reference": "sql kuesioner IF3170, rag komentar IF3170.",
+        "completeness_criteria": [
+          "Mencakup perspektif mahasiswa aktif tentang kualitas dosen IF3170."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C3-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Apakah kepuasan mahasiswa prodi IF terhadap beban kuliah sudah memadai? Dukung dengan data numerik dan komentar mahasiswanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Catalog lookup: pertanyaan kuesioner dimensi pelaksanaan untuk kode pertanyaan beban kerja dan SKS.",
+            "tool": "sql",
+            "required": true,
+            "catalog_dimension": "Pelaksanaan perkuliahan"
+          },
+          {
+            "task": "Ambil rata-rata skor Q28 (beban kerja sesuai SKS) prodi IF semester 2024-1.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa IF 2024-1 terkait beban tugas, SKS, atau workload.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban menyebut skor Q28 (beban kerja sesuai SKS) prodi IF.",
+          "Jawaban menyebut komentar mahasiswa terkait beban kuliah.",
+          "Jawaban memberikan penilaian memadai atau tidak."
+        ],
+        "acceptable_answer_patterns": [
+          "Skor Q28 dan komentar mahasiswa tentang beban kuliah diintegrasikan."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban menyebut skor Q28 IF.",
+          "Komentar beban dari rag.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "catalog Q28, sql skor Q28 IF, rag komentar beban.",
+        "completeness_criteria": [
+          "Mencakup skor Q28 dan komentar mahasiswa IF tentang beban kuliah."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C4-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Dari kelas IF yang skor evaluasinya turun lebih dari 0.2 poin dibanding semester 2023-2, analisis profil lengkapnya: statistik, komentar mahasiswa, dan refleksi dosen.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Hitung delta skor overall kelas IF antara 2024-1 dan 2023-2, filter yang turun > 0.2.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil statistik detail (kehadiran, nilai, semua dimensi) kelas-kelas yang turun.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Ambil komentar mahasiswa dan refleksi dosen dari kelas-kelas yang turun tersebut.",
+            "tool": "rag",
+            "required": false,
+            "rag_source_types": [
+              "komentar_mahasiswa",
+              "teks_portofolio"
+            ],
+            "rag_tipe_konten": [
+              "refleksi_pelaksanaan"
+            ]
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "Jawaban mengidentifikasi kelas IF yang skor turun > 0.2.",
+          "Jawaban menyebut statistik detail kelas tersebut.",
+          "Jawaban menyebut komentar atau refleksi dari kelas itu."
+        ],
+        "acceptable_answer_patterns": [
+          "Kelas IF turun signifikan diprofilkan numerik dan kualitatif."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Jawaban mengidentifikasi kelas IF turun.",
+          "Statistik dan konteks kualitatif disajikan.",
+          "3 langkah berurutan."
+        ],
+        "faithfulness_reference": "sql delta, sql detail, rag komentar+refleksi.",
+        "completeness_criteria": [
+          "Mencakup kelas IF turun, statistiknya, dan konteks kualitatif."
+        ]
+      }
+    }
+  ]
+}

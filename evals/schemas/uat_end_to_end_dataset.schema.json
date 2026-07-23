@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://itb-portofolio.local/schemas/uat_end_to_end_dataset.schema.json",
+  "title": "UAT and End-to-End Final System Dataset",
+  "type": "object",
+  "required": [
+    "dataset_name",
+    "version",
+    "description",
+    "total_cases",
+    "distribution",
+    "metrics",
+    "cases"
+  ],
+  "properties": {
+    "dataset_name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "total_cases": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "distribution": {
+      "type": "object",
+      "required": [
+        "role_counts",
+        "analysis_aspect_counts",
+        "data_source_mix_counts"
+      ],
+      "properties": {
+        "role_counts": {
+          "type": "object",
+          "required": ["dosen", "kaprodi", "dekan", "direktorat"],
+          "properties": {
+            "dosen": {"type": "integer"},
+            "kaprodi": {"type": "integer"},
+            "dekan": {"type": "integer"},
+            "direktorat": {"type": "integer"}
+          }
+        },
+        "analysis_aspect_counts": {
+          "type": "object",
+          "required": [
+            "academic_performance",
+            "portfolio_reflection",
+            "program_or_faculty_monitoring",
+            "comparative_or_trend_analysis",
+            "diagnostic_and_recommendation"
+          ],
+          "properties": {
+            "academic_performance": {"type": "integer"},
+            "portfolio_reflection": {"type": "integer"},
+            "program_or_faculty_monitoring": {"type": "integer"},
+            "comparative_or_trend_analysis": {"type": "integer"},
+            "diagnostic_and_recommendation": {"type": "integer"}
+          }
+        },
+        "data_source_mix_counts": {
+          "type": "object",
+          "required": ["structured", "textual", "hybrid"],
+          "properties": {
+            "structured": {"type": "integer"},
+            "textual": {"type": "integer"},
+            "hybrid": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["end_to_end", "uat"],
+      "properties": {
+        "end_to_end": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "uat": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "role",
+        "analysis_aspect",
+        "data_source_mix",
+        "language",
+        "domain",
+        "question",
+        "user_scope",
+        "expected_evidence",
+        "technical_rubric",
+        "acceptance_rubric",
+        "validation"
+      ],
+      "properties": {
+        "id": {"type": "string"},
+        "role": {
+          "type": "string",
+          "enum": ["dosen", "kaprodi", "dekan", "direktorat"]
+        },
+        "analysis_aspect": {
+          "type": "string",
+          "enum": [
+            "academic_performance",
+            "portfolio_reflection",
+            "program_or_faculty_monitoring",
+            "comparative_or_trend_analysis",
+            "diagnostic_and_recommendation"
+          ]
+        },
+        "data_source_mix": {
+          "type": "string",
+          "enum": ["structured", "textual", "hybrid"]
+        },
+        "language": {"type": "string"},
+        "domain": {"type": "string"},
+        "question": {"type": "string"},
+        "user_scope": {
+          "type": "object",
+          "required": ["role", "requires_live_role_account", "scope_notes"],
+          "properties": {
+            "role": {"type": "string"},
+            "requires_live_role_account": {"type": "boolean"},
+            "scope_notes": {"type": "string"}
+          }
+        },
+        "expected_evidence": {
+          "type": "object",
+          "required": [
+            "expected_tools",
+            "expected_data_sources",
+            "expected_answer_elements",
+            "prohibited_behavior"
+          ],
+          "properties": {
+            "expected_tools": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "expected_data_sources": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "expected_answer_elements": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "prohibited_behavior": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "technical_rubric": {
+          "type": "object",
+          "required": [
+            "task_success_criteria",
+            "correctness_reference",
+            "faithfulness_reference",
+            "completeness_criteria"
+          ],
+          "properties": {
+            "task_success_criteria": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "correctness_reference": {"type": "string"},
+            "faithfulness_reference": {"type": "string"},
+            "completeness_criteria": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "acceptance_rubric": {
+          "type": "object",
+          "required": [
+            "task_completion_prompt",
+            "perceived_correctness_prompt",
+            "usefulness_prompt",
+            "clarity_prompt",
+            "trust_acceptance_prompt"
+          ],
+          "properties": {
+            "task_completion_prompt": {"type": "string"},
+            "perceived_correctness_prompt": {"type": "string"},
+            "usefulness_prompt": {"type": "string"},
+            "clarity_prompt": {"type": "string"},
+            "trust_acceptance_prompt": {"type": "string"}
+          }
+        },
+        "validation": {
+          "type": "object",
+          "required": [
+            "pre_uat_checks",
+            "evidence_non_empty_required",
+            "scope_leakage_check_required"
+          ],
+          "properties": {
+            "pre_uat_checks": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "evidence_non_empty_required": {"type": "boolean"},
+            "scope_leakage_check_required": {"type": "boolean"}
+          }
+        },
+        "notes_for_evaluator": {"type": "string"}
+      }
+    }
+  }
+}

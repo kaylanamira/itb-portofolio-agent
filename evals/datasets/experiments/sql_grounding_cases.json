@@ -1,0 +1,4358 @@
+{
+  "dataset_name": "sql_grounding_cases",
+  "version": "0.1.0",
+  "description": "Experiment II dataset: 80 curated SQL grounding cases stratified by 8 SQL challenge categories, used to compare S1 Static Schema, S2 Dynamic Schema Grounding, and S3 Full Grounded SQL Pipeline. Cases are semantically varied within each category to avoid parameter-only template repetition.",
+  "total_cases": 80,
+  "database_snapshot": {
+    "snapshot_id": "TBD-snapshot-id",
+    "description": "Placeholder — set to the actual DB dump/version identifier used for the evaluation run before executing the experiment."
+  },
+  "distribution": {
+    "sql_complexity_counts": {
+      "single_table_query": 12,
+      "multi_table_join": 12,
+      "aggregation": 12,
+      "nested_query": 8,
+      "window_function": 8,
+      "conditional_aggregation": 8,
+      "ambiguous_or_typo_entity": 12,
+      "questionnaire_metadata": 8
+    }
+  },
+  "cases": [
+    {
+      "id": "SQL-SINGLE-001",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan skor capaian, pelaksanaan, sarana, dan overall untuk kelas IF2220 semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan skor capaian, pelaksanaan, sarana, dan overall untuk kelas IF2220 semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "avg_skor_capaian",
+          "avg_skor_overall"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns rows matching the requested simple filters and selected fields."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, avg_skor_capaian, avg_skor_pelaksanaan, avg_skor_sarana_prasarana, avg_skor_overall FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2220' AND tahun = 2023 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-002",
+      "sql_complexity": "single_table_query",
+      "question": "Daftar kelas KU1102 semester 2023-1 dengan kehadiran mahasiswa di bawah 80 persen.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Daftar kelas KU1102 semester 2023-1 dengan kehadiran mahasiswa di bawah 80 persen.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1102",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pct_kehadiran_mahasiswa",
+          "< 80"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns existing KU1102 classes in 2023-1 whose student attendance is below 80 percent."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'KU1102' AND tahun = 2023 AND semester = 1 AND pct_kehadiran_mahasiswa < 80 ORDER BY pct_kehadiran_mahasiswa ASC LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-003",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan distribusi nilai A sampai E untuk KU1202 semester 2022-2 yang distribusi nilainya sudah sah.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan distribusi nilai A sampai E untuk KU1202 semester 2022-2 yang distribusi nilainya sudah sah.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "is_distribusi_nilai_sah",
+          "dist_jumlah_a",
+          "dist_jumlah_e"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns grade distribution rows for KU1202 classes with valid grade distribution."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, jumlah_mahasiswa, dist_jumlah_a, dist_jumlah_ab, dist_jumlah_b, dist_jumlah_bc, dist_jumlah_c, dist_jumlah_d, dist_jumlah_e FROM analitik.v_akademik_kelas WHERE kode_matkul = 'KU1202' AND tahun = 2022 AND semester = 2 AND is_distribusi_nilai_sah = TRUE ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-004",
+      "sql_complexity": "single_table_query",
+      "question": "Apa jenis nilai, SKS, dan status wajib ITB untuk kelas WI1103 semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Apa jenis nilai, SKS, dan status wajib ITB untuk kelas WI1103 semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_kelas_matkul"
+        ],
+        "expected_entities": {
+          "kode_matkul": "WI1103",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_info_umum_kelas_matkul",
+          "jenis_nilai",
+          "is_wajib_itb"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns class metadata for WI1103 in 2024-1."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, sks, jenis_nilai, is_wajib_itb, kode_jenis_list, kode_sifat_list FROM analitik.v_info_umum_kelas_matkul WHERE kode_matkul = 'WI1103' AND tahun = 2024 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-005",
+      "sql_complexity": "single_table_query",
+      "question": "Ambil refleksi pelaksanaan perkuliahan dan usulan perbaikan dosen untuk KU1202 semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ambil refleksi pelaksanaan perkuliahan dan usulan perbaikan dosen untuk KU1202 semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "refleksi_pelaksanaan_perkuliahan",
+          "usulan_perbaikan_oleh_dosen_berikutnya"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns portfolio reflection and improvement recommendation fields using live portfolio column names."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, refleksi_pelaksanaan_perkuliahan, usulan_perbaikan_oleh_dosen_berikutnya FROM analitik.v_akademik_portofolio WHERE kode_matkul = 'KU1202' AND tahun = 2022 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-006",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan komentar terhadap hasil kuesioner mahasiswa untuk KU1102 semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan komentar terhadap hasil kuesioner mahasiswa untuk KU1102 semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1102",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_portofolio",
+          "komentar_terhadap_hasil_kuesioner_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns portfolio questionnaire-comment text from the portfolio view."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, komentar_terhadap_hasil_kuesioner_mahasiswa FROM analitik.v_akademik_portofolio WHERE kode_matkul = 'KU1102' AND tahun = 2023 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-007",
+      "sql_complexity": "single_table_query",
+      "question": "Berapa jumlah kelas, mata kuliah aktif, dosen aktif, dan mahasiswa aktif prodi IF semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas, mata kuliah aktif, dosen aktif, dan mahasiswa aktif prodi IF semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_institusi"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_info_umum_institusi",
+          "jumlah_kelas",
+          "jumlah_mahasiswa_aktif"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns rows matching the requested simple filters and selected fields."
+        ],
+        "gold_sql": "SELECT kode_prodi, nama_prodi_id, jumlah_kelas, jumlah_matkul_aktif, jumlah_dosen_aktif, jumlah_mahasiswa_aktif FROM analitik.v_info_umum_institusi WHERE kode_prodi = 'IF' AND tahun = 2023 AND semester = 2 LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-008",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan beban mengajar dosen yang mengajar KU1202 pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan beban mengajar dosen yang mengajar KU1202 pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_info_umum_dosen",
+          "kode_matkul_list",
+          "total_sks_diajar"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns lecturers whose course list contains KU1202 in 2022-2."
+        ],
+        "gold_sql": "SELECT dosen_id, nama_dosen_gelar, jumlah_kelas, jumlah_matkul, total_sks_diajar, kode_matkul_list FROM analitik.v_info_umum_dosen WHERE tahun = 2022 AND semester = 2 AND 'KU1202' = ANY(kode_matkul_list) ORDER BY total_sks_diajar DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-009",
+      "sql_complexity": "single_table_query",
+      "question": "Kelas KU1202 mana pada semester 2022-2 yang kehadiran mahasiswanya kurang dari 75 persen?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelas KU1202 mana pada semester 2022-2 yang kehadiran mahasiswanya kurang dari 75 persen?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "kode_matkul",
+          "pct_kehadiran_mahasiswa",
+          "< 75"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns KU1202 classes in 2022-2 with student attendance below 75 percent."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'KU1202' AND tahun = 2022 AND semester = 2 AND pct_kehadiran_mahasiswa < 75 ORDER BY pct_kehadiran_mahasiswa ASC LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-010",
+      "sql_complexity": "single_table_query",
+      "question": "Daftar kelas pass/fail WI1101 pada semester 2024-1 beserta jumlah mahasiswa pass dan fail.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Daftar kelas pass/fail WI1101 pada semester 2024-1 beserta jumlah mahasiswa pass dan fail.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "WI1101",
+          "jenis_nilai": "PassFail",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "jenis_nilai",
+          "dist_jumlah_pass",
+          "dist_jumlah_fail"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns PassFail grade distribution for WI1101 in 2024-1."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, dist_jumlah_pass, dist_jumlah_fail FROM analitik.v_akademik_kelas WHERE kode_matkul = 'WI1101' AND tahun = 2024 AND semester = 1 AND jenis_nilai = 'PassFail' AND is_distribusi_nilai_sah = TRUE ORDER BY kode_matkul, no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-011",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan kelas semester 2022-2 dengan skor sarana prasarana di bawah 3.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan kelas semester 2022-2 dengan skor sarana prasarana di bawah 3.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "avg_skor_sarana_prasarana",
+          "< 3"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns rows matching the requested simple filters and selected fields."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_sarana_prasarana FROM analitik.v_akademik_kelas WHERE tahun = 2022 AND semester = 2 AND avg_skor_sarana_prasarana < 3 ORDER BY avg_skor_sarana_prasarana ASC LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-SINGLE-012",
+      "sql_complexity": "single_table_query",
+      "question": "Tampilkan metode perkuliahan dan sistem penilaian untuk WI1103 semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan metode perkuliahan dan sistem penilaian untuk WI1103 semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "WI1103",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "metode_perkuliahan",
+          "sistem_penilaian"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Returns portfolio teaching-method and assessment-system text using live column names."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, metode_perkuliahan, sistem_penilaian FROM analitik.v_akademik_portofolio WHERE kode_matkul = 'WI1103' AND tahun = 2024 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-001",
+      "sql_complexity": "multi_table_join",
+      "question": "Gabungkan skor kelas dan refleksi portofolio untuk KU1202 semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gabungkan skor kelas dan refleksi portofolio untuk KU1202 semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "v_akademik_kelas",
+          "v_akademik_portofolio",
+          "refleksi_pelaksanaan_perkuliahan"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines class score and portfolio reflection by kelas_id."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas, k.avg_skor_overall, p.refleksi_pelaksanaan_perkuliahan FROM analitik.v_akademik_kelas k JOIN analitik.v_akademik_portofolio p ON p.kelas_id = k.kelas_id WHERE k.kode_matkul = 'KU1202' AND k.tahun = 2022 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-002",
+      "sql_complexity": "multi_table_join",
+      "question": "Untuk IF3130 semester 2023-1, tampilkan skor overall dan jumlah komentar mahasiswa per kelas.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk IF3130 semester 2023-1, tampilkan skor overall dan jumlah komentar mahasiswa per kelas.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_komentar_mahasiswa"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "LEFT JOIN",
+          "COUNT",
+          "komentar_teks"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines attributes from all requested joined tables using class, prodi, dosen, or question keys."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas, k.avg_skor_overall, COUNT(c.jawaban_id) AS jumlah_komentar FROM analitik.v_akademik_kelas k LEFT JOIN analitik.v_akademik_komentar_mahasiswa c ON c.kelas_id = k.kelas_id WHERE k.kode_matkul = 'IF3130' AND k.tahun = 2023 AND k.semester = 1 GROUP BY k.kelas_id, k.kode_matkul, k.no_kelas, k.avg_skor_overall ORDER BY jumlah_komentar DESC, k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-003",
+      "sql_complexity": "multi_table_join",
+      "question": "Bandingkan jumlah kelas dari statistik prodi dan info institusi untuk prodi IF semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Bandingkan jumlah kelas dari statistik prodi dan info institusi untuk prodi IF semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi",
+          "analitik.v_info_umum_institusi"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "jumlah_kelas"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines attributes from all requested joined tables using class, prodi, dosen, or question keys."
+        ],
+        "gold_sql": "SELECT s.kode_prodi, s.jumlah_kelas AS jumlah_kelas_statistik, i.jumlah_kelas AS jumlah_kelas_info, s.avg_skor_overall FROM analitik.v_akademik_statistik_prodi s JOIN analitik.v_info_umum_institusi i ON i.no_prodi = s.no_prodi AND i.tahun = s.tahun AND i.semester = s.semester WHERE s.kode_prodi = 'IF' AND s.tahun = 2024 AND s.semester = 1 LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-004",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan beban mengajar dosen FMIPA dan kelas yang diajarnya pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan beban mengajar dosen FMIPA dan kelas yang diajarnya pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen",
+          "analitik.v_info_umum_kelas_matkul"
+        ],
+        "expected_entities": {
+          "kode_fakultas_dosen": "FMIPA",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "total_sks_diajar",
+          "kode_matkul_list"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result joins lecturer workload rows with class metadata through the lecturer course list."
+        ],
+        "gold_sql": "SELECT d.dosen_id, d.nama_dosen_gelar, d.total_sks_diajar, k.kode_matkul, k.nama_matkul_id FROM analitik.v_info_umum_dosen d JOIN analitik.v_info_umum_kelas_matkul k ON k.tahun = d.tahun AND k.semester = d.semester AND k.kode_matkul = ANY(d.kode_matkul_list) WHERE d.kode_fakultas_dosen = 'FMIPA' AND d.tahun = 2023 AND d.semester = 2 ORDER BY d.total_sks_diajar DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-005",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan metadata kurikulum dan skor overall kelas IF2211 semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan metadata kurikulum dan skor overall kelas IF2211 semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_kelas_matkul",
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "kode_jenis_list",
+          "avg_skor_overall"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines attributes from all requested joined tables using class, prodi, dosen, or question keys."
+        ],
+        "gold_sql": "SELECT i.kelas_id, i.kode_matkul, i.nama_matkul_id, i.kode_jenis_list, i.kode_sifat_list, k.avg_skor_overall FROM analitik.v_info_umum_kelas_matkul i JOIN analitik.v_akademik_kelas k ON k.kelas_id = i.kelas_id WHERE i.kode_matkul = 'IF2211' AND i.tahun = 2023 AND i.semester = 2 ORDER BY i.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-006",
+      "sql_complexity": "multi_table_join",
+      "question": "Gabungkan skor kelas dengan usulan perbaikan portofolio untuk KU1102 semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gabungkan skor kelas dengan usulan perbaikan portofolio untuk KU1102 semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1102",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "avg_skor_overall",
+          "usulan_perbaikan_oleh_dosen_berikutnya"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result joins class score and portfolio improvement recommendation by kelas_id."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas, k.avg_skor_overall, p.usulan_perbaikan_oleh_dosen_berikutnya FROM analitik.v_akademik_kelas k JOIN analitik.v_akademik_portofolio p ON p.kelas_id = k.kelas_id WHERE k.kode_matkul = 'KU1102' AND k.tahun = 2023 AND k.semester = 1 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-007",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan teks pertanyaan Q28 dan skor beban kelas IF2220 semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan teks pertanyaan Q28 dan skor beban kelas IF2220 semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "kd_pertanyaan": 28,
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "pertanyaan_kuesioner",
+          "skor_q28"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines attributes from all requested joined tables using class, prodi, dosen, or question keys."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q28 FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 28 WHERE k.kode_matkul = 'IF2220' AND k.tahun = 2023 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-008",
+      "sql_complexity": "multi_table_join",
+      "question": "Bandingkan rata-rata skor prodi IF dengan rata-rata kelas IF semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Bandingkan rata-rata skor prodi IF dengan rata-rata kelas IF semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi",
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "AVG",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines attributes from all requested joined tables using class, prodi, dosen, or question keys."
+        ],
+        "gold_sql": "SELECT s.kode_prodi, s.avg_skor_overall AS avg_prodi, AVG(k.avg_skor_overall) AS avg_kelas FROM analitik.v_akademik_statistik_prodi s JOIN analitik.v_akademik_kelas k ON k.no_prodi = s.no_prodi AND k.tahun = s.tahun AND k.semester = s.semester WHERE s.kode_prodi = 'IF' AND s.tahun = 2023 AND s.semester = 1 GROUP BY s.kode_prodi, s.avg_skor_overall LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-009",
+      "sql_complexity": "multi_table_join",
+      "question": "Untuk kelas KU1202 semester 2022-2, tampilkan nilai akhir dan statistik kelas dari portofolio.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk kelas KU1202 semester 2022-2, tampilkan nilai akhir dan statistik kelas dari portofolio.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "avg_ip_akhir_mahasiswa",
+          "statistik_kelas"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result combines numeric final-grade statistics and portfolio class-statistic text by kelas_id."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas, k.avg_ip_akhir_mahasiswa, p.statistik_kelas FROM analitik.v_akademik_kelas k JOIN analitik.v_akademik_portofolio p ON p.kelas_id = k.kelas_id WHERE k.kode_matkul = 'KU1202' AND k.tahun = 2022 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-010",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan nama dosen dari info kelas dan skor overall WI1103 semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan nama dosen dari info kelas dan skor overall WI1103 semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_kelas_matkul",
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "WI1103",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "semua_dosen_nama_gelar",
+          "avg_skor_overall"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result joins public class lecturer metadata with class evaluation score by kelas_id."
+        ],
+        "gold_sql": "SELECT i.kelas_id, i.kode_matkul, i.no_kelas, i.semua_dosen_nama_gelar, k.avg_skor_overall FROM analitik.v_info_umum_kelas_matkul i JOIN analitik.v_akademik_kelas k ON k.kelas_id = i.kelas_id WHERE i.kode_matkul = 'WI1103' AND i.tahun = 2024 AND i.semester = 1 ORDER BY i.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-011",
+      "sql_complexity": "multi_table_join",
+      "question": "Gabungkan skor perilaku mahasiswa dengan tanggapan kuesioner portofolio untuk KU1202 semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gabungkan skor perilaku mahasiswa dengan tanggapan kuesioner portofolio untuk KU1202 semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "avg_skor_perilaku_mahasiswa",
+          "komentar_terhadap_hasil_kuesioner_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result joins class behavior score and portfolio questionnaire commentary by kelas_id."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas, k.avg_skor_perilaku_mahasiswa, p.komentar_terhadap_hasil_kuesioner_mahasiswa FROM analitik.v_akademik_kelas k JOIN analitik.v_akademik_portofolio p ON p.kelas_id = k.kelas_id WHERE k.kode_matkul = 'KU1202' AND k.tahun = 2022 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-JOIN-012",
+      "sql_complexity": "multi_table_join",
+      "question": "Tampilkan mata kuliah yang diajar dosen beserta metadata kelasnya pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan mata kuliah yang diajar dosen beserta metadata kelasnya pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen",
+          "analitik.v_info_umum_kelas_matkul"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "kode_matkul_list",
+          "semua_dosen_id"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result joins lecturer workload rows with class metadata for courses in the lecturer course list."
+        ],
+        "gold_sql": "SELECT d.dosen_id, d.nama_dosen_gelar, d.kode_matkul_list, k.kode_matkul, k.nama_matkul_id, k.no_kelas FROM analitik.v_info_umum_dosen d JOIN analitik.v_info_umum_kelas_matkul k ON k.tahun = d.tahun AND k.semester = d.semester AND k.kode_matkul = ANY(d.kode_matkul_list) WHERE d.tahun = 2024 AND d.semester = 1 ORDER BY d.nama_dosen_gelar, k.kode_matkul LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-001",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata skor overall dan jumlah kelas per fakultas pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata skor overall dan jumlah kelas per fakultas pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "GROUP BY",
+          "AVG",
+          "COUNT"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_fakultas, nama_fakultas_id, COUNT(*) AS jumlah_kelas, AVG(avg_skor_overall) AS avg_skor_overall FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2 GROUP BY kode_fakultas, nama_fakultas_id ORDER BY avg_skor_overall DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-002",
+      "sql_complexity": "aggregation",
+      "question": "Ringkas jumlah mahasiswa dinilai dan rata-rata IP akhir per prodi semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ringkas jumlah mahasiswa dinilai dan rata-rata IP akhir per prodi semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "SUM",
+          "AVG",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_prodi, nama_prodi_id, SUM(jumlah_mahasiswa) AS total_mahasiswa_dinilai, AVG(avg_ip_akhir_mahasiswa) AS avg_ip_akhir FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 1 AND is_distribusi_nilai_sah = TRUE GROUP BY kode_prodi, nama_prodi_id ORDER BY total_mahasiswa_dinilai DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-003",
+      "sql_complexity": "aggregation",
+      "question": "Hitung rata-rata kehadiran dosen dan mahasiswa untuk setiap fakultas pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Hitung rata-rata kehadiran dosen dan mahasiswa untuk setiap fakultas pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "pct_kehadiran_dosen",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_fakultas, AVG(pct_kehadiran_dosen) AS avg_kehadiran_dosen, AVG(pct_kehadiran_mahasiswa) AS avg_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE tahun = 2022 AND semester = 2 GROUP BY kode_fakultas ORDER BY avg_kehadiran_mahasiswa DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-004",
+      "sql_complexity": "aggregation",
+      "question": "Berapa total kelas dan rata-rata skor sarana prasarana per prodi pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa total kelas dan rata-rata skor sarana prasarana per prodi pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "jumlah_kelas",
+          "avg_skor_sarana_prasarana"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_prodi, nama_prodi_id, jumlah_kelas, avg_skor_sarana_prasarana FROM analitik.v_akademik_statistik_prodi WHERE tahun = 2024 AND semester = 1 ORDER BY avg_skor_sarana_prasarana ASC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-005",
+      "sql_complexity": "aggregation",
+      "question": "Kelompokkan kelas IF semester 2023-2 berdasarkan jenis nilai dan hitung jumlah kelasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelompokkan kelas IF semester 2023-2 berdasarkan jenis nilai dan hitung jumlah kelasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "GROUP BY",
+          "jenis_nilai",
+          "COUNT"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT jenis_nilai, COUNT(*) AS jumlah_kelas FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2023 AND semester = 2 GROUP BY jenis_nilai ORDER BY jumlah_kelas DESC LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-006",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata total SKS diajar dosen per fakultas homebase pada semester 2023-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata total SKS diajar dosen per fakultas homebase pada semester 2023-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "total_sks_diajar",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_fakultas_dosen, AVG(total_sks_diajar) AS avg_total_sks_diajar, COUNT(*) AS jumlah_dosen FROM analitik.v_info_umum_dosen WHERE tahun = 2023 AND semester = 1 GROUP BY kode_fakultas_dosen ORDER BY avg_total_sks_diajar DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-007",
+      "sql_complexity": "aggregation",
+      "question": "Hitung jumlah portofolio per mata kuliah STEI pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Hitung jumlah portofolio per mata kuliah STEI pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "kode_fakultas": "STEI",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "COUNT",
+          "GROUP BY",
+          "v_akademik_portofolio"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregates portfolio rows by course within STEI."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul_id, COUNT(*) AS jumlah_portofolio FROM analitik.v_akademik_portofolio WHERE kode_fakultas = 'STEI' AND tahun = 2023 AND semester = 2 GROUP BY kode_matkul, nama_matkul_id ORDER BY jumlah_portofolio DESC LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-008",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata skor Q25, Q26, dan Q27 kelas per fakultas pada semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata skor Q25, Q26, dan Q27 kelas per fakultas pada semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "skor_q25",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregates lecturer-related questionnaire scores from class-level rows by faculty."
+        ],
+        "gold_sql": "SELECT kode_fakultas, AVG(skor_q25) AS avg_q25, AVG(skor_q26) AS avg_q26, AVG(skor_q27) AS avg_q27 FROM analitik.v_akademik_kelas WHERE tahun = 2024 AND semester = 1 GROUP BY kode_fakultas ORDER BY avg_q25 DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-009",
+      "sql_complexity": "aggregation",
+      "question": "Untuk setiap mata kuliah semester 2023-2, hitung rata-rata skor overall dan jumlah kelas paralel.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk setiap mata kuliah semester 2023-2, hitung rata-rata skor overall dan jumlah kelas paralel.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "GROUP BY",
+          "AVG",
+          "COUNT"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul_id, COUNT(*) AS jumlah_kelas, AVG(avg_skor_overall) AS avg_skor_overall FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2 GROUP BY kode_matkul, nama_matkul_id HAVING COUNT(*) > 1 ORDER BY jumlah_kelas DESC, avg_skor_overall DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-010",
+      "sql_complexity": "aggregation",
+      "question": "Ringkas persentase lulus A-C rata-rata per prodi semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ringkas persentase lulus A-C rata-rata per prodi semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "dist_pct_lulus_a_c",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_prodi, AVG(dist_pct_lulus_a_c) AS avg_pct_lulus_a_c FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 1 AND is_distribusi_nilai_sah = TRUE GROUP BY kode_prodi ORDER BY avg_pct_lulus_a_c DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-011",
+      "sql_complexity": "aggregation",
+      "question": "Hitung jumlah kelas wajib dan tidak wajib ITB per fakultas semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Hitung jumlah kelas wajib dan tidak wajib ITB per fakultas semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_kelas_matkul"
+        ],
+        "expected_entities": {
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "GROUP BY",
+          "is_wajib_itb",
+          "COUNT"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_fakultas, is_wajib_itb, COUNT(*) AS jumlah_kelas FROM analitik.v_info_umum_kelas_matkul WHERE tahun = 2022 AND semester = 2 GROUP BY kode_fakultas, is_wajib_itb ORDER BY kode_fakultas, is_wajib_itb LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-AGG-012",
+      "sql_complexity": "aggregation",
+      "question": "Berapa rata-rata skor capaian, pelaksanaan, dan perilaku mahasiswa prodi IF semester 2024-1?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa rata-rata skor capaian, pelaksanaan, dan perilaku mahasiswa prodi IF semester 2024-1?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "avg_skor_capaian",
+          "avg_skor_pelaksanaan",
+          "avg_skor_perilaku_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Aggregated result is grouped or summarized at the requested faculty, prodi, course, or lecturer level."
+        ],
+        "gold_sql": "SELECT kode_prodi, avg_skor_capaian, avg_skor_pelaksanaan, avg_skor_perilaku_mahasiswa, avg_skor_overall FROM analitik.v_akademik_statistik_prodi WHERE kode_prodi = 'IF' AND tahun = 2024 AND semester = 1 LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": false,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-001",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah semester 2023-2 mana yang skor overall-nya di bawah rata-rata institusi semester itu?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah semester 2023-2 mana yang skor overall-nya di bawah rata-rata institusi semester itu?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "(SELECT",
+          "AVG",
+          "avg_skor_overall"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result depends on a nested comparison, membership test, or existence condition, not only flat filtering."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul_id, avg_skor_overall FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2 AND avg_skor_overall < (SELECT AVG(avg_skor_overall) FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2) ORDER BY avg_skor_overall ASC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-002",
+      "sql_complexity": "nested_query",
+      "question": "Kelas IF semester 2023-1 mana yang jumlah mahasiswanya lebih besar dari rata-rata kelas IF semester itu?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelas IF semester 2023-1 mana yang jumlah mahasiswanya lebih besar dari rata-rata kelas IF semester itu?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "(SELECT",
+          "AVG",
+          "jumlah_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result depends on a nested comparison, membership test, or existence condition, not only flat filtering."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, no_kelas, jumlah_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2023 AND semester = 1 AND jumlah_mahasiswa > (SELECT AVG(jumlah_mahasiswa) FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2023 AND semester = 1 AND jumlah_mahasiswa IS NOT NULL) ORDER BY jumlah_mahasiswa DESC LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-003",
+      "sql_complexity": "nested_query",
+      "question": "Prodi mana pada semester 2024-1 yang skor overall-nya di atas rata-rata fakultasnya sendiri?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Prodi mana pada semester 2024-1 yang skor overall-nya di atas rata-rata fakultasnya sendiri?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "EXISTS",
+          "AVG",
+          "kode_fakultas"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result depends on a nested comparison, membership test, or existence condition, not only flat filtering."
+        ],
+        "gold_sql": "SELECT p.kode_prodi, p.kode_fakultas, p.avg_skor_overall FROM analitik.v_akademik_statistik_prodi p WHERE p.tahun = 2024 AND p.semester = 1 AND p.avg_skor_overall > (SELECT AVG(p2.avg_skor_overall) FROM analitik.v_akademik_statistik_prodi p2 WHERE p2.tahun = p.tahun AND p2.semester = p.semester AND p2.kode_fakultas = p.kode_fakultas) ORDER BY p.kode_fakultas, p.avg_skor_overall DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-004",
+      "sql_complexity": "nested_query",
+      "question": "Dosen semester 2023-2 mana yang total SKS diajarnya di atas rata-rata dosen di fakultas yang sama?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Dosen semester 2023-2 mana yang total SKS diajarnya di atas rata-rata dosen di fakultas yang sama?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "(SELECT",
+          "AVG",
+          "total_sks_diajar"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result depends on a nested comparison, membership test, or existence condition, not only flat filtering."
+        ],
+        "gold_sql": "SELECT d.dosen_id, d.nama_dosen_gelar, d.kode_fakultas_dosen, d.total_sks_diajar FROM analitik.v_info_umum_dosen d WHERE d.tahun = 2023 AND d.semester = 2 AND d.total_sks_diajar > (SELECT AVG(d2.total_sks_diajar) FROM analitik.v_info_umum_dosen d2 WHERE d2.tahun = d.tahun AND d2.semester = d.semester AND d2.kode_fakultas_dosen = d.kode_fakultas_dosen) ORDER BY d.total_sks_diajar DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-005",
+      "sql_complexity": "nested_query",
+      "question": "Kelas semester 2023-2 mana yang memiliki portofolio tetapi belum lengkap?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelas semester 2023-2 mana yang memiliki portofolio tetapi belum lengkap?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_portofolio"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "EXISTS",
+          "lengkap"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result uses EXISTS to return classes with portfolio rows that are marked incomplete."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_kelas FROM analitik.v_akademik_kelas k WHERE k.tahun = 2023 AND k.semester = 2 AND EXISTS (SELECT 1 FROM analitik.v_akademik_portofolio p WHERE p.kelas_id = k.kelas_id AND COALESCE(p.lengkap, FALSE) = FALSE) ORDER BY k.kode_matkul, k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-006",
+      "sql_complexity": "nested_query",
+      "question": "Mata kuliah IF yang pernah berada di bawah rata-rata institusi pada 2022-2 tetapi muncul lagi pada 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Mata kuliah IF yang pernah berada di bawah rata-rata institusi pada 2022-2 tetapi muncul lagi pada 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "IN",
+          "(SELECT",
+          "AVG"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result depends on a nested comparison, membership test, or existence condition, not only flat filtering."
+        ],
+        "gold_sql": "SELECT DISTINCT kode_matkul, nama_matkul_id FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2023 AND semester = 2 AND kode_matkul IN (SELECT kode_matkul FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2022 AND semester = 2 AND avg_skor_overall < (SELECT AVG(avg_skor_overall) FROM analitik.v_akademik_kelas WHERE tahun = 2022 AND semester = 2)) ORDER BY kode_matkul LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-007",
+      "sql_complexity": "nested_query",
+      "question": "Kelas yang skor Q28-nya lebih rendah dari rata-rata Q28 prodi masing-masing pada semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelas yang skor Q28-nya lebih rendah dari rata-rata Q28 prodi masing-masing pada semester 2024-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kd_pertanyaan": 28,
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "JOIN",
+          "AVG",
+          "skor_q28"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result compares each class Q28 score against its prodi-level Q28 average without timing out."
+        ],
+        "gold_sql": "SELECT k.kelas_id, k.kode_matkul, k.no_prodi, k.skor_q28 FROM analitik.v_akademik_kelas k JOIN (SELECT no_prodi, AVG(skor_q28) AS avg_q28 FROM analitik.v_akademik_kelas WHERE tahun = 2024 AND semester = 1 GROUP BY no_prodi) p ON p.no_prodi = k.no_prodi WHERE k.tahun = 2024 AND k.semester = 1 AND k.skor_q28 < p.avg_q28 ORDER BY k.no_prodi, k.skor_q28 ASC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-NESTED-008",
+      "sql_complexity": "nested_query",
+      "question": "Prodi semester 2023-1 yang memiliki kelas dengan kehadiran dosen di bawah 70 persen.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Prodi semester 2023-1 yang memiliki kelas dengan kehadiran dosen di bawah 70 persen.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi",
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "EXISTS",
+          "pct_kehadiran_dosen",
+          "no_prodi"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result depends on a nested comparison, membership test, or existence condition, not only flat filtering."
+        ],
+        "gold_sql": "SELECT p.no_prodi, p.kode_prodi, p.nama_prodi_id, p.avg_pct_kehadiran_dosen FROM analitik.v_akademik_statistik_prodi p WHERE p.tahun = 2023 AND p.semester = 1 AND EXISTS (SELECT 1 FROM analitik.v_akademik_kelas k WHERE k.no_prodi = p.no_prodi AND k.tahun = p.tahun AND k.semester = p.semester AND k.pct_kehadiran_dosen < 70) ORDER BY p.kode_prodi LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-001",
+      "sql_complexity": "window_function",
+      "question": "Ranking lima mata kuliah dengan skor overall tertinggi pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking lima mata kuliah dengan skor overall tertinggi pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "RANK()",
+          "OVER",
+          "ORDER BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT kode_matkul, nama_matkul_id, avg_skor_overall, RANK() OVER (ORDER BY avg_skor_overall DESC NULLS LAST) AS peringkat FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2 ORDER BY peringkat LIMIT 5;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-002",
+      "sql_complexity": "window_function",
+      "question": "Beri peringkat kelas dalam setiap prodi berdasarkan kehadiran mahasiswa semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Beri peringkat kelas dalam setiap prodi berdasarkan kehadiran mahasiswa semester 2023-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "ROW_NUMBER()",
+          "PARTITION BY",
+          "pct_kehadiran_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT kode_prodi, kode_matkul, no_kelas, pct_kehadiran_mahasiswa, ROW_NUMBER() OVER (PARTITION BY kode_prodi ORDER BY pct_kehadiran_mahasiswa DESC NULLS LAST) AS peringkat_prodi FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 1 ORDER BY kode_prodi, peringkat_prodi LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-003",
+      "sql_complexity": "window_function",
+      "question": "Bandingkan skor overall setiap kelas semester 2024-1 dengan rata-rata fakultasnya.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Bandingkan skor overall setiap kelas semester 2024-1 dengan rata-rata fakultasnya.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "AVG",
+          "OVER",
+          "PARTITION BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, kode_fakultas, avg_skor_overall, AVG(avg_skor_overall) OVER (PARTITION BY kode_fakultas) AS avg_fakultas FROM analitik.v_akademik_kelas WHERE tahun = 2024 AND semester = 1 ORDER BY kode_fakultas, avg_skor_overall DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-004",
+      "sql_complexity": "window_function",
+      "question": "Untuk tiap prodi, tampilkan kelas dengan skor Q28 terendah pada semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk tiap prodi, tampilkan kelas dengan skor Q28 terendah pada semester 2023-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kd_pertanyaan": 28,
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "ROW_NUMBER()",
+          "PARTITION BY",
+          "skor_q28"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT * FROM (SELECT kode_prodi, kode_matkul, no_kelas, skor_q28, ROW_NUMBER() OVER (PARTITION BY kode_prodi ORDER BY skor_q28 ASC NULLS LAST) AS rn FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2) ranked WHERE rn = 1 ORDER BY kode_prodi LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-005",
+      "sql_complexity": "window_function",
+      "question": "Hitung perubahan jumlah kelas prodi IF antar semester menggunakan LAG.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Hitung perubahan jumlah kelas prodi IF antar semester menggunakan LAG.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_statistik_prodi"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "LAG",
+          "OVER",
+          "jumlah_kelas"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT kode_prodi, tahun, semester, jumlah_kelas, LAG(jumlah_kelas) OVER (PARTITION BY kode_prodi ORDER BY tahun, semester) AS jumlah_kelas_sebelumnya, jumlah_kelas - LAG(jumlah_kelas) OVER (PARTITION BY kode_prodi ORDER BY tahun, semester) AS delta_jumlah_kelas FROM analitik.v_akademik_statistik_prodi WHERE kode_prodi = 'IF' ORDER BY tahun, semester LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-006",
+      "sql_complexity": "window_function",
+      "question": "Kelompokkan kelas semester 2023-1 ke kuartil berdasarkan skor overall.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelompokkan kelas semester 2023-1 ke kuartil berdasarkan skor overall.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "NTILE",
+          "OVER",
+          "avg_skor_overall"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, avg_skor_overall, NTILE(4) OVER (ORDER BY avg_skor_overall DESC NULLS LAST) AS kuartil_skor FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 1 ORDER BY kuartil_skor, avg_skor_overall DESC NULLS LAST LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-007",
+      "sql_complexity": "window_function",
+      "question": "Ranking dosen STEI semester 2024-1 berdasarkan total SKS diajar.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ranking dosen STEI semester 2024-1 berdasarkan total SKS diajar.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "kode_fakultas_dosen": "STEI",
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "DENSE_RANK()",
+          "OVER",
+          "total_sks_diajar"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT dosen_id, nama_dosen_gelar, total_sks_diajar, DENSE_RANK() OVER (ORDER BY total_sks_diajar DESC NULLS LAST) AS peringkat_beban FROM analitik.v_info_umum_dosen WHERE kode_fakultas_dosen = 'STEI' AND tahun = 2024 AND semester = 1 ORDER BY peringkat_beban LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-WINDOW-008",
+      "sql_complexity": "window_function",
+      "question": "Tampilkan persentil kumulatif kelas IF semester 2022-2 berdasarkan persentase lulus A-C.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan persentil kumulatif kelas IF semester 2022-2 berdasarkan persentase lulus A-C.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CUME_DIST()",
+          "OVER",
+          "dist_pct_lulus_a_c"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Result requires a SQL window function with the requested ordering or partitioning behavior."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, dist_pct_lulus_a_c, CUME_DIST() OVER (ORDER BY dist_pct_lulus_a_c ASC NULLS LAST) AS posisi_kumulatif FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2022 AND semester = 2 AND is_distribusi_nilai_sah = TRUE ORDER BY posisi_kumulatif LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-001",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Berapa jumlah kelas dengan skor overall baik, cukup, dan rendah pada semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa jumlah kelas dengan skor overall baik, cukup, dan rendah pada semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN avg_skor_overall >= 3.5 THEN 1 ELSE 0 END) AS jumlah_baik, SUM(CASE WHEN avg_skor_overall >= 3.0 AND avg_skor_overall < 3.5 THEN 1 ELSE 0 END) AS jumlah_cukup, SUM(CASE WHEN avg_skor_overall < 3.0 THEN 1 ELSE 0 END) AS jumlah_rendah FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-002",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Untuk prodi IF semester 2023-1, hitung kelas dengan kehadiran mahasiswa tinggi dan rendah.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk prodi IF semester 2023-1, hitung kelas dengan kehadiran mahasiswa tinggi dan rendah.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_prodi": "IF",
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "SUM",
+          "pct_kehadiran_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN pct_kehadiran_mahasiswa >= 85 THEN 1 ELSE 0 END) AS kelas_kehadiran_tinggi, SUM(CASE WHEN pct_kehadiran_mahasiswa < 75 THEN 1 ELSE 0 END) AS kelas_kehadiran_rendah FROM analitik.v_akademik_kelas WHERE kode_prodi = 'IF' AND tahun = 2023 AND semester = 1;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-003",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Per fakultas, hitung kelas semester 2024-1 yang lulus A-C di atas 90 persen dan di bawah 70 persen.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Per fakultas, hitung kelas semester 2024-1 yang lulus A-C di atas 90 persen dan di bawah 70 persen.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "GROUP BY",
+          "dist_pct_lulus_a_c"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT kode_fakultas, SUM(CASE WHEN dist_pct_lulus_a_c >= 90 THEN 1 ELSE 0 END) AS kelas_lulus_tinggi, SUM(CASE WHEN dist_pct_lulus_a_c < 70 THEN 1 ELSE 0 END) AS kelas_lulus_rendah FROM analitik.v_akademik_kelas WHERE tahun = 2024 AND semester = 1 AND is_distribusi_nilai_sah = TRUE GROUP BY kode_fakultas ORDER BY kode_fakultas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-004",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Hitung jumlah kelas IF2210 berdasarkan apakah skor beban Q28 minimal 3 atau kurang dari 3.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Hitung jumlah kelas IF2210 berdasarkan apakah skor beban Q28 minimal 3 atau kurang dari 3.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210"
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "skor_q28",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN skor_q28 >= 3 THEN 1 ELSE 0 END) AS beban_sesuai, SUM(CASE WHEN skor_q28 < 3 THEN 1 ELSE 0 END) AS beban_tidak_sesuai FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2210';"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-005",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Untuk setiap prodi semester 2023-2, hitung kelas dengan sarana tinggi, sedang, dan rendah.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk setiap prodi semester 2023-2, hitung kelas dengan sarana tinggi, sedang, dan rendah.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "GROUP BY",
+          "avg_skor_sarana_prasarana"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT kode_prodi, SUM(CASE WHEN avg_skor_sarana_prasarana >= 3.5 THEN 1 ELSE 0 END) AS sarana_tinggi, SUM(CASE WHEN avg_skor_sarana_prasarana >= 3.0 AND avg_skor_sarana_prasarana < 3.5 THEN 1 ELSE 0 END) AS sarana_sedang, SUM(CASE WHEN avg_skor_sarana_prasarana < 3.0 THEN 1 ELSE 0 END) AS sarana_rendah FROM analitik.v_akademik_kelas WHERE tahun = 2023 AND semester = 2 GROUP BY kode_prodi ORDER BY kode_prodi LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-006",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Ringkas kelas ABCDE dan PassFail per fakultas pada semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Ringkas kelas ABCDE dan PassFail per fakultas pada semester 2022-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "jenis_nilai",
+          "GROUP BY"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT kode_fakultas, SUM(CASE WHEN jenis_nilai = 'ABCDE' THEN 1 ELSE 0 END) AS jumlah_abcde, SUM(CASE WHEN jenis_nilai = 'PassFail' THEN 1 ELSE 0 END) AS jumlah_passfail FROM analitik.v_akademik_kelas WHERE tahun = 2022 AND semester = 2 GROUP BY kode_fakultas ORDER BY kode_fakultas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-007",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Untuk dosen semester 2024-1, hitung yang beban SKS-nya ringan (total sks < 6), sedang, dan berat (total sks > 12)",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Untuk dosen semester 2024-1, hitung yang beban SKS-nya ringan (total sks < 6), sedang, dan berat (total sks > 12)",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_info_umum_dosen"
+        ],
+        "expected_entities": {
+          "tahun": 2024,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "total_sks_diajar",
+          "SUM"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT SUM(CASE WHEN total_sks_diajar < 6 THEN 1 ELSE 0 END) AS beban_ringan, SUM(CASE WHEN total_sks_diajar BETWEEN 6 AND 12 THEN 1 ELSE 0 END) AS beban_sedang, SUM(CASE WHEN total_sks_diajar > 12 THEN 1 ELSE 0 END) AS beban_berat FROM analitik.v_info_umum_dosen WHERE tahun = 2024 AND semester = 1;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-CONDAGG-008",
+      "sql_complexity": "conditional_aggregation",
+      "question": "Per prodi semester 2023-1, hitung kelas dengan komentar mahasiswa dan tanpa komentar mahasiswa.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Per prodi semester 2023-1, hitung kelas dengan komentar mahasiswa dan tanpa komentar mahasiswa.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "analitik.v_akademik_komentar_mahasiswa"
+        ],
+        "expected_entities": {
+          "tahun": 2023,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "CASE WHEN",
+          "LEFT JOIN",
+          "COUNT"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Counts or summaries are partitioned by explicit CASE WHEN conditions requested in the question."
+        ],
+        "gold_sql": "SELECT k.kode_prodi, SUM(CASE WHEN c.jumlah_komentar > 0 THEN 1 ELSE 0 END) AS kelas_dengan_komentar, SUM(CASE WHEN COALESCE(c.jumlah_komentar, 0) = 0 THEN 1 ELSE 0 END) AS kelas_tanpa_komentar FROM analitik.v_akademik_kelas k LEFT JOIN (SELECT kelas_id, COUNT(*) AS jumlah_komentar FROM analitik.v_akademik_komentar_mahasiswa GROUP BY kelas_id) c ON c.kelas_id = k.kelas_id WHERE k.tahun = 2023 AND k.semester = 1 GROUP BY k.kode_prodi ORDER BY k.kode_prodi LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-001",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa skor overall kelas if 2210 di semester 2023-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa skor overall kelas if 2210 di semester 2023-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun": 2023,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The ambiguous or misspelled course mention is resolved to the intended canonical course code before filtering."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2210' AND tahun = 2023 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-002",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Tampilkan evaluasi Pemrogramn Berorientasi Objek semester 2020-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan evaluasi Pemrogramn Berorientasi Objek semester 2020-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Pemrograman Berorientasi Objek",
+          "kode_matkul": "IF2210",
+          "tahun": 2020,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Misspelled course name resolves to IF2210 and returns visible 2020-2 rows."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2210' AND tahun = 2020 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-003",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Bagaimana skor kelas IF-2220 pada semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Bagaimana skor kelas IF-2220 pada semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The ambiguous or misspelled course mention is resolved to the intended canonical course code before filtering."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2220' AND tahun = 2022 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-004",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Tampilkan kehadiran mahasiswa untuk if3130 semester 2021-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan kehadiran mahasiswa untuk if3130 semester 2021-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun": 2021,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "pct_kehadiran_mahasiswa"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Lowercase course code resolves to IF3130 and returns visible 2021-1 rows."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3130' AND tahun = 2021 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-005",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa evaluasi Rekayasa Perangkat  Lunak semester 2020-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa evaluasi Rekayasa Perangkat  Lunak semester 2020-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Rekayasa Perangkat Lunak",
+          "kode_matkul": "IF2250",
+          "tahun": 2020,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Course title mention with spacing noise resolves to IF2250."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2250' AND tahun = 2020 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-006",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Tampilkan distribusi nilai IF221O semester 2020-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan distribusi nilai IF221O semester 2020-2.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2210",
+          "tahun": 2020,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Character confusion IF221O resolves to IF2210."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2210' AND tahun = 2020 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-007",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa skor sarana kelas probstat semester 2022-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa skor sarana kelas probstat semester 2022-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Probabilitas dan Statistika",
+          "kode_matkul": "IF2220",
+          "tahun": 2022,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The ambiguous or misspelled course mention is resolved to the intended canonical course code before filtering."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2220' AND tahun = 2022 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-008",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Tampilkan skor kelas jarkom semester 2021-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan skor kelas jarkom semester 2021-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Jaringan Komputer",
+          "kode_matkul": "IF3130",
+          "tahun": 2021,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Abbreviated course mention resolves to IF3130."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3130' AND tahun = 2021 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-009",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Kelas manbasdat semester 2021-1 punya skor overall berapa?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Kelas manbasdat semester 2021-1 punya skor overall berapa?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Manajemen Basis Data",
+          "kode_matkul": "IF3140",
+          "tahun": 2021,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Course nickname resolves to IF3140."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3140' AND tahun = 2021 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-010",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa evaluasi Strategi Algortima semester 2020-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa evaluasi Strategi Algortima semester 2020-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Strategi Algoritma",
+          "kode_matkul": "IF2211",
+          "tahun": 2020,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Misspelled course title resolves to IF2211."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2211' AND tahun = 2020 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-011",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Tampilkan skor MPPL untuk semester 2021-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Tampilkan skor MPPL untuk semester 2021-1.",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Manajemen Proyek Perangkat Lunak",
+          "kode_matkul": "IF3150",
+          "tahun": 2021,
+          "semester": 1
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Course abbreviation MPPL resolves to IF3150."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF3150' AND tahun = 2021 AND semester = 1 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-ENTITY-012",
+      "sql_complexity": "ambiguous_or_typo_entity",
+      "question": "Berapa skor PBO pada semester 2024-2?",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Berapa skor PBO pada semester 2024-2?",
+        "tool": "sql",
+        "required": false
+      },
+      "prior_steps_context": "",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas"
+        ],
+        "expected_entities": {
+          "nama_matkul_id": "Pemrograman Berorientasi Objek",
+          "kode_matkul": "IF2010",
+          "tahun": 2024,
+          "semester": 2
+        },
+        "expected_catalog_references": []
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "v_akademik_kelas",
+          "kode_matkul"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "Ambiguous PBO abbreviation resolves to the active PBO course code IF2010 for 2024-2."
+        ],
+        "gold_sql": "SELECT kelas_id, kode_matkul, nama_matkul_id, no_kelas, avg_skor_overall, avg_skor_sarana_prasarana, pct_kehadiran_mahasiswa FROM analitik.v_akademik_kelas WHERE kode_matkul = 'IF2010' AND tahun = 2024 AND semester = 2 ORDER BY no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": false,
+        "retry_expected": true
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-001",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Ketercapaian CPMK' kelas IF2220 semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Ketercapaian CPMK' kelas IF2220 semester 2023-2.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Ketercapaian CPMK' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 21 and score column skor_q21.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun": 2023,
+          "semester": 2,
+          "kd_pertanyaan": 21
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:21",
+          "score_column:skor_q21"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q21",
+          "21"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item rather than a semantically similar but different item."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q21 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 21 WHERE k.kode_matkul = 'IF2220' AND k.tahun = 2023 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-002",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Pelaksanaan perkuliahan' kelas IF3130 semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Pelaksanaan perkuliahan' kelas IF3130 semester 2023-1.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Pelaksanaan perkuliahan' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 24 and score column skor_q24.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF3130",
+          "tahun": 2023,
+          "semester": 1,
+          "kd_pertanyaan": 24
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:24",
+          "score_column:skor_q24"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q24",
+          "24"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item rather than a semantically similar but different item."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q24 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 24 WHERE k.kode_matkul = 'IF3130' AND k.tahun = 2023 AND k.semester = 1 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-003",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Komunikasi dosen' kelas KU1202 semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Komunikasi dosen' kelas KU1202 semester 2022-2.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Komunikasi dosen' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 25 and score column skor_q25.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1202",
+          "tahun": 2022,
+          "semester": 2,
+          "kd_pertanyaan": 25
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:25",
+          "score_column:skor_q25"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q25",
+          "25"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item and returns visible rows."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q25 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 25 WHERE k.kode_matkul = 'KU1202' AND k.tahun = 2022 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-004",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Kepedulian dosen terhadap capaian mahasiswa' kelas WI1103 semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Kepedulian dosen terhadap capaian mahasiswa' kelas WI1103 semester 2024-1.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kepedulian dosen terhadap capaian mahasiswa' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 26 and score column skor_q26.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "WI1103",
+          "tahun": 2024,
+          "semester": 1,
+          "kd_pertanyaan": 26
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:26",
+          "score_column:skor_q26"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q26",
+          "26"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item and returns visible rows."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q26 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 26 WHERE k.kode_matkul = 'WI1103' AND k.tahun = 2024 AND k.semester = 1 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-005",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Keadilan dosen kepada mahasiswa' kelas IF2211 semester 2023-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Keadilan dosen kepada mahasiswa' kelas IF2211 semester 2023-2.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Keadilan dosen kepada mahasiswa' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 27 and score column skor_q27.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2211",
+          "tahun": 2023,
+          "semester": 2,
+          "kd_pertanyaan": 27
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:27",
+          "score_column:skor_q27"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q27",
+          "27"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item rather than a semantically similar but different item."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q27 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 27 WHERE k.kode_matkul = 'IF2211' AND k.tahun = 2023 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-006",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Kesesuaian beban kuliah dengan SKS' kelas KU1102 semester 2023-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Kesesuaian beban kuliah dengan SKS' kelas KU1102 semester 2023-1.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kesesuaian beban kuliah dengan SKS' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 28 and score column skor_q28.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "KU1102",
+          "tahun": 2023,
+          "semester": 1,
+          "kd_pertanyaan": 28
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:28",
+          "score_column:skor_q28"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q28",
+          "28"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item and returns visible rows."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q28 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 28 WHERE k.kode_matkul = 'KU1102' AND k.tahun = 2023 AND k.semester = 1 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-007",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Ketersediaan sarana pendukung' kelas IF2220 semester 2022-2.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Ketersediaan sarana pendukung' kelas IF2220 semester 2022-2.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Ketersediaan sarana pendukung' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 29 and score column skor_q29.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "IF2220",
+          "tahun": 2022,
+          "semester": 2,
+          "kd_pertanyaan": 29
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:29",
+          "score_column:skor_q29"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q29",
+          "29"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item rather than a semantically similar but different item."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q29 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 29 WHERE k.kode_matkul = 'IF2220' AND k.tahun = 2022 AND k.semester = 2 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    },
+    {
+      "id": "SQL-QMETA-008",
+      "sql_complexity": "questionnaire_metadata",
+      "question": "Gunakan katalog kuesioner untuk mengambil skor 'Kedisiplinan dan perilaku mahasiswa' kelas MA1101 semester 2024-1.",
+      "language": "id",
+      "domain": "portfolio",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "plan_step_context": {
+        "task": "Gunakan katalog kuesioner untuk mengambil skor 'Kedisiplinan dan perilaku mahasiswa' kelas MA1101 semester 2024-1.",
+        "tool": "sql",
+        "required": true
+      },
+      "prior_steps_context": "catalog_lookup resolved 'Kedisiplinan dan perilaku mahasiswa' to evaluasi.pertanyaan_kuesioner.kd_pertanyaan = 35 and score column skor_q35.",
+      "expected_grounding": {
+        "expected_tables": [
+          "analitik.v_akademik_kelas",
+          "evaluasi.pertanyaan_kuesioner"
+        ],
+        "expected_entities": {
+          "kode_matkul": "MA1101",
+          "tahun": 2024,
+          "semester": 1,
+          "kd_pertanyaan": 35
+        },
+        "expected_catalog_references": [
+          "kd_pertanyaan:35",
+          "score_column:skor_q35"
+        ]
+      },
+      "expected_sql_behavior": {
+        "must_include_sql_patterns": [
+          "pertanyaan_kuesioner",
+          "skor_q35",
+          "35"
+        ],
+        "must_not_include_sql_patterns": [
+          "DROP",
+          "DELETE",
+          "UPDATE",
+          "INSERT",
+          "--",
+          ";--"
+        ],
+        "expected_result_facts": [
+          "The selected score column matches the catalog-resolved questionnaire item and returns visible rows."
+        ],
+        "gold_sql": "SELECT k.kode_matkul, k.no_kelas, q.kd_pertanyaan, q.pertanyaan->>'id' AS teks_pertanyaan, k.skor_q35 AS skor_kuesioner FROM analitik.v_akademik_kelas k JOIN evaluasi.pertanyaan_kuesioner q ON q.kd_pertanyaan = 35 WHERE k.kode_matkul = 'MA1101' AND k.tahun = 2024 AND k.semester = 1 ORDER BY k.no_kelas LIMIT 100;"
+      },
+      "scoring": {
+        "execution_accuracy_required": true,
+        "schema_selection_required": true,
+        "entity_resolution_required": true,
+        "catalog_lookup_required": true,
+        "retry_expected": false
+      },
+      "notes_for_dataset_author": "Curated diversified case for SQL Pipeline Architecture Experiment II."
+    }
+  ]
+}

@@ -1,0 +1,980 @@
+{
+  "dataset_name": "uat_end_to_end_cases",
+  "version": "1.0.0",
+  "description": "Shared 24-question dataset for final-system end-to-end evaluation and role-based UAT. The same questions are evaluated technically using traces and LLM-as-a-Judge, then by users using acceptance metrics.",
+  "total_cases": 24,
+  "distribution": {
+    "role_counts": {
+      "dosen": 6,
+      "kaprodi": 6,
+      "dekan": 6,
+      "direktorat": 6
+    },
+    "analysis_aspect_counts": {
+      "academic_performance": 5,
+      "portfolio_reflection": 4,
+      "program_or_faculty_monitoring": 6,
+      "comparative_or_trend_analysis": 5,
+      "diagnostic_and_recommendation": 4
+    },
+    "data_source_mix_counts": {
+      "structured": 16,
+      "textual": 4,
+      "hybrid": 4
+    }
+  },
+  "metrics": {
+    "end_to_end": [
+      "task_success_rate",
+      "correctness",
+      "faithfulness",
+      "completeness",
+      "latency_seconds"
+    ],
+    "uat": [
+      "task_completion",
+      "perceived_correctness",
+      "usefulness",
+      "clarity",
+      "trust_and_acceptance"
+    ]
+  },
+  "cases": [
+    {
+      "id": "UAT-DOS-01",
+      "role": "dosen",
+      "analysis_aspect": "academic_performance",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan ringkasan performa akademik untuk salah satu kelas yang saya ampu, mencakup jumlah mahasiswa, distribusi nilai, kehadiran mahasiswa, dan indikator evaluasi utama.",
+      "user_scope": {
+        "role": "dosen",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a lecturer account that has at least one visible taught class with grade distribution and evaluation data."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["class identity", "student count or graded-student count", "grade distribution", "student attendance", "main evaluation indicators"],
+        "prohibited_behavior": ["showing classes outside the lecturer scope", "claiming unsupported causes"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies a class in the lecturer scope.", "The answer reports academic performance using multiple indicators, not only evaluation score."],
+        "correctness_reference": "Compare the stated indicators with SQL tool output.",
+        "faithfulness_reference": "All numeric claims must be supported by tool observations.",
+        "completeness_criteria": ["Includes grade distribution or graded-student count.", "Includes attendance.", "Includes evaluation indicators."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you use this answer to understand the academic condition of one class you teach?",
+        "perceived_correctness_prompt": "The answer appears factually reasonable for my class data.",
+        "usefulness_prompt": "The answer helps me identify whether the class needs follow-up.",
+        "clarity_prompt": "The answer is easy to understand.",
+        "trust_acceptance_prompt": "I would use this type of answer as academic monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Full graph completes.", "SQL evidence is non-empty.", "The selected class belongs to the lecturer scope."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": "This case tests broader academic performance, not only course evaluation score."
+    },
+    {
+      "id": "UAT-DOS-02",
+      "role": "dosen",
+      "analysis_aspect": "academic_performance",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Kelas yang saya ampu mana yang memiliki indikasi performa akademik paling perlu diperhatikan berdasarkan kehadiran mahasiswa, distribusi nilai, atau skor evaluasi?",
+      "user_scope": {
+        "role": "dosen",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a lecturer account with more than one visible class if possible."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["prioritized class", "reason for prioritization", "at least two academic indicators"],
+        "prohibited_behavior": ["ranking without evidence", "using only one indicator when multiple indicators are available"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer prioritizes at least one class.", "The prioritization is justified using academic indicators."],
+        "correctness_reference": "Compare class ranking and indicators with SQL output.",
+        "faithfulness_reference": "Priority reasoning must be traceable to retrieved indicators.",
+        "completeness_criteria": ["Mentions attendance, grade distribution, or evaluation score.", "Explains why the class is prioritized."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify which class needs attention from this answer?",
+        "perceived_correctness_prompt": "The prioritization appears consistent with the data.",
+        "usefulness_prompt": "The answer helps me decide where to focus follow-up.",
+        "clarity_prompt": "The priority and reason are clearly explained.",
+        "trust_acceptance_prompt": "I would trust this answer as an initial warning signal."
+      },
+      "validation": {
+        "pre_uat_checks": ["Full graph completes.", "Evidence contains at least one visible class.", "No out-of-scope class is shown."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": "If the lecturer has only one class, evaluate whether the answer still explains the class condition rather than forcing a ranking."
+    },
+    {
+      "id": "UAT-DOS-03",
+      "role": "dosen",
+      "analysis_aspect": "portfolio_reflection",
+      "data_source_mix": "textual",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan ringkasan metode perkuliahan dan sistem penilaian dari portofolio salah satu kelas yang saya ampu.",
+      "user_scope": {
+        "role": "dosen",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a lecturer account with at least one visible portfolio entry."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["teaching method summary", "assessment system summary", "class identity"],
+        "prohibited_behavior": ["inventing portfolio content", "summarizing without class identity"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer summarizes teaching method and assessment system.", "The summary is grounded in portfolio text."],
+        "correctness_reference": "Compare summary against retrieved portfolio text.",
+        "faithfulness_reference": "No statement should go beyond portfolio evidence.",
+        "completeness_criteria": ["Mentions teaching method.", "Mentions assessment system.", "Identifies the class."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you understand how the class was conducted and assessed from this answer?",
+        "perceived_correctness_prompt": "The summary matches what I expect from the portfolio.",
+        "usefulness_prompt": "The answer helps me review my portfolio entry.",
+        "clarity_prompt": "The summary is concise and understandable.",
+        "trust_acceptance_prompt": "I would use this summary to review portfolio documentation."
+      },
+      "validation": {
+        "pre_uat_checks": ["Portfolio evidence is non-empty.", "Answer does not fabricate missing text.", "Scope matches lecturer role."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": "Accept either SQL-based portfolio retrieval or RAG retrieval if the final evidence is grounded."
+    },
+    {
+      "id": "UAT-DOS-04",
+      "role": "dosen",
+      "analysis_aspect": "portfolio_reflection",
+      "data_source_mix": "textual",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Ringkas refleksi pelaksanaan perkuliahan dan usulan perbaikan dosen untuk salah satu kelas yang saya ampu.",
+      "user_scope": {
+        "role": "dosen",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a lecturer account with reflection and improvement-plan text."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["reflection summary", "improvement recommendation summary", "class identity"],
+        "prohibited_behavior": ["creating recommendations not present in evidence without labeling them as interpretation"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer summarizes reflection and improvement plan.", "The answer separates evidence summary from interpretation."],
+        "correctness_reference": "Compare summary with portfolio evidence.",
+        "faithfulness_reference": "Summary claims must be grounded in retrieved text.",
+        "completeness_criteria": ["Includes reflection.", "Includes improvement plan."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you use this answer to review reflection and follow-up plans?",
+        "perceived_correctness_prompt": "The answer reflects the portfolio content accurately.",
+        "usefulness_prompt": "The answer helps me evaluate what to improve next.",
+        "clarity_prompt": "The reflection and improvement points are clear.",
+        "trust_acceptance_prompt": "I would use this answer as a review aid."
+      },
+      "validation": {
+        "pre_uat_checks": ["Portfolio evidence is available.", "The answer contains both reflection and improvement components."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DOS-05",
+      "role": "dosen",
+      "analysis_aspect": "comparative_or_trend_analysis",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Bandingkan skor kelas yang saya ampu antara dua semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "dosen",
+        "requires_live_role_account": true,
+        "scope_notes": "Prefer a lecturer account with class data in at least two semesters."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["two-semester comparison", "score difference or trend direction", "class or course identity"],
+        "prohibited_behavior": ["comparing semesters without evidence"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer compares two available semesters.", "The answer states direction of change."],
+        "correctness_reference": "Compare trend claims with SQL output.",
+        "faithfulness_reference": "Trend statements must be derived from observed scores.",
+        "completeness_criteria": ["Includes compared semesters.", "Includes score values or differences."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you understand whether class performance improved or declined?",
+        "perceived_correctness_prompt": "The comparison appears consistent with the data.",
+        "usefulness_prompt": "The comparison helps me reflect on semester-to-semester changes.",
+        "clarity_prompt": "The comparison is easy to follow.",
+        "trust_acceptance_prompt": "I would trust this comparison as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["At least two semesters are available or the answer states that comparison is not possible.", "No fabricated historical data."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DOS-06",
+      "role": "dosen",
+      "analysis_aspect": "diagnostic_and_recommendation",
+      "data_source_mix": "hybrid",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Berdasarkan skor evaluasi dan isi portofolio, aspek apa yang paling perlu saya perbaiki pada kelas yang saya ampu?",
+      "user_scope": {
+        "role": "dosen",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a lecturer account with both score data and portfolio text."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_kelas", "analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["lowest or weakest indicator", "supporting portfolio evidence", "actionable improvement area"],
+        "prohibited_behavior": ["unsupported diagnosis", "prescriptive recommendation without evidence"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies an improvement area.", "The answer uses both numeric and textual evidence."],
+        "correctness_reference": "Compare identified weak indicators with SQL evidence and portfolio text.",
+        "faithfulness_reference": "Recommendation must be traceable to evidence.",
+        "completeness_criteria": ["Includes numeric signal.", "Includes portfolio signal.", "Includes practical follow-up."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify what to improve from this answer?",
+        "perceived_correctness_prompt": "The diagnosis feels consistent with my class context.",
+        "usefulness_prompt": "The recommendation is useful for teaching improvement.",
+        "clarity_prompt": "The reasoning and recommendation are clear.",
+        "trust_acceptance_prompt": "I would use this answer as decision-support, not as final judgment."
+      },
+      "validation": {
+        "pre_uat_checks": ["SQL and portfolio evidence are both present.", "The recommendation is phrased as support, not absolute judgment."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": "This is one of the most important UAT cases because it tests integrated analytical value."
+    },
+    {
+      "id": "UAT-KAP-01",
+      "role": "kaprodi",
+      "analysis_aspect": "academic_performance",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan lima kelas di prodi saya yang perlu diprioritaskan berdasarkan performa akademik, termasuk distribusi nilai, kehadiran, dan skor evaluasi.",
+      "user_scope": {
+        "role": "kaprodi",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a program-head account with active program scope."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["five or fewer prioritized classes", "academic indicators", "reason for priority"],
+        "prohibited_behavior": ["showing classes outside program scope", "dashboard-only summary"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer ranks or prioritizes classes.", "The answer uses more than one academic indicator."],
+        "correctness_reference": "Compare class indicators and scope with SQL output.",
+        "faithfulness_reference": "Prioritization must follow available evidence.",
+        "completeness_criteria": ["Includes class identity.", "Includes indicator values.", "Includes priority reason."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify which classes in the program need follow-up?",
+        "perceived_correctness_prompt": "The selected classes appear reasonable.",
+        "usefulness_prompt": "The answer helps program-level monitoring.",
+        "clarity_prompt": "The priority list is understandable.",
+        "trust_acceptance_prompt": "I would use this as an initial monitoring aid."
+      },
+      "validation": {
+        "pre_uat_checks": ["Program scope is enforced.", "Class evidence is non-empty.", "Answer is not only a KPI list."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-KAP-02",
+      "role": "kaprodi",
+      "analysis_aspect": "portfolio_reflection",
+      "data_source_mix": "textual",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Untuk kelas dengan performa akademik yang perlu diperhatikan di prodi saya, ringkas refleksi dosen dan usulan perbaikannya.",
+      "user_scope": {
+        "role": "kaprodi",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a program-head account with visible class portfolio entries."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_kelas", "analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["class selection reason", "lecturer reflection summary", "improvement proposal summary"],
+        "prohibited_behavior": ["selecting class without performance evidence", "summarizing unavailable portfolio text"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer first identifies relevant classes then summarizes portfolio evidence.", "The answer stays within program scope."],
+        "correctness_reference": "Compare class selection with SQL output and summary with portfolio text.",
+        "faithfulness_reference": "Reflection and improvement claims must be supported by text evidence.",
+        "completeness_criteria": ["Includes class selection.", "Includes reflection.", "Includes improvement proposal."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you understand why the class needs attention and what the lecturer proposed?",
+        "perceived_correctness_prompt": "The summary appears consistent with program data.",
+        "usefulness_prompt": "The answer helps me prepare program-level follow-up.",
+        "clarity_prompt": "The selected class and summary are clear.",
+        "trust_acceptance_prompt": "I would use this answer for initial monitoring discussion."
+      },
+      "validation": {
+        "pre_uat_checks": ["SQL evidence and portfolio evidence are both available.", "No class outside program scope appears."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-KAP-03",
+      "role": "kaprodi",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Di prodi saya, indikator akademik mana yang paling perlu diperhatikan pada semester terakhir yang tersedia jika mempertimbangkan skor capaian, pelaksanaan, sarana prasarana, perilaku mahasiswa, dan kehadiran?",
+      "user_scope": {
+        "role": "kaprodi",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a program-head account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi", "analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["weakest indicator", "indicator values", "monitoring implication"],
+        "prohibited_behavior": ["returning only dashboard counts", "ignoring attendance"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies an indicator needing attention.", "The answer uses cross-indicator interpretation."],
+        "correctness_reference": "Compare indicator values with SQL output.",
+        "faithfulness_reference": "Interpretation must be grounded in indicator values.",
+        "completeness_criteria": ["Includes multiple indicators.", "Explains why one indicator is prioritized."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify which program indicator needs attention?",
+        "perceived_correctness_prompt": "The indicated concern appears data-based.",
+        "usefulness_prompt": "The answer helps program monitoring beyond dashboard reading.",
+        "clarity_prompt": "The reasoning is understandable.",
+        "trust_acceptance_prompt": "I would use this as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Answer includes interpretation, not only raw values.", "Program scope is enforced."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": "This replaces a dashboard-only KPI question."
+    },
+    {
+      "id": "UAT-KAP-04",
+      "role": "kaprodi",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan rata-rata skor capaian, pelaksanaan, sarana prasarana, perilaku mahasiswa, dan keseluruhan untuk prodi saya.",
+      "user_scope": {
+        "role": "kaprodi",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a program-head account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["program-level indicator values", "semester", "brief interpretation"],
+        "prohibited_behavior": ["out-of-scope program data"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer reports program-level indicators.", "The answer includes the evaluated period."],
+        "correctness_reference": "Compare program indicators with SQL output.",
+        "faithfulness_reference": "All values must be supported by SQL observations.",
+        "completeness_criteria": ["Includes all requested dimensions.", "Includes overall score."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you understand the program indicator profile from this answer?",
+        "perceived_correctness_prompt": "The reported values appear credible.",
+        "usefulness_prompt": "The answer helps me monitor program performance.",
+        "clarity_prompt": "The indicator summary is clear.",
+        "trust_acceptance_prompt": "I would use this output as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Program-level row exists.", "All requested indicators are handled."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-KAP-05",
+      "role": "kaprodi",
+      "analysis_aspect": "comparative_or_trend_analysis",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Bandingkan skor evaluasi mahasiswa untuk prodi saya antara dua semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "kaprodi",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a program-head account with at least two semesters of data."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["two-semester comparison", "score change", "trend direction"],
+        "prohibited_behavior": ["claiming trend without two periods"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer compares two available semesters.", "The answer states whether the trend improves or declines."],
+        "correctness_reference": "Compare trend values with SQL output.",
+        "faithfulness_reference": "Trend claims must be supported by data.",
+        "completeness_criteria": ["Includes both periods.", "Includes score values or deltas."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you understand the program trend from this answer?",
+        "perceived_correctness_prompt": "The trend appears consistent with the data.",
+        "usefulness_prompt": "The answer helps program evaluation.",
+        "clarity_prompt": "The comparison is easy to follow.",
+        "trust_acceptance_prompt": "I would use this trend as monitoring input."
+      },
+      "validation": {
+        "pre_uat_checks": ["Two periods are available or limitation is clearly stated.", "Program scope is enforced."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-KAP-06",
+      "role": "kaprodi",
+      "analysis_aspect": "diagnostic_and_recommendation",
+      "data_source_mix": "hybrid",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Berdasarkan kuesioner evaluasi, dosen atau kelas mana yang perlu mendapat perhatian terlebih dahulu?",
+      "user_scope": {
+        "role": "kaprodi",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a program-head account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_kelas", "analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["priority class or lecturer", "supporting indicator", "recommended follow-up"],
+        "prohibited_behavior": ["identifying individual lecturers without supporting evidence", "overstating diagnosis"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies a priority target.", "The answer explains the evidence for attention."],
+        "correctness_reference": "Compare priority evidence with SQL and portfolio observations.",
+        "faithfulness_reference": "Diagnosis must remain evidence-bound.",
+        "completeness_criteria": ["Includes target.", "Includes reason.", "Includes follow-up."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you decide what needs attention first from this answer?",
+        "perceived_correctness_prompt": "The suggested priority appears reasonable.",
+        "usefulness_prompt": "The answer helps program-level follow-up.",
+        "clarity_prompt": "The recommendation is clear.",
+        "trust_acceptance_prompt": "I would use this answer as initial decision support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Evidence is available.", "Answer does not make unsupported personal judgments.", "Scope is program-limited."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": "If privacy-sensitive lecturer identification is a concern, judge whether the answer uses class-level priority instead."
+    },
+    {
+      "id": "UAT-DEK-01",
+      "role": "dekan",
+      "analysis_aspect": "academic_performance",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan kelas di fakultas saya yang perlu diprioritaskan berdasarkan performa akademik, termasuk nilai, kehadiran, dan indikator evaluasi.",
+      "user_scope": {
+        "role": "dekan",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a faculty-level account with kd_fak scope."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["faculty-scoped priority classes", "academic indicators", "priority rationale"],
+        "prohibited_behavior": ["data outside faculty scope", "ranking without indicators"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies priority classes within faculty scope.", "The answer uses academic-performance indicators."],
+        "correctness_reference": "Compare selected classes and indicators with SQL output.",
+        "faithfulness_reference": "Priority reasoning must be supported by evidence.",
+        "completeness_criteria": ["Includes class identity.", "Includes indicator values.", "Includes reason."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify faculty-level classes needing attention?",
+        "perceived_correctness_prompt": "The selected classes appear reasonable.",
+        "usefulness_prompt": "The answer helps faculty monitoring.",
+        "clarity_prompt": "The priority list is clear.",
+        "trust_acceptance_prompt": "I would use this as initial faculty monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Faculty scope is enforced.", "Evidence is non-empty.", "Answer is not purely generic."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DEK-02",
+      "role": "dekan",
+      "analysis_aspect": "portfolio_reflection",
+      "data_source_mix": "textual",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Ringkas pola usulan perbaikan dari portofolio beberapa kelas dengan skor rendah di fakultas saya.",
+      "user_scope": {
+        "role": "dekan",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a faculty-level account with visible portfolio entries."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_kelas", "analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["low-score class selection", "improvement pattern summary", "faculty-scope evidence"],
+        "prohibited_behavior": ["portfolio summary without explaining selected class basis"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer selects relevant low-score classes.", "The answer summarizes improvement patterns from portfolio evidence."],
+        "correctness_reference": "Compare low-score selection with SQL output and summary with portfolio text.",
+        "faithfulness_reference": "Pattern summary must be grounded in retrieved portfolio text.",
+        "completeness_criteria": ["Includes selection basis.", "Includes recurring improvement themes."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you understand common improvement themes in the faculty?",
+        "perceived_correctness_prompt": "The pattern summary appears consistent with portfolio content.",
+        "usefulness_prompt": "The answer helps faculty-level quality improvement discussion.",
+        "clarity_prompt": "The themes are clearly summarized.",
+        "trust_acceptance_prompt": "I would use this answer as preparation for follow-up."
+      },
+      "validation": {
+        "pre_uat_checks": ["Portfolio evidence is available.", "Class selection remains faculty-scoped."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DEK-03",
+      "role": "dekan",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan rata-rata skor overall setiap prodi di fakultas saya pada semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "dekan",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a faculty-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["program list", "overall score per program", "semester"],
+        "prohibited_behavior": ["including programs outside faculty scope"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer reports program-level scores for the faculty.", "The evaluated semester is stated."],
+        "correctness_reference": "Compare program rows with SQL output.",
+        "faithfulness_reference": "All values must come from SQL evidence.",
+        "completeness_criteria": ["Includes each visible program.", "Includes scores."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you monitor program-level scores from this answer?",
+        "perceived_correctness_prompt": "The values appear reasonable.",
+        "usefulness_prompt": "The answer helps faculty monitoring.",
+        "clarity_prompt": "The program comparison is clear.",
+        "trust_acceptance_prompt": "I would use this table-like output as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Program rows are non-empty.", "Faculty scope is enforced."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DEK-04",
+      "role": "dekan",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Prodi mana di fakultas saya yang memiliki rata-rata kehadiran mahasiswa terendah?",
+      "user_scope": {
+        "role": "dekan",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a faculty-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi", "analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["lowest-attendance program", "attendance value", "semester"],
+        "prohibited_behavior": ["ranking outside faculty scope"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies the program with lowest average student attendance.", "The answer reports the attendance value or rank basis."],
+        "correctness_reference": "Compare lowest program with SQL output.",
+        "faithfulness_reference": "Ranking must be supported by SQL evidence.",
+        "completeness_criteria": ["Includes program identity.", "Includes attendance value.", "Includes period."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify the program needing attendance follow-up?",
+        "perceived_correctness_prompt": "The identified program appears data-based.",
+        "usefulness_prompt": "The answer helps faculty monitoring.",
+        "clarity_prompt": "The answer is clear.",
+        "trust_acceptance_prompt": "I would trust this as an initial signal."
+      },
+      "validation": {
+        "pre_uat_checks": ["Attendance evidence is available.", "Faculty scope is enforced."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DEK-05",
+      "role": "dekan",
+      "analysis_aspect": "comparative_or_trend_analysis",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Bandingkan tren skor overall antarprodi di fakultas saya dalam dua semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "dekan",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a faculty-level account with at least two semesters of program statistics."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["program trends", "two periods", "increase or decrease"],
+        "prohibited_behavior": ["claiming trend without temporal evidence"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer compares programs across two semesters.", "The answer identifies trend direction."],
+        "correctness_reference": "Compare trend values with SQL output.",
+        "faithfulness_reference": "All trend claims must be data-supported.",
+        "completeness_criteria": ["Includes programs.", "Includes compared periods.", "Includes trend direction."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you compare program trends from this answer?",
+        "perceived_correctness_prompt": "The trend comparison appears credible.",
+        "usefulness_prompt": "The answer helps faculty-level monitoring.",
+        "clarity_prompt": "The comparison is understandable.",
+        "trust_acceptance_prompt": "I would use this as monitoring input."
+      },
+      "validation": {
+        "pre_uat_checks": ["Two periods exist.", "Faculty scope is enforced."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DEK-06",
+      "role": "dekan",
+      "analysis_aspect": "diagnostic_and_recommendation",
+      "data_source_mix": "hybrid",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Berdasarkan data evaluasi dan portofolio, prodi atau kelas mana yang perlu mendapat perhatian fakultas terlebih dahulu?",
+      "user_scope": {
+        "role": "dekan",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a faculty-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_kelas", "analitik.v_akademik_statistik_prodi", "analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["priority program or class", "numeric evidence", "portfolio evidence", "follow-up suggestion"],
+        "prohibited_behavior": ["unsupported ranking", "scope leakage"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies a priority target.", "The answer combines evaluation data with portfolio evidence."],
+        "correctness_reference": "Compare priority evidence with SQL output and retrieved text.",
+        "faithfulness_reference": "Recommendation must be evidence-grounded.",
+        "completeness_criteria": ["Includes target.", "Includes evidence.", "Includes recommendation."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you decide what needs faculty attention first?",
+        "perceived_correctness_prompt": "The suggested priority appears reasonable.",
+        "usefulness_prompt": "The answer helps faculty decision-making.",
+        "clarity_prompt": "The recommendation is clear.",
+        "trust_acceptance_prompt": "I would use this as decision-support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Numeric and text evidence are both available.", "Faculty scope is enforced."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DIR-01",
+      "role": "direktorat",
+      "analysis_aspect": "academic_performance",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan kelas di tingkat institut yang perlu diprioritaskan berdasarkan performa akademik, termasuk nilai, kehadiran, dan indikator evaluasi.",
+      "user_scope": {
+        "role": "direktorat",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a directorate-level account with institution-wide scope."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["institution-level priority classes", "academic indicators", "reason for priority"],
+        "prohibited_behavior": ["unsupported prioritization"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies institution-level priority classes.", "The answer uses academic indicators."],
+        "correctness_reference": "Compare indicators with SQL output.",
+        "faithfulness_reference": "Priority claims must be evidence-based.",
+        "completeness_criteria": ["Includes class identity.", "Includes indicators.", "Includes priority reason."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify institution-level classes needing attention?",
+        "perceived_correctness_prompt": "The priority list appears data-based.",
+        "usefulness_prompt": "The answer supports institution-level monitoring.",
+        "clarity_prompt": "The answer is clear.",
+        "trust_acceptance_prompt": "I would use this as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Evidence is non-empty.", "No artificial scope restriction blocks institution-level view."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": true
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DIR-02",
+      "role": "direktorat",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Tampilkan rata-rata skor overall setiap fakultas pada semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "direktorat",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a directorate-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["faculty list", "average overall score", "semester"],
+        "prohibited_behavior": ["missing faculty grouping"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer aggregates by faculty.", "The answer reports overall score."],
+        "correctness_reference": "Compare faculty aggregation with SQL output.",
+        "faithfulness_reference": "All values must be supported by SQL.",
+        "completeness_criteria": ["Includes faculties.", "Includes period.", "Includes score values."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you monitor faculty-level scores from this answer?",
+        "perceived_correctness_prompt": "The values appear credible.",
+        "usefulness_prompt": "The answer helps institution-level monitoring.",
+        "clarity_prompt": "The output is easy to read.",
+        "trust_acceptance_prompt": "I would use this as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Faculty aggregation is non-empty.", "Values are grounded in SQL output."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": false
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DIR-03",
+      "role": "direktorat",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Fakultas mana yang memiliki rata-rata kehadiran mahasiswa terendah pada semester terakhir yang tersedia?",
+      "user_scope": {
+        "role": "direktorat",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a directorate-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi", "analitik.v_akademik_kelas"],
+        "expected_answer_elements": ["lowest-attendance faculty", "attendance value", "semester"],
+        "prohibited_behavior": ["ranking without attendance evidence"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies a faculty with lowest attendance.", "The answer reports the evidence value."],
+        "correctness_reference": "Compare ranking with SQL output.",
+        "faithfulness_reference": "The lowest-faculty claim must be SQL-supported.",
+        "completeness_criteria": ["Includes faculty.", "Includes attendance metric.", "Includes period."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify the faculty needing attendance follow-up?",
+        "perceived_correctness_prompt": "The answer appears data-based.",
+        "usefulness_prompt": "The answer supports institution-level monitoring.",
+        "clarity_prompt": "The result is clear.",
+        "trust_acceptance_prompt": "I would use this as an initial monitoring signal."
+      },
+      "validation": {
+        "pre_uat_checks": ["Attendance aggregation is non-empty.", "The ranking is evidence-based."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": false
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DIR-04",
+      "role": "direktorat",
+      "analysis_aspect": "comparative_or_trend_analysis",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Bandingkan tren skor overall antar fakultas dalam dua semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "direktorat",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a directorate-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["faculty trends", "two periods", "increase or decrease"],
+        "prohibited_behavior": ["trend without temporal evidence"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer compares faculties across two semesters.", "The answer states trend direction."],
+        "correctness_reference": "Compare trend with SQL output.",
+        "faithfulness_reference": "Trend claims must be supported by data.",
+        "completeness_criteria": ["Includes faculties.", "Includes periods.", "Includes trend direction."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you compare faculty trends from this answer?",
+        "perceived_correctness_prompt": "The comparison appears credible.",
+        "usefulness_prompt": "The answer helps institution-level monitoring.",
+        "clarity_prompt": "The trend explanation is clear.",
+        "trust_acceptance_prompt": "I would use this as monitoring support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Two periods exist.", "Faculty trend aggregation is non-empty."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": false
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DIR-05",
+      "role": "direktorat",
+      "analysis_aspect": "comparative_or_trend_analysis",
+      "data_source_mix": "structured",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Identifikasi prodi dengan penurunan skor overall terbesar antar dua semester terakhir yang tersedia.",
+      "user_scope": {
+        "role": "direktorat",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a directorate-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["program with largest decline", "score delta", "period comparison"],
+        "prohibited_behavior": ["claiming decline without comparison"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies programs with largest decline.", "The answer reports the amount or direction of decline."],
+        "correctness_reference": "Compare identified decline with SQL output.",
+        "faithfulness_reference": "Decline claims must be calculated from evidence.",
+        "completeness_criteria": ["Includes program.", "Includes compared periods.", "Includes delta."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify the program needing trend follow-up?",
+        "perceived_correctness_prompt": "The decline ranking appears data-based.",
+        "usefulness_prompt": "The answer helps prioritize institution-level review.",
+        "clarity_prompt": "The decline explanation is clear.",
+        "trust_acceptance_prompt": "I would use this as initial prioritization support."
+      },
+      "validation": {
+        "pre_uat_checks": ["Two periods exist.", "Program trend data is non-empty."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": false
+      },
+      "notes_for_evaluator": ""
+    },
+    {
+      "id": "UAT-DIR-06",
+      "role": "direktorat",
+      "analysis_aspect": "diagnostic_and_recommendation",
+      "data_source_mix": "hybrid",
+      "language": "id",
+      "domain": "portfolio",
+      "question": "Berdasarkan data lintas fakultas, area akademik mana yang perlu diprioritaskan untuk evaluasi lanjutan dan apa bukti pendukungnya?",
+      "user_scope": {
+        "role": "direktorat",
+        "requires_live_role_account": true,
+        "scope_notes": "Run using a directorate-level account."
+      },
+      "expected_evidence": {
+        "expected_tools": ["sql", "rag"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi", "analitik.v_akademik_kelas", "analitik.v_akademik_portofolio"],
+        "expected_answer_elements": ["priority academic area", "supporting quantitative evidence", "supporting qualitative evidence if available", "follow-up recommendation"],
+        "prohibited_behavior": ["unsupported institution-level recommendation", "overstating causality"]
+      },
+      "technical_rubric": {
+        "task_success_criteria": ["The answer identifies an institution-level priority area.", "The answer provides evidence and a follow-up recommendation."],
+        "correctness_reference": "Compare evidence with SQL and retrieved text.",
+        "faithfulness_reference": "Recommendation must be grounded and cautious.",
+        "completeness_criteria": ["Includes priority area.", "Includes evidence.", "Includes follow-up."]
+      },
+      "acceptance_rubric": {
+        "task_completion_prompt": "Can you identify what should be evaluated further?",
+        "perceived_correctness_prompt": "The priority appears evidence-based.",
+        "usefulness_prompt": "The answer supports institution-level decision-making.",
+        "clarity_prompt": "The recommendation is clearly explained.",
+        "trust_acceptance_prompt": "I would use this as decision-support for further review."
+      },
+      "validation": {
+        "pre_uat_checks": ["Evidence is available.", "Recommendation is not framed as definitive causality."],
+        "evidence_non_empty_required": true,
+        "scope_leakage_check_required": false
+      },
+      "notes_for_evaluator": "This is the highest-level decision-support UAT case."
+    }
+  ]
+}

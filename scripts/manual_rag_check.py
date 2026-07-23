@@ -1,5 +1,7 @@
 import asyncio
+from pathlib import Path
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.database import init_db_pool, close_db_pool
 from core.scope import UserScope, ScopeEntry, UserRole
@@ -32,7 +34,7 @@ async def check_full_pipeline(query: str, user_scope: UserScope):
 
 
 async def main():
-    query = sys.argv[1] if len(sys.argv) > 1 else "Bagaimana pendapat mahasiswa mengenai praktikum?"
+    query = sys.argv[1] if len(sys.argv) > 1 else "Tampilkan komentar mahasiswa IF3170 dan refleksi pelaksanaan dosen IF3170 dari semester 2024-1"
 
     await init_db_pool()
     try:

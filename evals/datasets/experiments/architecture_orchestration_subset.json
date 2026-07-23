@@ -1,0 +1,1338 @@
+{
+  "dataset_name": "Architecture Orchestration Cases (20-Case Subset)",
+  "version": "0.1.0",
+  "description": "Experiment I dataset: 80 manually-curated (first-pass, auto-templated) cases stratified by 10 planner QueryType labels x 4 orchestration complexity levels (2 cases each), used to compare A1 Direct Tool Calling, A2 ReAct-style Agent, A3 Plan-Execute Agent, and A4 Proposed Planner-Orchestrator with iterative reasoning.",
+  "total_cases": 20,
+  "distribution": {
+    "query_type_counts": {
+      "data_lookup": 2,
+      "text_lookup": 2,
+      "analytical_numeric": 2,
+      "analytical_text": 2,
+      "analytical_hybrid": 2,
+      "diagnostic": 2,
+      "comparative": 2,
+      "summarization": 2,
+      "chart_interpret": 2,
+      "clarification_needed": 2
+    },
+    "orchestration_complexity_counts": {
+      "C1_single_tool": 5,
+      "C2_parallel_multi_tool": 5,
+      "C3_sequential": 5,
+      "C4_dependent_multi_step": 5
+    }
+  },
+  "cases": [
+    {
+      "id": "ARCH-AHYB-C1-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apakah kelas IF2210 dengan nilai evaluasi rendah juga memiliki komentar negatif?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Answer the analytical_hybrid question directly using sql.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Apakah kelas IF2210 dengan nilai evaluasi rendah juga memiliki komentar negatif?"
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the analytical_hybrid intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Apakah kelas IF2210 dengan nilai evaluasi rendah juga memiliki komentar negatif?')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-AHYB-C2-001",
+      "query_type": "analytical_hybrid",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Tampilkan nilai evaluasi IF2210 dan tema komentar mahasiswa terkait.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_hybrid",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Independent evidence step 1 for analytical_hybrid.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Independent evidence step 2 for analytical_hybrid.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Tampilkan nilai evaluasi IF2210 dan tema komentar mahasiswa terkait."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the analytical_hybrid intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Tampilkan nilai evaluasi IF2210 dan tema komentar mahasiswa terkait.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C1-001",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Mata kuliah apa yang memiliki rata-rata evaluasi tertinggi pada semester 2024-1?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Answer the analytical_numeric question directly using sql.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Mata kuliah apa yang memiliki rata-rata evaluasi tertinggi pada semester 2024-1?"
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the analytical_numeric intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Mata kuliah apa yang memiliki rata-rata evaluasi tertinggi pada semester 2024-1?')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ANUM-C2-001",
+      "query_type": "analytical_numeric",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Lakukan analisis pada nilai evaluasi dosen IF2210, dan lakukan analisis terpisah pada tingkat kelulusan IF2210.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_numeric",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Independent evidence step 1 for analytical_numeric.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Independent evidence step 2 for analytical_numeric.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Tampilkan mata kuliah dengan rata-rata tertinggi beserta jumlah kelasnya."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the analytical_numeric intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Tampilkan mata kuliah dengan rata-rata tertinggi beserta jumlah kelasnya.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C1-001",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Apa tema utama komentar mahasiswa IF2210?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Answer the analytical_text question directly using rag.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Apa tema utama komentar mahasiswa IF2210?"
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the analytical_text intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Apa tema utama komentar mahasiswa IF2210?')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-ATXT-C2-001",
+      "query_type": "analytical_text",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Rangkum sentimen komentar mahasiswa untuk mata kuliah IF2210, dan secara paralel rangkum keluhan terkait fasilitas laboratorium.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "analytical_text",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Independent evidence step 1 for analytical_text.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Independent evidence step 2 for analytical_text.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Analisis tema komentar mahasiswa dan ringkas contoh komentar pendukungnya."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the analytical_text intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Analisis tema komentar mahasiswa dan ringkas contoh komentar pendukungnya.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CHRT-C1-001",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Jelaskan anomali utama dari grafik evaluasi ini.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Tren Skor Evaluasi per Semester",
+          "x_axis_label": "Semester",
+          "y_axis_label": "Skor Rata-rata",
+          "series": [
+            {
+              "name": "IF2210",
+              "data": [
+                3.4,
+                3.2,
+                3.0
+              ]
+            }
+          ],
+          "filters_applied": {
+            "tahun_ajaran": "2024-1",
+            "semester": [],
+            "jenjang": [],
+            "kode_fakultas": [],
+            "no_prodi": []
+          },
+          "hint": [
+            "Grafik menunjukkan penurunan skor tiga semester terakhir."
+          ],
+          "jumlah_kelas_aktif": 12
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Answer the chart_interpret question directly using chart_interpreter.",
+            "tool": "chart_interpreter",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Jelaskan anomali utama dari grafik evaluasi ini."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the chart_interpret intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Jelaskan anomali utama dari grafik evaluasi ini.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CHRT-C2-001",
+      "query_type": "chart_interpret",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Tolong interpretasikan grafik tren evaluasi IF2210 ini, dan secara terpisah cari data rata-rata nilainya di database.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": {
+          "chart_type": "score_trend_line_chart",
+          "title": "Tren Skor Evaluasi per Semester",
+          "x_axis_label": "Semester",
+          "y_axis_label": "Skor Rata-rata",
+          "series": [
+            {
+              "name": "IF2210",
+              "data": [
+                3.4,
+                3.2,
+                3.0
+              ]
+            }
+          ],
+          "filters_applied": {
+            "tahun_ajaran": "2024-1",
+            "semester": [],
+            "jenjang": [],
+            "kode_fakultas": [],
+            "no_prodi": []
+          },
+          "hint": [
+            "Grafik menunjukkan penurunan skor tiga semester terakhir."
+          ],
+          "jumlah_kelas_aktif": 12
+        }
+      },
+      "expected_behavior": {
+        "expected_query_type": "chart_interpret",
+        "expected_tool_sequence": [
+          "chart_interpreter",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "chart_interpreter",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Independent evidence step 1 for chart_interpret.",
+            "tool": "chart_interpreter",
+            "required": false
+          },
+          {
+            "task": "Independent evidence step 2 for chart_interpret.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Jelaskan grafik ini dan ambil data pendukung untuk kelas yang paling menonjol."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the chart_interpret intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Jelaskan grafik ini dan ambil data pendukung untuk kelas yang paling menonjol.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C1-001",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C1_single_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana hasilnya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "clarification_handler"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Ask user to disambiguate the missing reference/entity before proceeding.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "The response must ask a clarifying question naming the missing reference/entity/time period."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct clarification question, no premature data claims."
+        ],
+        "expected_clarification_slots": [
+          "referenced_entity"
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Agent asks a clarification question instead of answering with assumed values.",
+          "Clarification question names the specific missing slot(s)."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by clarification_handler reasoning (no data claims expected).",
+        "completeness_criteria": [
+          "All ambiguous slots identified in expected_clarification_slots are asked about."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-CLAR-C2-001",
+      "query_type": "clarification_needed",
+      "orchestration_complexity": "C2_parallel_multi_tool",
+      "domain": "portfolio",
+      "raw_query": "Bagaimana hasilnya? dan apa rinciannya?",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "clarification_needed",
+        "expected_tool_sequence": [
+          "clarification",
+          "clarification"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "clarification_handler",
+          "clarification_handler"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Independent evidence step 1 for clarification_needed.",
+            "tool": "clarification",
+            "required": false
+          },
+          {
+            "task": "Independent evidence step 2 for clarification_needed.",
+            "tool": "clarification",
+            "required": false
+          }
+        ],
+        "expected_response_type": "clarification",
+        "required_answer_facts": [
+          "The response must ask a clarifying question naming the missing reference/entity/time period."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct clarification question, no premature data claims."
+        ],
+        "expected_clarification_slots": [
+          "referenced_entity",
+          "comparison_baseline"
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Agent asks a clarification question instead of answering with assumed values.",
+          "Clarification question names the specific missing slot(s)."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by clarification_handler reasoning (no data claims expected).",
+        "completeness_criteria": [
+          "All ambiguous slots identified in expected_clarification_slots are asked about."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C3-001",
+      "query_type": "comparative",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Cari dua kelas dengan penurunan terbesar, lalu bandingkan komponen evaluasinya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Resolve the entity/context needed before the main comparative step.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Use resolved context to answer the comparative question.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari dua kelas dengan penurunan terbesar, lalu bandingkan komponen evaluasinya."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the comparative intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari dua kelas dengan penurunan terbesar, lalu bandingkan komponen evaluasinya.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-COMP-C4-001",
+      "query_type": "comparative",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Identifikasi dua program studi dengan tren evaluasi paling berbeda, lalu jelaskan komponen yang paling berkontribusi.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "comparative",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Identify the subset/trend relevant to the question.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Retrieve supporting evidence for the identified subset.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Synthesize a diagnostic/comparative explanation from combined evidence.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Identifikasi dua program studi dengan tren evaluasi paling berbeda, lalu jelaskan komponen yang paling berkontribusi."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the comparative intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Identifikasi dua program studi dengan tren evaluasi paling berbeda, lalu jelaskan komponen yang paling berkontribusi.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C3-001",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas IF2210 semester terakhir, lalu tampilkan rata-rata evaluasinya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Resolve the entity/context needed before the main data_lookup step.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Use resolved context to answer the data_lookup question.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas IF2210 semester terakhir, lalu tampilkan rata-rata evaluasinya."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the data_lookup intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas IF2210 semester terakhir, lalu tampilkan rata-rata evaluasinya.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DATA-C4-001",
+      "query_type": "data_lookup",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas IF2210 dengan evaluasi terendah dalam tiga semester terakhir, lalu tampilkan indikator utama yang paling rendah.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "data_lookup",
+        "expected_tool_sequence": [
+          "sql",
+          "sql",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Identify the subset/trend relevant to the question.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Retrieve supporting evidence for the identified subset.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Synthesize a diagnostic/comparative explanation from combined evidence.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas IF2210 dengan evaluasi terendah dalam tiga semester terakhir, lalu tampilkan indikator utama yang paling rendah."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the data_lookup intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas IF2210 dengan evaluasi terendah dalam tiga semester terakhir, lalu tampilkan indikator utama yang paling rendah.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C3-001",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas dengan indikator terendah, lalu ambil komentar mahasiswa yang relevan untuk kelas tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Resolve the entity/context needed before the main diagnostic step.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Use resolved context to answer the diagnostic question.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas dengan indikator terendah, lalu ambil komentar mahasiswa yang relevan untuk kelas tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the diagnostic intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas dengan indikator terendah, lalu ambil komentar mahasiswa yang relevan untuk kelas tersebut.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-DIAG-C4-001",
+      "query_type": "diagnostic",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Identifikasi penurunan evaluasi, telusuri komponen penyebab, ambil bukti komentar, lalu susun diagnosis singkat.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "diagnostic",
+        "expected_tool_sequence": [
+          "sql",
+          "rag",
+          "sql"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "sql_pipeline",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "sql_pipeline",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Identify the subset/trend relevant to the question.",
+            "tool": "sql",
+            "required": false
+          },
+          {
+            "task": "Retrieve supporting evidence for the identified subset.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Synthesize a diagnostic/comparative explanation from combined evidence.",
+            "tool": "sql",
+            "required": false
+          }
+        ],
+        "expected_response_type": "mixed",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Identifikasi penurunan evaluasi, telusuri komponen penyebab, ambil bukti komentar, lalu susun diagnosis singkat."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the diagnostic intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Identifikasi penurunan evaluasi, telusuri komponen penyebab, ambil bukti komentar, lalu susun diagnosis singkat.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-SUMM-C3-001",
+      "query_type": "summarization",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas IF2210 semester terakhir, lalu ringkas komentar mahasiswanya.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "summarization",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Resolve the entity/context needed before the main summarization step.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Use resolved context to answer the summarization question.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas IF2210 semester terakhir, lalu ringkas komentar mahasiswanya."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the summarization intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas IF2210 semester terakhir, lalu ringkas komentar mahasiswanya.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-SUMM-C4-001",
+      "query_type": "summarization",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas dengan komentar paling banyak, kelompokkan komentar, lalu susun ringkasan masalah utama.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "summarization",
+        "expected_tool_sequence": [
+          "rag",
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Identify the subset/trend relevant to the question.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Retrieve supporting evidence for the identified subset.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Synthesize a diagnostic/comparative explanation from combined evidence.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas dengan komentar paling banyak, kelompokkan komentar, lalu susun ringkasan masalah utama."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the summarization intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas dengan komentar paling banyak, kelompokkan komentar, lalu susun ringkasan masalah utama.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C3-001",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C3_sequential",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas IF2210 semester terakhir, lalu ambil komentar mahasiswa untuk kelas tersebut.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Resolve the entity/context needed before the main text_lookup step.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Use resolved context to answer the text_lookup question.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas IF2210 semester terakhir, lalu ambil komentar mahasiswa untuk kelas tersebut."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the text_lookup intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas IF2210 semester terakhir, lalu ambil komentar mahasiswa untuk kelas tersebut.')."
+        ]
+      }
+    },
+    {
+      "id": "ARCH-TEXT-C4-001",
+      "query_type": "text_lookup",
+      "orchestration_complexity": "C4_dependent_multi_step",
+      "domain": "portfolio",
+      "raw_query": "Cari kelas dengan komentar negatif terbanyak, lalu ambil tema komentar paling dominan.",
+      "language": "id",
+      "user_scope": {
+        "role": "dosen"
+      },
+      "input_context": {
+        "conversation_history": [],
+        "chart_context": null
+      },
+      "expected_behavior": {
+        "expected_query_type": "text_lookup",
+        "expected_tool_sequence": [
+          "rag",
+          "rag",
+          "rag"
+        ],
+        "expected_node_sequence": [
+          "input_guard",
+          "intent_classifier",
+          "query_rewriter",
+          "planner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "rag_retriever",
+          "step_reasoner",
+          "synthesizer"
+        ],
+        "expected_plan_steps": [
+          {
+            "task": "Identify the subset/trend relevant to the question.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Retrieve supporting evidence for the identified subset.",
+            "tool": "rag",
+            "required": false
+          },
+          {
+            "task": "Synthesize a diagnostic/comparative explanation from combined evidence.",
+            "tool": "rag",
+            "required": false
+          }
+        ],
+        "expected_response_type": "text",
+        "required_answer_facts": [
+          "The response must state the key numeric/textual finding relevant to: Cari kelas dengan komentar negatif terbanyak, lalu ambil tema komentar paling dominan."
+        ],
+        "acceptable_answer_patterns": [
+          "A direct answer grounded in retrieved SQL/RAG/chart evidence, in Indonesian, with the relevant course/semester/entity named."
+        ]
+      },
+      "scoring_rubric": {
+        "task_success_criteria": [
+          "Final answer addresses the text_lookup intent of the query.",
+          "Final answer is grounded in tool outputs (SQL result / RAG chunks / chart context) recorded in steps_completed.",
+          "Correct entities (course/lecturer/semester) from the query are reflected in the answer."
+        ],
+        "faithfulness_reference": "steps_completed entries produced by sql_pipeline / rag_retriever / chart_interpreter for this case.",
+        "completeness_criteria": [
+          "Answer covers all sub-parts implied by the query ('Cari kelas dengan komentar negatif terbanyak, lalu ambil tema komentar paling dominan.')."
+        ]
+      }
+    }
+  ]
+}
