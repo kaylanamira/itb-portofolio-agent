@@ -6,7 +6,7 @@ from langchain_anthropic import ChatAnthropic
 from core.config import settings
 import os
 
-load_dotenv()
+load_dotenv(override=True)
 OPENROUTER_MODEL_ENVS: dict[str, tuple[str, ...]] = {
     "intent_classification": ("INTENT_MODEL", "INTENT_CLASSIFICATION_MODEL"),
     "query_rewriter": ("REWRITER_MODEL", "QUERY_REWRITER_MODEL"),
@@ -87,6 +87,10 @@ TASK_MODEL_MAPPING["llm_evaluation"] = {
     "provider": os.getenv("EVAL_PROVIDER", "google"),
     "model": os.getenv("EVAL_MODEL", os.getenv("GOOGLE_MODEL", "gemini-1.5-pro"))
 }
+TASK_MODEL_MAPPING["intent_classification"] = {
+    "provider": os.getenv("INTENT_PROVIDER", DEFAULT_PROVIDER),
+    "model": os.getenv("INTENT_MODEL", "llama3-8b-8192")
+}
 
 TASK_MODEL_MAPPING["rag_generation"] = {
     "provider": os.getenv("RAG_GEN_PROVIDER", "google"),
@@ -98,20 +102,7 @@ TASK_MODEL_MAPPING["rag_faithfulness"] = {
 }
 
 
-def get_llm(task_type: str = "general", force_json: bool = True):
-    """Returns a LangChain Chat Model instance for the given task.
-
-    Args:
-        task_type: Key from TASK_MODEL_MAPPING.
-        force_json: If True, requests JSON output format where supported.
-    """
-    mapping = TASK_MODEL_MAPPING.get(
-        task_type,
-        {"provider": DEFAULT_PROVIDER, "model": DEFAULT_MODEL},
-    )
-    provider = mapping["provider"].lower()
-    model_name = mapping["model"]
-
+def _create_llm_instance(provider: str, model_name: str, force_json: bool, task_type: str):
     if provider == "openrouter":
         kwargs = {
             "api_key": settings.OPENROUTER_API_KEY,
@@ -180,3 +171,27 @@ def get_llm(task_type: str = "general", force_json: bool = True):
         return ChatOpenAI(**kwargs)
 
     raise ValueError(f"Unsupported LLM provider '{provider}' for task '{task_type}'.")
+
+
+def get_llm(task_type: str = "general", force_json: bool = True):
+    """Returns a LangChain Chat Model instance for the given task.
+
+    Args:
+        task_type: Key from TASK_MODEL_MAPPING.
+        force_json: If True, requests JSON output format where supported.
+    """
+    mapping = TASK_MODEL_MAPPING.get(
+        task_type,
+        {"provider": DEFAULT_PROVIDER, "model": DEFAULT_MODEL},
+    )
+    provider = mapping["provider"].lower()
+    model_name = mapping["model"]
+
+    primary_llm = _create_llm_instance(provider, model_name, force_json, task_type)
+
+    if provider == "groq" and settings.GOOGLE_API_KEY:
+        google_model = os.getenv("GOOGLE_MODEL", "gemini-2.5-flash")
+        fallback_llm = _create_llm_instance("google", google_model, force_json, task_type)
+        return primary_llm.with_fallbacks([fallback_llm])
+
+    return primary_llm

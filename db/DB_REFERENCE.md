@@ -940,13 +940,13 @@ Contains pre-joined student evaluation comments for easy RAG ingestion and analy
 | `semua_dosen_id` | `integer[]` | Array of dosen IDs teaching the class |
 | `semua_dosen_nama_gelar` | `text[]` | Array of teaching dosen names with titles |
 | `metode_perkuliahan` | `text` |  |
-| `komponen_penilaian` | `text` |  |
-| `statistik_nilai_kelas` | `text` |  |
-| `analisis_ketercapaian_outcomes` | `text` |  |
-| `tanggapan_kuesioner_mahasiswa` | `text` |  |
-| `refleksi_perkuliahan` | `text` |  |
-| `usulan_perbaikan_dosen` | `text` |  |
-| `rekomendasi_ke_itb` | `text` |  |
+| `sistem_penilaian` | `text` |  |
+| `statistik_kelas` | `text` |  |
+| `analisis_terhadap_statistik_kelas_dan_ketercapaian_outcomes` | `text` |  |
+| `komentar_terhadap_hasil_kuesioner_mahasiswa` | `text` |  |
+| `refleksi_pelaksanaan_perkuliahan` | `text` |  |
+| `usulan_perbaikan_oleh_dosen_berikutnya` | `text` |  |
+| `usulan_perbaikan_oleh_itb` | `text` |  |
 | `lama_metode_perkuliahan` | `text` |  |
 | `lama_statistik_kelas` | `text` |  |
 | `lama_outcomes_matakuliah` | `text` |  |

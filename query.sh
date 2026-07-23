@@ -128,7 +128,7 @@ elif [ "${1:-}" = "--chart2" ]; then
 JSON
 )
 else
-  QUERY="${1:-Identifikasi semester dengan skor keseluruhan IF paling rendah dalam 3 tahun terakhir, lalu analisis dimensi mana (capaian/pelaksanaan/sarana/perilaku) yang paling berkontribusi terhadap rendahnya skor tersebut. ?}"
+  QUERY="${1:-Tampilkan rata-rata skor capaian, pelaksanaan, sarana prasarana, perilaku mahasiswa, dan keseluruhan untuk prodi saya}"
   BODY=$(cat <<JSON
 {
   "query": "${QUERY}",

@@ -21,7 +21,7 @@ class QueryType(str, Enum):
 
 class AgentDomain(str, Enum):
     PORTFOLIO   = "portfolio"
-    WISUDAWAN   = "wisudawan"
+    # WISUDAWAN   = "wisudawan"
     OUT_OF_SCOPE = "out_of_scope"
 
 class ValidationStatus(str, Enum):

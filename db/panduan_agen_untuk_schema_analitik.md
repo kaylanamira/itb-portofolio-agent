@@ -210,9 +210,9 @@ untuk tahu mana yang ordinal (skala 1–4/1–5, bisa di-`AVG`) vs nominal
 `skema_pertanyaan` menentukan kolom mana yang terisi:
 
 - **`'baru'`** (kd_pertanyaan 12–19, sejak 2018/sem-1, ~54K baris): kolom
-  `metode_perkuliahan`, `komponen_penilaian`, `statistik_nilai_kelas`,
-  `analisis_ketercapaian_outcomes`, `tanggapan_kuesioner_mahasiswa`,
-  `refleksi_perkuliahan`, `usulan_perbaikan_dosen`, `rekomendasi_ke_itb`, +
+  `metode_perkuliahan`, `sistem_penilaian`, `statistik_kelas`,
+  `analisis_terhadap_statistik_kelas_dan_ketercapaian_outcomes`, `komentar_terhadap_hasil_kuesioner_mahasiswa`,
+  `refleksi_pelaksanaan_perkuliahan`, `usulan_perbaikan_oleh_dosen_berikutnya`, `usulan_perbaikan_oleh_itb`, +
   `komentar_*` (verifikator era baru).
 - **`'lama'`** (kd_pertanyaan 1–11, sebelum 2018, ~27K baris): kolom
   `lama_metode_perkuliahan`, `lama_statistik_kelas`, ... `lama_komentar_*`.
@@ -288,9 +288,9 @@ ter-mask untuk DOSEN — lihat §5.2).
 - `lengkap` (boolean) = status verifikasi, `nilai_portofolio` = nilai hasil
   verifikasi. Keduanya independen dari `skema_pertanyaan`.
 - Untuk pertanyaan "apa kata dosen tentang kelas X", field yang relevan
-  tergantung era: era baru → `refleksi_perkuliahan`,
-  `tanggapan_kuesioner_mahasiswa`, `usulan_perbaikan_dosen`,
-  `rekomendasi_ke_itb`; era lama → `lama_refleksi_perkuliahan`,
+  tergantung era: era baru → `refleksi_pelaksanaan_perkuliahan`,
+  `komentar_terhadap_hasil_kuesioner_mahasiswa`, `usulan_perbaikan_oleh_dosen_berikutnya`,
+  `usulan_perbaikan_oleh_itb`; era lama → `lama_refleksi_perkuliahan`,
   `lama_komentar_kuesioner_mahasiswa`, `lama_rencana_tindak_lanjut`,
   `lama_rekomendasi_*`.
 
@@ -301,19 +301,3 @@ ter-mask untuk DOSEN — lihat §5.2).
   `kode_matkul` (6 karakter), `kode_fakultas` (string, contoh STEI/SBM),
   `tahun_ajaran` (`'YYYY/YYYY'`), `semester` (1=ganjil, 2=genap, 3=pendek),
   `jenjang` (S1/S2/S3/PR).
-
----
-
-## 8. Checklist Singkat Sebelum Eksekusi Query Agen
-
-1. ✅ Semua referensi tabel di-prefix `analitik.` — tidak ada
-   `analitik_mv`, tidak ada schema lain, tidak ada tabel tanpa prefix.
-2. ✅ Statement adalah `SELECT` murni (tidak ada INSERT/UPDATE/DELETE/DDL/
-   `;`-chained multi-statement berbahaya).
-3. ✅ Session variable `app.role`, `app.no_ps`, `app.kd_fak`,
-   `app.dosen_id`, `app.user_id`, `app.kk_id` sudah di-`SET LOCAL` sesuai
-   role/scope user yang sedang login, dalam transaksi yang sama dengan
-   query — DAN `fn_get_*()` sudah disesuaikan untuk membaca nama+casing ini
-   (lihat peringatan mismatch di §2).
-4. ✅ Koneksi DB untuk agen idealnya `default_transaction_read_only = on`
-   sebagai safety net tambahan.
