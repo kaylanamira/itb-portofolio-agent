@@ -55,10 +55,13 @@ class PsycopgExecutor:
         Returns:
             QueryResult with rows (Decimal values coerced to float), row_count, and error.
         """
-        logger.info("Executing SQL:\n%s", sql)
+        logger.debug("Executing SQL:\n%s", sql)
+        import asyncio
         try:
             async with get_db_connection() as conn:
                 async with conn.transaction():
+                    await conn.execute("SET LOCAL statement_timeout = '15000'")
+                    
                     for key, value in user_scope.get_rls_vars().items():
                         await conn.execute(
                             psql.SQL("SET LOCAL {} = {}").format(
@@ -67,7 +70,8 @@ class PsycopgExecutor:
                             )
                         )
 
-                    cursor = await conn.execute(sql, params) if params is not None else await conn.execute(sql)
+                    execute_coro = conn.execute(sql, params) if params is not None else conn.execute(sql)
+                    cursor = await asyncio.wait_for(execute_coro, timeout=20.0)
                     rows = await cursor.fetchall()
 
                     if cursor.description:

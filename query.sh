@@ -128,7 +128,7 @@ elif [ "${1:-}" = "--chart2" ]; then
 JSON
 )
 else
-  QUERY="${1:-Tampilkan rata-rata skor capaian, pelaksanaan, sarana prasarana, perilaku mahasiswa, dan keseluruhan untuk prodi saya}"
+  QUERY="${1:-Untuk kelas dengan performa akademik yang perlu diperhatikan di prodi saya, ringkas refleksi dosen dan usulan perbaikannya.}"
   BODY=$(cat <<JSON
 {
   "query": "${QUERY}",
