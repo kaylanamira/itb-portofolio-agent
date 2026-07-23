@@ -13,14 +13,14 @@
     "analysis_aspect_counts": {
       "academic_performance": 5,
       "portfolio_reflection": 4,
-      "program_or_faculty_monitoring": 6,
+      "program_or_faculty_monitoring": 7,
       "comparative_or_trend_analysis": 5,
-      "diagnostic_and_recommendation": 4
+      "diagnostic_and_recommendation": 3
     },
     "data_source_mix_counts": {
-      "structured": 16,
+      "structured": 17,
       "textual": 4,
-      "hybrid": 4
+      "hybrid": 3
     }
   },
   "metrics": {
@@ -706,37 +706,37 @@
     {
       "id": "UAT-DEK-06",
       "role": "dekan",
-      "analysis_aspect": "diagnostic_and_recommendation",
-      "data_source_mix": "hybrid",
+      "analysis_aspect": "program_or_faculty_monitoring",
+      "data_source_mix": "structured",
       "language": "id",
       "domain": "portfolio",
-      "question": "Berdasarkan data nilai dan isi portofolio, prodi atau kelas mana di fakultas saya yang perlu mendapat perhatian terlebih dahulu?",
+      "question": "Tampilkan rata-rata skor capaian, pelaksanaan, sarana prasarana, perilaku mahasiswa, dan keseluruhan untuk fakultas saya.",
       "user_scope": {
         "role": "dekan",
         "requires_live_role_account": true,
         "scope_notes": "Run using a faculty-level account."
       },
       "expected_evidence": {
-        "expected_tools": ["sql", "rag"],
-        "expected_data_sources": ["analitik.v_akademik_kelas", "analitik.v_akademik_statistik_prodi", "analitik.v_akademik_portofolio"],
-        "expected_answer_elements": ["priority program or class", "numeric evidence", "portfolio evidence", "follow-up suggestion"],
-        "prohibited_behavior": ["unsupported ranking", "scope leakage"]
+        "expected_tools": ["sql"],
+        "expected_data_sources": ["analitik.v_akademik_statistik_prodi"],
+        "expected_answer_elements": ["faculty-level indicator values", "learning achievement score", "teaching implementation score", "facilities score", "student behavior score", "overall score"],
+        "prohibited_behavior": ["out-of-scope faculty data", "exposing raw database column names"]
       },
       "technical_rubric": {
-        "task_success_criteria": ["The answer identifies a priority target.", "The answer combines evaluation data with portfolio evidence."],
-        "correctness_reference": "Compare priority evidence with SQL output and retrieved text.",
-        "faithfulness_reference": "Recommendation must be evidence-grounded.",
-        "completeness_criteria": ["Includes target.", "Includes evidence.", "Includes recommendation."]
+        "task_success_criteria": ["The answer reports faculty-level evaluation indicators across dimensions.", "The answer covers all requested questionnaire components plus overall score."],
+        "correctness_reference": "Compare reported faculty scores with SQL tool output.",
+        "faithfulness_reference": "All score claims must be supported by SQL evidence.",
+        "completeness_criteria": ["Includes learning achievement score.", "Includes implementation score.", "Includes facilities score.", "Includes student behavior score.", "Includes overall score."]
       },
       "acceptance_rubric": {
-        "task_completion_prompt": "Can you decide what needs faculty attention first?",
-        "perceived_correctness_prompt": "The suggested priority appears reasonable.",
-        "usefulness_prompt": "The answer helps faculty decision-making.",
-        "clarity_prompt": "The recommendation is clear.",
-        "trust_acceptance_prompt": "I would use this as decision-support."
+        "task_completion_prompt": "Can you understand the faculty evaluation profile across dimensions from this answer?",
+        "perceived_correctness_prompt": "The reported faculty scores appear credible.",
+        "usefulness_prompt": "The answer helps faculty-level academic quality monitoring.",
+        "clarity_prompt": "The score breakdown across dimensions is clear.",
+        "trust_acceptance_prompt": "I would use this summary for faculty-level monitoring."
       },
       "validation": {
-        "pre_uat_checks": ["Numeric and text evidence are both available.", "Faculty scope is enforced."],
+        "pre_uat_checks": ["Faculty-level SQL evidence is available.", "Faculty scope is enforced."],
         "evidence_non_empty_required": true,
         "scope_leakage_check_required": true
       },
