@@ -69,19 +69,46 @@ class _ResolvedEntitas:
 
 
 def _resolve_locked(scope: UserScope) -> FilterOptionsLocked:
+    """
+    Tentukan fakultas/prodi yang dikunci (tidak bisa diubah client) per role,
+    untuk endpoint akademik umum (/api/dashboard/akademik/*).
+
+    Locked di sini SELALU granularity prodi/fakultas — tidak pernah dosen_id,
+    meskipun rolenya DOSEN. Ini disengaja: endpoint akademik umum dipakai
+    juga oleh chatbot untuk kebutuhan dosen mempelajari evaluasi mata kuliah
+    dan portofolio dosen LAIN di prodi yang sama, sebagai bahan rancangan
+    pelaksanaan mata kuliah periode berikutnya. Mempersempit locked di sini
+    ke dosen_id akan mematikan kebutuhan itu.
+
+    Endpoint dashboard PERSONAL dosen (data milik diri sendiri) ada di
+    router terpisah: api/routers/dashboard_dosen.py — scope-nya dikunci ke
+    dosen_id di level situ, bukan di sini.
+    """
     role = scope.role
+
     if role in (UserRole.ADMIN, UserRole.DIREKTORAT):
         return FilterOptionsLocked(fakultas=None, prodi=None)
+
     if role in (UserRole.DEKAN, UserRole.JAJARAN_DEKANAT):
         return FilterOptionsLocked(fakultas=scope.active_role.kd_fak, prodi=None)
-    locked_prodi = (
-        str(scope.active_role.no_ps)
-        if scope.active_role.no_ps is not None else None
-    )
-    if locked_prodi is None:
-        logger.warning("_resolve_locked: no_ps None role=%s user=%s", scope.role, scope.user_id)
-    return FilterOptionsLocked(fakultas=scope.active_role.kd_fak, prodi=locked_prodi)
 
+    # KAPRODI, JAJARAN_PRODI, dan DOSEN sama-sama dikunci di granularity
+    # prodi (no_ps) untuk endpoint ini — lihat alasan di docstring atas.
+    if role in (UserRole.KAPRODI, UserRole.JAJARAN_PRODI, UserRole.DOSEN):
+        locked_prodi = (
+            str(scope.active_role.no_ps)
+            if scope.active_role.no_ps is not None else None
+        )
+        if locked_prodi is None:
+            logger.warning("_resolve_locked: no_ps None role=%s user=%s", role, scope.user_id)
+        return FilterOptionsLocked(fakultas=scope.active_role.kd_fak, prodi=locked_prodi)
+
+    # Role tidak dikenal — seharusnya tidak pernah tercapai karena
+    # _resolve_user_role() di role_mapper.py sudah menyaring role yang valid
+    # sebelum UserScope terbentuk. Log keras supaya kelihatan kalau ada role
+    # baru yang lolos tanpa ditangani di sini.
+    logger.error("_resolve_locked: role tidak dikenal role=%s user=%s", role, scope.user_id)
+    return FilterOptionsLocked(fakultas=None, prodi=None)
 
 def _resolve_entitas(
     scope: UserScope, fakultas: list[str] | None, no_ps: list[str] | None,
