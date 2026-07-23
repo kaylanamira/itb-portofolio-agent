@@ -31,7 +31,9 @@ CORRECTNESS:
 4. LIMIT 100 unless the query is a pure aggregation (COUNT/AVG/SUM with no detail rows).
 5. Text/name searches: always use ILIKE with wildcards — `column ILIKE '%%keyword%%'`. Never exact =.
 6. ORDER BY for all list queries.
-7. COALESCE for nullable score/metric columns: e.g. COALESCE(nullable_col, 0).
+7. NULL HANDLING & FILTERING FOR SCORES/METRICS:
+   - When ordering/ranking by lowest performance (`ORDER BY metric ASC`), ALWAYS filter out missing/unsubmitted records with `WHERE metric IS NOT NULL` (or `ORDER BY metric ASC NULLS LAST`).
+   - DO NOT use `COALESCE(metric, 0)` when sorting by lowest values (`ORDER BY ... ASC`), because `NULL` represents missing/unrecorded data, NOT a zero score. Converting NULL to 0 falsely ranks unsubmitted/missing rows at the top.
 8. Table aliases on all columns when joining multiple tables — no bare column names.
 9. COMPARATIVE queries: use GROUP BY + aggregate functions.
 

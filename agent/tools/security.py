@@ -104,20 +104,25 @@ def check_sql_security(
     """
     _allowed = ALLOWED_SCHEMAS if allowed_schemas is None else allowed_schemas
 
-    if not sql or not sql.strip():
-        return False, "Security Violation: Empty SQL"
+    # Strip inline and block comments for security evaluation
+    sql_clean = re.sub(r'--.*$', '', sql, flags=re.MULTILINE)
+    sql_clean = re.sub(r'/\*[\s\S]*?\*/', '', sql_clean).strip()
 
-    sql_upper = sql.upper()
+    if not sql_clean:
+        return False, "Security Violation: Empty SQL after removing comments"
+
+    sql_upper = sql_clean.upper()
 
     # 1. Write-operation keyword
     for keyword in FORBIDDEN_KEYWORDS:
         if re.search(r"\b" + keyword + r"\b", sql_upper):
             return False, f"Security Violation: Forbidden keyword '{keyword}'"
 
-    # 2. Injection patterns
+    # 2. Injection patterns (excluding standard SQL comments which were stripped above)
     for pattern, label in INJECTION_PATTERNS:
-        if re.search(pattern, sql, re.IGNORECASE):
-            return False, f"Security Violation: {label} detected"
+        if label not in ("SQL line comment", "SQL block comment"):
+            if re.search(pattern, sql_clean, re.IGNORECASE):
+                return False, f"Security Violation: {label} detected"
 
     # 3. Dangerous function names
     for func in DANGEROUS_FUNCTIONS:
