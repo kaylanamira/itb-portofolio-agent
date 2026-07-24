@@ -294,3 +294,55 @@ async def get_dosen_skor_pertanyaan(
         {"kode_pertanyaan": kode_q, "pertanyaan": teks, "skor": row[kolom]}
         for kode_q, kolom, teks in pertanyaan_list
     ]
+
+async def get_dosen_refleksi(
+    scope: UserScope, filters: AkademikQueryFilters, dosen_id: int,
+    page: int, page_size: int,
+) -> tuple[list[dict], int]:
+    """
+    Refleksi & usulan perbaikan dari portofolio — DIBATASI ke portofolio milik
+    dosen ini sendiri (dosen_id = ANY(semua_dosen_id) di aplikasi), BUKAN
+    mengandalkan RLS. RLS v_akademik_portofolio untuk role dosen sengaja
+    seluas prodi (lihat DB_REFERENCE.md) untuk kebutuhan eksplorasi chatbot;
+    dashboard menyempitkan lagi di sini karena tujuannya beda: dosen melihat
+    refleksi dirinya sendiri, bukan riset lintas dosen di prodinya.
+    """
+    clauses, params = _period_clauses(filters)
+    clauses.append("%s = ANY(semua_dosen_id)")
+    params.append(dosen_id)
+    # Hanya baris yang benar-benar terisi salah satu field refleksi/usulan —
+    # portofolio yang belum diisi tidak perlu muncul sebagai "komentar kosong".
+    clauses.append("(refleksi_pelaksanaan_perkuliahan IS NOT NULL "
+                    "OR usulan_perbaikan_oleh_dosen_berikutnya IS NOT NULL)")
+    where_sql = f"WHERE {' AND '.join(clauses)}"
+
+    count_sql = f"SELECT COUNT(*) AS total FROM analitik.v_akademik_portofolio {where_sql}"
+    count_result = await _executor.execute(count_sql, scope, params)
+    if count_result.error:
+        logger.error("get_dosen_refleksi count (dosen_id=%s): %s", dosen_id, count_result.error)
+        return [], 0
+    total = count_result.rows[0]["total"] if count_result.rows else 0
+
+    # teks gabungan: refleksi dulu, usulan perbaikan setelahnya (kalau
+    # keduanya ada) -- 1 kartu per kelas, bukan dipecah 2 item terpisah,
+    # supaya tetap 1 baris = 1 hasil pengisian dosen, mudah dibaca sekaligus.
+    data_sql = f"""
+        SELECT
+            kelas_id, kode_matkul, nama_matkul_id, kode_prodi, nama_prodi_id,
+            kode_fakultas, tahun_ajaran, semester,
+            CONCAT_WS(
+                E'\\n\\n',
+                CASE WHEN refleksi_pelaksanaan_perkuliahan IS NOT NULL
+                     THEN 'Refleksi: ' || refleksi_pelaksanaan_perkuliahan END,
+                CASE WHEN usulan_perbaikan_oleh_dosen_berikutnya IS NOT NULL
+                     THEN 'Usulan Perbaikan: ' || usulan_perbaikan_oleh_dosen_berikutnya END
+            ) AS teks
+        FROM analitik.v_akademik_portofolio {where_sql}
+        ORDER BY tahun_ajaran DESC, semester DESC, kode_matkul
+        LIMIT %s OFFSET %s
+    """
+    result = await _executor.execute(data_sql, scope, params + [page_size, (page - 1) * page_size])
+    if result.error:
+        logger.error("get_dosen_refleksi (dosen_id=%s): %s", dosen_id, result.error)
+        return [], total
+    return result.rows, total

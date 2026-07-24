@@ -163,9 +163,21 @@ async def get_dosen_skor_pertanyaan(
         items=[DosenSkorPertanyaanItem(**r) for r in rows],
     )
 
+import math
 
-# ─── Tab 4: komentar — reuse penuh endpoint akademik umum ──────────────────────
-# Tidak didaftarkan ulang di sini. RLS v_akademik_komentar_mahasiswa untuk role
-# dosen sudah filter ke kelas yang benar-benar diajarkan (semua_dosen_id) —
-# lihat DB_REFERENCE.md. Frontend dashboard dosen memanggil endpoint yang sudah
-# ada: GET /api/dashboard/akademik/komentar-mentah, tanpa perubahan apapun.
+@router.get("/refleksi", response_model=KomentarResponse,
+            summary="Refleksi & usulan perbaikan dari portofolio milik dosen sendiri (bukan seluruh prodi)")
+async def get_dosen_refleksi(
+    filters:   Annotated[AkademikQueryFilters, Query()] = AkademikQueryFilters(),
+    page:      int                                       = Query(default=1, ge=1),
+    page_size: int                                       = Query(default=10, ge=1, le=100),
+    scope:     UserScope                                 = Depends(get_user_scope),
+) -> KomentarResponse:
+    dosen_id = _require_dosen_id(scope)
+    rows, total = await service.get_dosen_refleksi(scope, filters, dosen_id, page, page_size)
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+    return KomentarResponse(
+        sumber="dosen",
+        pagination=KomentarPagination(page=page, page_size=page_size, total_items=total, total_pages=total_pages),
+        items=[KomentarItem(**r) for r in rows],
+    )
